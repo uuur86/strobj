@@ -1,0 +1,24 @@
+{
+	"description": "PHP String to Objects Referrer. ",
+	"name": "uuur86/strobj",
+	"type": "library",
+	"license": "GPL-2.0-or-later",
+	"support": {
+		"source": "https://github.com/uuur86/strobj"
+	},
+	"authors": [
+		{
+			"name": "Uğur Biçer",
+			"email": "info@ugurbicer.com.tr",
+			"role": "lead"
+		}
+	],
+	"autoload": {
+    		"psr-4": {
+      			"strobj\\": "src/"
+		}
+	},
+	"require": {
+		"php": ">=5.6.0"
+	}
+}
