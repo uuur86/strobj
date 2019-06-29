@@ -23,7 +23,7 @@ class StringObjects {
 
 		foreach( $str_exp as $obj_name ) {
 
-			if( !isset( $obj->{ $obj_name } ) ) retun false;
+			if( !isset( $obj->{ $obj_name } ) ) return false;
 
 			if( empty( $val ) ) {
 				$val = $obj->{ $obj_name };
