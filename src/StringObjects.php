@@ -19,20 +19,14 @@ class StringObjects {
 
 		$str_exp	= explode( '/', $str );
 		$obj		= $this->obj;
-		$val		= null;
 
 		foreach( $str_exp as $obj_name ) {
 
 			if( !isset( $obj->{ $obj_name } ) ) return false;
 
-			if( empty( $val ) ) {
-				$val = $obj->{ $obj_name };
-			}
-			else {
-				$val = $val->{ $obj_name };
-			}
+			$obj = $obj->{ $obj_name };
 		}
 
-		return $val;
+		return $obj;
 	}
 }
