@@ -13,16 +13,16 @@ class StringObjects {
 
 
 
-	public function get( $str ) {
+	public function get( $str, $default = false ) {
 
-		if( empty( $this->obj ) ) return false;
+		if( empty( $this->obj ) ) return $default;
 
 		$str_exp	= explode( '/', $str );
 		$obj		= $this->obj;
 
 		foreach( $str_exp as $obj_name ) {
 
-			if( !isset( $obj->{ $obj_name } ) ) return false;
+			if( !isset( $obj->{ $obj_name } ) ) return $default;
 
 			$obj = $obj->{ $obj_name };
 		}
