@@ -1,6 +1,6 @@
 <?php
 
-namespace strobj;
+namespace StrObj;
 
 class StringObjects {
 	protected $obj = null;
