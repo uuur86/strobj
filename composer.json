@@ -15,7 +15,7 @@
 	],
 	"autoload": {
     		"psr-4": {
-      			"strobj\\": "src/"
+      			"StrObj\\": "src/"
 		}
 	},
 	"require": {
