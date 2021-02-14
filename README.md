@@ -10,10 +10,16 @@ use StrObj\StringObjects;
 
 require('vendor/autoload.php');
 
-$testObj = (object) array( 'a' => (object) array( 'b' => 'I`m here!' ) );
-$test = new StringObjects( $testObj );
+$testObj = (object) array('a' => (object) array( 'b' => 'I`m here!'));
+$test = new StringObjects($testObj);
 
-var_dump( $test->get( 'a/b' ) );
+$test->check('a/b', '', '#[a-z0-9 ]+#siu');
 
-// prints string(9) "I`m here!"
+if ($test->isValid('a/b')) {
+  var_dump($test->get('a/b'));
+} else {
+  echo "a/b value is not acceptable!";
+}
+
+// prints "a/b value is not acceptable!"
 ```
