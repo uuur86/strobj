@@ -8,7 +8,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <uuur86@yandex.com>
- * @version 0.4
+ * @version 0.4.1
  */
 
 namespace StrObj;
@@ -50,6 +50,10 @@ class StringObjects
 			$regex = $self_regex;
 		}
 
+		if (is_object($value)) {
+			return;
+		}
+
 		if (! empty($regex)) {
 			$result = \preg_match($regex, $value);
 
@@ -72,7 +76,19 @@ class StringObjects
 	 */
 	public function isValid($str)
 	{
-		return isset($this->sanitize_errors[$str]) && $this->sanitize_errors[$str] ? false : true;
+		$result = isset($this->sanitize_errors[$str]) && $this->sanitize_errors[$str] ? false : true;
+
+		if (! $result && is_object($this->get($str))) {
+			$obj_iterate = new ObjectIterator($this->get($str));
+
+			foreach ($obj_iterate as $key => $val) {
+				if (! $this->isValid($key)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 
