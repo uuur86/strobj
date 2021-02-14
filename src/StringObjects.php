@@ -8,7 +8,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <uuur86@yandex.com>
- * @version 0.4.1
+ * @version 0.4
  */
 
 namespace StrObj;
@@ -23,6 +23,8 @@ class StringObjects
 
 	protected $sanitize_errors = [];
 
+	protected $regex_type = [];
+
 
 	/**
 	 * Loads the object to use
@@ -31,6 +33,20 @@ class StringObjects
 	 */
 	public function __construct($obj) {
 		$this->obj = $obj;
+	}
+
+
+
+	/**
+	 * Registers regex type
+	 * 
+	 * @param array $regex
+	 */
+	public function addRegexType($regex)
+	{
+		if (! empty($regex) && is_array($regex)) {
+			$this->regex_type = $regex;
+		}
 	}
 
 
@@ -46,7 +62,9 @@ class StringObjects
 	{
 		$value = $this->get($str);
 
-		if (! empty($self_regex)) {
+		if (isset($this->regex_type[$type])) {
+			$regex = $this->regex_type[$type];
+		} else if (! empty($self_regex)) {
 			$regex = $self_regex;
 		}
 
@@ -78,17 +96,17 @@ class StringObjects
 	{
 		$result = isset($this->sanitize_errors[$str]) && $this->sanitize_errors[$str] ? false : true;
 
-		if (! $result && is_object($this->get($str))) {
-			$obj_iterate = new ObjectIterator($this->get($str));
+		if ($result && is_object($this->get($str))) {
+			$obj_iterate = $this->get($str);
 
-			foreach ($obj_iterate as $key => $val) {
-				if (! $this->isValid($key)) {
+			foreach ($obj_iterate as $key => $value) {
+				if (! $this->isValid($str . '/' . $key)) {
 					return false;
 				}
 			}
 		}
 
-		return true;
+		return $result;
 	}
 
 
@@ -136,8 +154,8 @@ class StringObjects
 
 		if (! empty($cache_obj)) return $cache_obj;
 
-		$str_exp	= explode('/', $str);
-		$obj		= $this->obj;
+		$str_exp = explode('/', $str);
+		$obj		 = $this->obj;
 
 		foreach ($str_exp as $obj_name) {
 
