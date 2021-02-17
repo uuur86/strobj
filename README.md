@@ -10,10 +10,10 @@ use StrObj\StringObjects;
 
 require('vendor/autoload.php');
 
-$testObj = (object) array('a' => (object) array( 'b' => 'I`m here!'));
+$testObj = (object) array('a' => (object) array('b' => 'i`m here!'));
 $test = new StringObjects($testObj);
 
-$test->check('a/b', '', '#[a-z0-9 ]+#siu');
+$test->control('a/b', '', true, '#^[a-z0-9 ]+$#siu');
 
 if ($test->isValid('a/b')) {
   var_dump($test->get('a/b'));

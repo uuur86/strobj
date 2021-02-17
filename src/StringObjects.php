@@ -8,7 +8,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <uuur86@yandex.com>
- * @version 0.4
+ * @version 0.4.2
  */
 
 namespace StrObj;
@@ -58,9 +58,11 @@ class StringObjects
 	 * @param string $type pre-defined control type(not ready)
 	 * @param string $self_regex self defined regex text
 	 */
-	public function control($str, $type, $self_regex = "")
+	public function control($str, $type, $required = true, $self_regex = "")
 	{
 		$value = $this->get($str);
+
+		if (! $required && empty($value)) return;
 
 		if (isset($this->regex_type[$type])) {
 			$regex = $this->regex_type[$type];
@@ -77,8 +79,10 @@ class StringObjects
 
 			if ($result === 0) {
 				$this->sanitize_errors[$str] = true;
-			} else if ($result === FALSE) {
-				// ERROR
+				
+				if ($result === FALSE) {
+					// ERROR
+				}
 			}
 		}
 	}
@@ -154,8 +158,8 @@ class StringObjects
 
 		if (! empty($cache_obj)) return $cache_obj;
 
-		$str_exp = explode('/', $str);
-		$obj		 = $this->obj;
+		$str_exp	= explode('/', $str);
+		$obj		= $this->obj;
 
 		foreach ($str_exp as $obj_name) {
 
