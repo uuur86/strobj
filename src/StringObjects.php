@@ -7,7 +7,7 @@
  *
  * @package strobj
  * @license GPLv2
- * @author Uğur Biçer <uuur86@yandex.com>
+ * @author Uğur Biçer <info@ugurbicer.com.tr>
  * @version 0.5.0
  */
 
