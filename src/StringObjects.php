@@ -8,12 +8,10 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <uuur86@yandex.com>
- * @version 0.4.2
+ * @version 0.5.0
  */
 
 namespace StrObj;
-
-use stdClass;
 
 class StringObjects
 {
@@ -25,14 +23,62 @@ class StringObjects
 
 	protected $regex_type = [];
 
+	protected static $memory_limit = 0;
+
+
 
 	/**
-	 * Loads the object to use
+	 * Loads the object to be used
 	 * 
 	 * @param object $obj The object to use
+	 * @param int $memory The memory limit
 	 */
-	public function __construct($obj) {
+	public function __construct($obj, int $memory)
+	{
 		$this->obj = $obj;
+
+		self::_setmemory($memory);
+	}
+
+
+
+	/**
+	 * Correct way to be used
+	 * 
+	 * @param object $obj The object to use
+	 * @param int $memory The memory limit
+	 */
+	public static function instance($obj, int $memory = 50)
+	{
+		if (empty($obj) || ! is_object($obj)) {
+			return false;
+		}
+
+		return new static($obj, $memory);
+	}
+
+
+
+	private static function _setmemory(int $mem)
+	{
+		// Its check only once for performance.
+		if (self::$memory_limit > 0) {
+			return;
+		}
+
+		$toMb = 1024 * 1024;
+		$default = 50 * $toMb;
+		$mem *= $toMb;
+		$ini_get_mem = ini_get('memory_limit') ? ini_get('memory_limit') : 0;
+		$ini_get_mem = intval($ini_get_mem) * $toMb;
+
+		if (empty($ini_get_mem)) {
+			$mem = $default * $toMb;
+		} else if ($mem > $ini_get_mem) {
+			$mem = $ini_get_mem;
+		}
+
+		self::$memory_limit = $mem;
 	}
 
 
@@ -40,29 +86,31 @@ class StringObjects
 	/**
 	 * Registers regex type
 	 * 
-	 * @param array $regex
+	 * @param string $key type key name
+	 * @param string $regex regex pattern
 	 */
-	public function addRegexType($regex)
+	public function addRegexType(string $key, string $regex)
 	{
-		if (! empty($regex) && is_array($regex)) {
-			$this->regex_type = $regex;
+		if (! empty($key) && ! empty($regex)) {
+			$this->regex_type[$key] = $regex;
 		}
 	}
 
 
 
 	/**
-	 * Checks value if it valid or not
+	 * Checks if the value is valid or not
 	 * 
-	 * @param string $str requested path
-	 * @param string $type pre-defined control type(not ready)
+	 * @param string $path requested path
+	 * @param string $type pre-defined validator type
+	 * @param bool $required field is required?
 	 * @param string $self_regex self defined regex text
 	 */
-	public function control($str, $type, $required = true, $self_regex = "")
+	public function validator(string $path, string $type, bool $required = true, string $self_regex = "")
 	{
-		$value = $this->get($str);
+		$values = $this->get($path);
 
-		if (! $required && empty($value)) return;
+		if (! $required && empty($values)) return;
 
 		if (isset($this->regex_type[$type])) {
 			$regex = $this->regex_type[$type];
@@ -70,17 +118,28 @@ class StringObjects
 			$regex = $self_regex;
 		}
 
-		if (is_object($value)) {
+		if (is_object($values)) {
 			return;
 		}
 
 		if (! empty($regex)) {
-			$result = \preg_match($regex, $value);
+			if (! is_array($values)) {
+				$values = [$values];
+			}
 
-			if ($result === 0) {
-				$this->sanitize_errors[$str] = true;
-				
-				if ($result === FALSE) {
+			$replace = substr_count($path, '*') > 0 ? true : false;
+
+			foreach ($values as $key => $value) {
+				$result = \preg_match($regex, $value);
+
+				if ($result === 0) {
+					$this->sanitize_errors[$path] = true;
+
+					if ($replace) {
+						$new_path = str_replace('*', $key, $path);
+						$this->sanitize_errors[$new_path] = true;
+					}
+				} else if ($result === FALSE) {
 					// ERROR
 				}
 			}
@@ -90,24 +149,79 @@ class StringObjects
 
 
 	/**
-	 * Checks the value whether it valid or not which is added in control list.
+	 * Checks whether the value which is in the desired path and added to the control list is valid or not
 	 * 
-	 * @param string $str requested path
+	 * @param string $path requested path
 	 * 
 	 * @return bool
 	 */
-	public function isValid($str)
+	public function isValid(string $path)
 	{
-		$result = isset($this->sanitize_errors[$str]) && $this->sanitize_errors[$str] ? false : true;
+		$result = isset($this->sanitize_errors[$path]) && $this->sanitize_errors[$path] ? false : true;
 
-		if ($result && is_object($this->get($str))) {
-			$obj_iterate = $this->get($str);
+		return $result;
+	}
 
-			foreach ($obj_iterate as $key => $value) {
-				if (! $this->isValid($str . '/' . $key)) {
-					return false;
-				}
-			}
+
+
+	/**
+	 * Saves the value to cache for performance
+	 * 
+	 * @param string $path requested path
+	 * @param mixed $obj
+	 */
+	public function saveCache(string $path, $obj)
+	{
+		$this->cache[$path] = $obj;
+	}
+
+
+
+	/**
+	 * Gets the cached value for performance. This function is used by get method.
+	 * 
+	 * @param string $path requested path
+	 * 
+	 * @return null|string|object
+	 */
+	private function _getCache(string $path)
+	{
+		return isset($this->cache[$path]) ? $this->cache[$path] : null;
+	}
+
+
+
+	private function _get($obj, string $path)
+	{
+		if (isset($obj->{$path})) {
+			$obj = $obj->{$path};
+		} else if (isset($obj[$path])) {
+			$obj = $obj[$path];
+		}
+
+		if (! empty($obj)) {
+			return $obj;
+		}
+
+		return false;
+	}
+
+
+
+	private function _deepSearch($obj, string $key)
+	{
+		$result = [];
+
+		foreach ($obj as $obj_key => $obj_item) {
+			$result_item = $this->_get($obj_item, $key);
+
+			if (! $result_item) continue;
+
+			$result[$obj_key] = $result_item;
+		}
+
+		if (empty($result)) {
+			return false;
 		}
 
 		return $result;
@@ -116,59 +230,45 @@ class StringObjects
 
 
 	/**
-	 * Saves value to cache for performance
+	 * Gets the value from the inside of the loaded object or returns the default value
 	 * 
-	 * @param string $str requested path
-	 * @param mixed $obj
-	 */
-	public function saveCache($str, $obj)
-	{
-		$this->cache[$str] = $obj;
-	}
-
-
-
-	/**
-	 * Gets cached value for performance. This function is using by get function.
-	 * 
-	 * @param string $str requested path
-	 * 
-	 * @return null|string|object
-	 */
-	private function _getCache($str)
-	{
-		return isset($this->cache[$str]) ? $this->cache[$str] : null;
-	}
-
-
-
-	/**
-	 * Gets the value from inside of loaded object or returns default value
-	 * 
-	 * @param string $str requested object path like data/child_data for data->child_data
+	 * @param string $path requested object path like data/child_data instead of data->child_data
 	 * @param mixed $default default value will return if value not exists
 	 * 
 	 * @return object|string 
 	 */
-	public function get($str, $default = false) {
-
-		if (empty($this->obj)) return $default;
-
-		$cache_obj = $this->_getCache($str);
+	public function get(string $path, $default = false)
+	{
+		$cache_obj = $this->_getCache($path);
 
 		if (! empty($cache_obj)) return $cache_obj;
 
-		$str_exp	= explode('/', $str);
-		$obj		= $this->obj;
-
-		foreach ($str_exp as $obj_name) {
-
-			if (! isset( $obj->{$obj_name})) return $default;
-
-			$obj = $obj->{$obj_name};
+		if (memory_get_usage() > self::$memory_limit) {
+			// TODO: error information
+			return $default;
 		}
 
-		$this->saveCache($str, $obj);
+		if (empty($this->obj) || empty($path)) return false;
+
+		$obj = $this->obj;
+
+		$str_exp	= explode('/', $path);
+
+		foreach ($str_exp as $key => $exp_path) {
+			if ($exp_path === '*') {
+				$result = $this->_deepSearch($obj, $str_exp[$key + 1]);
+
+				return $result ? $result : $default;
+			}
+
+			$obj = $this->_get($obj, $exp_path);
+		}
+
+		if (empty($obj)) {
+			return $default;
+		}
+
+		$this->saveCache($path, $obj);
 
 		return $obj;
 	}
