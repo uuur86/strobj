@@ -8,7 +8,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 0.5.0
+ * @version 0.5.1
  */
 
 namespace StrObj;
@@ -37,7 +37,7 @@ class StringObjects
 	{
 		$this->obj = $obj;
 
-		self::_setmemory($memory);
+		self::_setMemoryLimit($memory);
 	}
 
 
@@ -59,21 +59,40 @@ class StringObjects
 
 
 
-	private static function _setmemory(int $mem)
+	public static function convertToByte($amount)
+	{
+		$value = intval($amount);
+		$unit = strtolower(substr($amount, strlen($value)));
+
+		if ($unit == "g" || $unit == "gb") {
+			$value *= 1024 * 1024 * 1024;
+		} else if ($unit == "m" || $unit == "mb") {
+			$value *= 1024 * 1024;
+		} else if ($unit == "k" || $unit == "kb") {
+			$value *= 1024;
+		}
+
+		return $value;
+	}
+
+
+
+	private static function _setMemoryLimit(int $mem)
 	{
 		// Its check only once for performance.
 		if (self::$memory_limit > 0) {
 			return;
 		}
 
-		$toMb = 1024 * 1024;
-		$default = 50 * $toMb;
-		$mem *= $toMb;
-		$ini_get_mem = ini_get('memory_limit') ? ini_get('memory_limit') : 0;
-		$ini_get_mem = intval($ini_get_mem) * $toMb;
+		$mbToByte = 1024 * 1024;
+		$default = 50 * $mbToByte;
+
+		$mem *= $mbToByte;
+
+		$ini_get_mem = ini_get('memory_limit') ? self::convertToByte(ini_get('memory_limit')) : 0;
 
 		if (empty($ini_get_mem)) {
-			$mem = $default * $toMb;
+			$mem = $default;
 		} else if ($mem > $ini_get_mem) {
 			$mem = $ini_get_mem;
 		}
