@@ -1,5 +1,6 @@
 # strobj
-PHP String to Objects Referrer.
+## PHP String Objects
+This repository allows you to access objects via string. You can also check if their values are valid.
 
 ```bash
 composer require uuur86/strobj
@@ -74,30 +75,30 @@ $test->validator('persons/*/name', '', true, '#^[a-z0-9 ]+$#siu');
 
 // prints "persons/*/name values are not acceptable!"
 if ($test->isValid('persons/*/name')) {
-  var_dump($test->get('persons/*/name'));
+	var_dump($test->get('persons/*/name'));
 } else {
-  echo "persons/*/name values are not acceptable!";
+	echo "persons/*/name values are not acceptable!";
 }
 
 // prints "persons/0/age value is not acceptable!"
 if ($test->isValid('persons/0/age')) {
-  var_dump($test->get('persons/0/age'));
+	var_dump($test->get('persons/0/age'));
 } else {
-  echo "persons/0/age value is not acceptable!";
+	echo "persons/0/age value is not acceptable!";
 }
 
 // prints "14"
 if ($test->isValid('persons/1/age')) {
-  var_dump($test->get('persons/1/age'));
+	var_dump($test->get('persons/1/age'));
 } else {
-  echo "persons/1/age value is not acceptable!";
+	echo "persons/1/age value is not acceptable!";
 }
 
 // prints "persons/*/age values are not acceptable!"
 if ($test->isValid('persons/*/age')) {
-  var_dump($test->get('persons/*/age'));
+	var_dump($test->get('persons/*/age'));
 } else {
-  echo "persons/*/age values are not acceptable!";
+	echo "persons/*/age values are not acceptable!";
 }
 
 
