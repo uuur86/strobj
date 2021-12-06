@@ -321,7 +321,7 @@ class StringObjects
 	 */
 	public function isPathExists($path)
 	{
-		return in_array($path, array_keys($this->_paths));
+		return array_key_exists($path, $this->_paths);
 	}
 
 	/**
