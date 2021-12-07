@@ -84,7 +84,7 @@ class StringObjects
 	 * 
 	 * @var int
 	 */
-	private static $_memory_limit = 0;
+	private $_memory_limit = 0;
 
 	/**
 	 * Constructor
@@ -96,7 +96,7 @@ class StringObjects
 	{
 		$this->_obj = $obj;
 
-		self::_setMemoryLimit($memory);
+		$this->_setMemoryLimit($memory);
 	}
 
 	/**
@@ -123,7 +123,7 @@ class StringObjects
 	 * 
 	 * @return int
 	 */
-	public static function convertToByte($amount): int
+	public function convertToByte($amount): int
 	{
 		$value = (string)intval($amount);
 		$unit = strtolower(substr($amount, strlen($value)));
@@ -144,10 +144,10 @@ class StringObjects
 	 * 
 	 * @param int $mem
 	 */
-	private static function _setMemoryLimit(int $mem): void
+	private function _setMemoryLimit(int $mem): void
 	{
 		// Its check only once for performance.
-		if (self::$_memory_limit > 0) {
+		if ($this->_memory_limit > 0) {
 			return;
 		}
 
@@ -157,7 +157,7 @@ class StringObjects
 		$mem *= $mbToByte;
 
 		$ini_get_mem = ini_get('memory_limit') ? 
-			self::convertToByte(ini_get('memory_limit')) : 0;
+			$this->convertToByte(ini_get('memory_limit')) : 0;
 
 		if (empty($ini_get_mem)) {
 			$mem = $default;
@@ -165,7 +165,7 @@ class StringObjects
 			$mem = $ini_get_mem;
 		}
 
-		self::$_memory_limit = $mem;
+		$this->_memory_limit = $mem;
 	}
 
 	/**
@@ -412,15 +412,14 @@ class StringObjects
 	 */
 	public function query($path)
 	{
-		if (memory_get_usage() > self::$_memory_limit) {
+		if (memory_get_usage() > $this->_memory_limit) {
 			throw new OverflowException(
 				sprintf(
 					"StrObj Error: Allowed memory size of %s exhausted! (max: %s bytes)",
-					intval(memory_get_usage() - self::$_memory_limit),
-					self::$_memory_limit
+					intval(memory_get_usage() - $this->_memory_limit),
+					$this->_memory_limit
 				)
 			);
-			return false;
 		}
 
 		if (empty($path)) return false;
