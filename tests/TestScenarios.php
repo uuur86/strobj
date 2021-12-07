@@ -42,8 +42,9 @@ class TestScenarios extends TestCase
 
 		$this->assertTrue($data->isValid('a/1'));
 		$this->assertTrue($data->isValid('a/1/b'));
-		
+
 		// This array contains non valid value
+		$this->assertFalse($data->isValid('*'));
 		$this->assertFalse($data->isValid('a'));
 		$this->assertFalse($data->isValid('a/*'));
 		$this->assertFalse($data->isValid('a/*/b'));
@@ -51,6 +52,8 @@ class TestScenarios extends TestCase
 		$this->assertFalse($data->isValid('a/0/b'));
 
 		// non exists values
+		$this->assertFalse($data->isValid(null));
+		$this->assertFalse($data->isValid(''));
 		$this->assertFalse($data->isValid('b'));
 		$this->assertFalse($data->isValid('b/*'));
 		$this->assertFalse($data->isValid('b/2'));
@@ -58,6 +61,26 @@ class TestScenarios extends TestCase
 		$this->assertFalse($data->isValid('z/2'));
 		$this->assertFalse($data->isValid('b/2/*'));
 		$this->assertFalse($data->isValid('a/*/c'));
+
+		// exists path
+		$this->assertTrue($data->isPathExists('a'));
+		$this->assertTrue($data->isPathExists('a/*/b'));
+		$this->assertTrue($data->isPathExists('a/0/b'));
+		$this->assertTrue($data->isPathExists('a/1/b'));
+		$this->assertTrue($data->isPathExists('a/6'));
+
+		// non exists path
+		$this->assertFalse($data->isPathExists('z/*'));
+		$this->assertFalse($data->isPathExists('z/2'));
+
+		// null is exists? of course no!
+		$this->assertFalse($data->isPathExists(''));
+
+		// exception: a cannot contain everything
+		$this->assertFalse($data->isPathExists('a/*'));
+
+		// It has everything? absolutely not!
+		$this->assertFalse($data->isPathExists('*'));
 	}
 
 

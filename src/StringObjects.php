@@ -104,6 +104,8 @@ class StringObjects
 	 * 
 	 * @param object $obj The object to use
 	 * @param int $memory The memory limit
+	 * 
+	 * @return bool|static
 	 */
 	public static function instance($obj, int $memory = 50)
 	{
@@ -121,7 +123,7 @@ class StringObjects
 	 * 
 	 * @return int
 	 */
-	public static function convertToByte($amount)
+	public static function convertToByte($amount): int
 	{
 		$value = (string)intval($amount);
 		$unit = strtolower(substr($amount, strlen($value)));
@@ -142,7 +144,7 @@ class StringObjects
 	 * 
 	 * @param int $mem
 	 */
-	private static function _setMemoryLimit(int $mem)
+	private static function _setMemoryLimit(int $mem): void
 	{
 		// Its check only once for performance.
 		if (self::$_memory_limit > 0) {
@@ -172,7 +174,7 @@ class StringObjects
 	 * @param string $key type key name
 	 * @param string $regex regex pattern
 	 */
-	public function addRegexType(string $key, string $regex)
+	public function addRegexType(string $key, string $regex): void
 	{
 		if (! empty($key) && ! empty($regex)) {
 			$this->_regex_type[$key] = $regex;
@@ -187,7 +189,7 @@ class StringObjects
 	 * @param bool $required field is required?
 	 * @param string $self_regex self defined regex text
 	 */
-	public function validator(string $path, string $type, bool $required = false, string $self_regex = "")
+	public function validator(string $path, string $type, bool $required = false, string $self_regex = ""): void
 	{
 		if (isset($this->_regex_type[$type])) {
 			$regex = $this->_regex_type[$type];
@@ -211,7 +213,7 @@ class StringObjects
 	 * 
 	 * @throws UnexpectedValueException
 	 */
-	private function _validate($path, $regex, $required)
+	private function _validate(string $path, string $regex, bool $required): bool
 	{
 		$result = true;
 
@@ -239,7 +241,7 @@ class StringObjects
 		}
 
 		$values = Collection::instance($values);
-		
+
 		while ($values->valid()) {
 			$result = $result && $this->_validate($values->key(), $regex, $required);
 			$values->next();
@@ -259,7 +261,7 @@ class StringObjects
 	 * 
 	 * @return bool
 	 */
-	public function isValid(string $path)
+	public function isValid(?string $path): bool
 	{
 		return $this->isPathExists($path) && ! isset($this->_validation_errors[$path]);
 	}
@@ -271,7 +273,7 @@ class StringObjects
 	 * @param string $path
 	 * @param mixed $value
 	 */
-	public function setAllPaths(&$data, $path, $value)
+	public function setAllPaths(&$data, $path, $value): void
 	{
 		$path_array = explode('/', $path);
 
@@ -295,7 +297,7 @@ class StringObjects
 	 * @param string $path requested path
 	 * @param mixed $obj
 	 */
-	private function _saveStoredValue(string $path, $obj)
+	private function _saveStoredValue(string $path, $obj): void
 	{
 		$this->_paths[$path] = $obj;
 	}
@@ -305,7 +307,7 @@ class StringObjects
 	 * 
 	 * @param string $path requested path
 	 * 
-	 * @return null|string|object
+	 * @return mixed
 	 */
 	private function _getStoredValue(string $path)
 	{
@@ -319,7 +321,7 @@ class StringObjects
 	 * 
 	 * @return bool
 	 */
-	public function isPathExists($path)
+	public function isPathExists(?string $path): bool
 	{
 		return array_key_exists($path, $this->_paths);
 	}
@@ -332,7 +334,7 @@ class StringObjects
 	 * 
 	 * @return array
 	 */
-	private function _deepSearch($obj, $path_array)
+	private function _deepSearch(Collection $obj, array $path_array): array
 	{
 		$results = [];
 		$obj_key = key($path_array);
@@ -363,7 +365,7 @@ class StringObjects
 	 * 
 	 * @return mixed
 	 */
-	private function _get(string $path)
+	private function _get(?string $path)
 	{
 		if ($this->isPathExists($path)) {
 			return $this->_getStoredValue($path);
@@ -434,7 +436,7 @@ class StringObjects
 	 * @param string $path requested object path like data/child_data instead of data->child_data
 	 * @param mixed $default default value will return if value not exists
 	 * 
-	 * @return object|string 
+	 * @return mixed
 	 */
 	public function get(string $path, $default = false)
 	{
