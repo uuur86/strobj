@@ -13,20 +13,20 @@ use StrObj\StringObjects;
 require('vendor/autoload.php');
 
 $persons = (object)array(
-	"persons" => array(
-		(object)array(
-			"name" => "John Doe",
-			"age" => 12
-		),
-		(object)array(
-			"name" => "Molly Doe",
-			"age" => 14
-		),
-		(object)array(
-			"name" => "Lorem Ipsum",
-			"age" => 21
-		)
-	)
+  "persons" => array(
+    (object)array(
+      "name" => "John Doe",
+      "age" => 12
+    ),
+    (object)array(
+      "name" => "Molly Doe",
+      "age" => 14
+    ),
+    (object)array(
+      "name" => "Lorem Ipsum",
+      "age" => 21
+    )
+  )
 );
 
 $test = StringObjects::instance($persons);
@@ -49,20 +49,20 @@ use StrObj\StringObjects;
 require('vendor/autoload.php');
 
 $persons = (object)array(
-	"persons" => array(
-		(object)array(
-			"name" => "John-Doe",
-			"age" => "twelve"
-		),
-		(object)array(
-			"name" => "Molly Doe",
-			"age" => 14
-		),
-		(object)array(
-			"name" => "Lorem Ipsum",
-			"age" => 21
-		)
-	)
+  "persons" => array(
+    (object)array(
+      "name" => "John-Doe",
+      "age" => "twelve"
+    ),
+    (object)array(
+      "name" => "Molly Doe",
+      "age" => 14
+    ),
+    (object)array(
+      "name" => "Lorem Ipsum",
+      "age" => 21
+    )
+  )
 );
 
 $test = StringObjects::instance($persons);
@@ -75,30 +75,30 @@ $test->validator('persons/*/name', '', true, '#^[a-z0-9 ]+$#siu');
 
 // prints "persons/*/name values are not acceptable!"
 if ($test->isValid('persons/*/name')) {
-	var_dump($test->get('persons/*/name'));
+  var_dump($test->get('persons/*/name'));
 } else {
-	echo "persons/*/name values are not acceptable!";
+  echo "persons/*/name values are not acceptable!";
 }
 
 // prints "persons/0/age value is not acceptable!"
 if ($test->isValid('persons/0/age')) {
-	var_dump($test->get('persons/0/age'));
+  var_dump($test->get('persons/0/age'));
 } else {
-	echo "persons/0/age value is not acceptable!";
+  echo "persons/0/age value is not acceptable!";
 }
 
 // prints "14"
 if ($test->isValid('persons/1/age')) {
-	var_dump($test->get('persons/1/age'));
+  var_dump($test->get('persons/1/age'));
 } else {
-	echo "persons/1/age value is not acceptable!";
+  echo "persons/1/age value is not acceptable!";
 }
 
 // prints "persons/*/age values are not acceptable!"
 if ($test->isValid('persons/*/age')) {
-	var_dump($test->get('persons/*/age'));
+  var_dump($test->get('persons/*/age'));
 } else {
-	echo "persons/*/age values are not acceptable!";
+  echo "persons/*/age values are not acceptable!";
 }
 
 
