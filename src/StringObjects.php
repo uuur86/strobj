@@ -11,7 +11,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 1.0.0
+ * @version 1.0.1
  */
 
 declare(strict_types=1);
@@ -159,7 +159,7 @@ class StringObjects
     $mem *= $mbToByte;
 
     $ini_get_mem = ini_get('memory_limit') ?
-      $this->convertToByte(ini_get('memory_limit')) : 0;
+    $this->convertToByte(ini_get('memory_limit')) : 0;
 
     if (empty($ini_get_mem)) {
       $mem = $default;
@@ -218,7 +218,6 @@ class StringObjects
   private function _validate(string $path, string $regex, bool $required): bool
   {
     $result = true;
-
     $values = $this->_get($path);
 
     if (!$this->isPathExists($path)) {
