@@ -11,7 +11,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 1.0.1
+ * @version 1.0.2
  */
 
 declare(strict_types=1);
@@ -429,7 +429,7 @@ class StringObjects
 
     $this->_results = $this->_get($path);
 
-    if (!$this->isPathExists($path)) return false;
+    if (!empty($path) && !$this->isPathExists($path)) return false;
 
     return $this;
   }
