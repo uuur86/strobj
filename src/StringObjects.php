@@ -367,13 +367,17 @@ class StringObjects
    * 
    * @return mixed
    */
-  private function _get(?string $path)
+  private function _get(string $path)
   {
+    $obj = $this->_obj;
+
+    if (empty($path)) {
+      return $obj;
+    }
+
     if ($this->isPathExists($path)) {
       return $this->_getStoredValue($path);
     }
-
-    $obj = $this->_obj;
 
     $path_array = explode('/', $path);
     $current_path = [];
@@ -412,7 +416,7 @@ class StringObjects
    * 
    * @throws OverflowException
    */
-  public function query($path)
+  public function query(string $path)
   {
     if (memory_get_usage() > $this->_memory_limit) {
       throw new OverflowException(
@@ -424,9 +428,9 @@ class StringObjects
       );
     }
 
-    if (empty($path)) return false;
-
     $this->_results = $this->_get($path);
+
+    if (!$this->isPathExists($path)) return false;
 
     return $this;
   }
