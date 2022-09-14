@@ -1,14 +1,6 @@
 <?php
 /**
- * StrObj: PHP String Object Project
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- *
  * @package strobj
- * @license GPLv2
- * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 1.0.0
  */
 
 namespace StrObj;

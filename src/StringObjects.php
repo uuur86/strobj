@@ -11,7 +11,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 1.0.2
+ * @version 1.0.3
  */
 
 declare(strict_types=1);
@@ -90,8 +90,8 @@ class StringObjects
   /**
    * Constructor
    *
-   * @param object|array $obj The object to use
-   * @param int $memory The memory limit
+   * @param object|array    $obj The object to use
+   * @param int             $memory The memory limit
    */
     public function __construct($obj, int $memory)
     {
@@ -103,8 +103,8 @@ class StringObjects
   /**
    * You can provide an array or any traversable object
    *
-   * @param object $obj The object to use
-   * @param int $memory The memory limit
+   * @param object  $obj The object to use
+   * @param int     $memory The memory limit
    *
    * @return bool|static
    */
@@ -120,7 +120,7 @@ class StringObjects
   /**
    * Converts the string to bytes
    *
-   * @param string|int $amount
+   * @param string|int  $amount
    *
    * @return int
    */
@@ -143,11 +143,11 @@ class StringObjects
   /**
    * Memory leak protection
    *
-   * @param int $mem
+   * @param int     $mem
    */
     private function setMemoryLimit(int $mem): void
     {
-      // Its check only once for performance.
+        // Its check only once for performance.
         if ($this->memoryLimit > 0) {
             return;
         }
@@ -172,8 +172,8 @@ class StringObjects
   /**
    * Registers regex type
    *
-   * @param string $key type key name
-   * @param string $regex regex pattern
+   * @param string  $key type key name
+   * @param string  $regex regex pattern
    */
     public function addRegexType(string $key, string $regex): void
     {
@@ -185,10 +185,10 @@ class StringObjects
   /**
    * Checks if the value is valid or not
    *
-   * @param string $path requested path
-   * @param string $type pre-defined validator type
-   * @param bool $required field is required?
-   * @param string $selfRegex self defined regex text
+   * @param string  $path requested path
+   * @param string  $type pre-defined validator type
+   * @param bool    $required field is required?
+   * @param string  $selfRegex self defined regex text
    */
     public function validator(string $path, string $type, $required = false, $selfRegex = ""): void
     {
@@ -206,9 +206,9 @@ class StringObjects
   /**
    * Validates the object path
    *
-   * @param string $path
-   * @param string $regex
-   * @param bool $required
+   * @param string  $path
+   * @param string  $regex
+   * @param bool    $required
    *
    * @return bool
    *
@@ -260,7 +260,7 @@ class StringObjects
    * Checks whether the value which is in the desired path
    *  and added to the control list is valid or not
    *
-   * @param string $path requested path
+   * @param string  $path requested path
    *
    * @return bool
    */
@@ -272,9 +272,9 @@ class StringObjects
   /**
    * Sets the value to the all parent paths.
    *
-   * @param array $data
-   * @param string $path
-   * @param mixed $value
+   * @param array   $data
+   * @param string  $path
+   * @param mixed   $value
    */
     public function setAllPaths(&$data, $path, $value): void
     {
@@ -299,8 +299,8 @@ class StringObjects
   /**
    * Saves the value to cache for performance
    *
-   * @param string $path requested path
-   * @param mixed $obj
+   * @param string  $path requested path
+   * @param mixed   $obj
    */
     private function saveStoredValue(string $path, $obj): void
     {
@@ -310,7 +310,7 @@ class StringObjects
   /**
    * Gets the stored value for performance. This function is used by get method.
    *
-   * @param string $path requested path
+   * @param string  $path requested path
    *
    * @return mixed
    */
@@ -322,7 +322,7 @@ class StringObjects
   /**
    * Checks whether the object path exists or not
    *
-   * @param string $path
+   * @param string  $path
    *
    * @return bool
    */
@@ -334,8 +334,8 @@ class StringObjects
   /**
    * Performs an extensive search within the object.
    *
-   * @param Collection $obj The object to be searched in
-   * @param array $pathArray The array of the object path
+   * @param Collection $obj     The object to be searched in
+   * @param array $pathArray    The array of the object path
    *
    * @return array
    */
@@ -366,7 +366,7 @@ class StringObjects
   /**
    * Returns the requested object with the given path.
    *
-   * @param string $path The path of the object or array to be accessed
+   * @param string  $path The path of the object or array to be accessed
    *
    * @return mixed
    */
@@ -413,7 +413,7 @@ class StringObjects
   /**
    * Searches the requested object with the given path.
    *
-   * @param string $path The path of the object or array to be accessed
+   * @param string  $path The path of the object or array to be accessed
    *
    * @return bool|object Returns $this if query is exists
    *                     otherwise returns false
@@ -445,8 +445,8 @@ class StringObjects
    * Gets the value from the inside of the loaded object
    *  or returns the default value
    *
-   * @param string $path requested object path like
-   *               data/child_data instead of data->child_data
+   * @param string $path    requested object path like
+   *                        data/child_data instead of data->child_data
    * @param mixed  $default default value will return if value not exists
    *
    * @return mixed
