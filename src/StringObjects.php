@@ -190,7 +190,7 @@ class StringObjects
    * @param bool $required field is required?
    * @param string $selfRegex self defined regex text
    */
-    public function validator(string $path, string $type, bool $required = false, string $selfRegex = ""): void
+    public function validator(string $path, string $type, $required = false, $selfRegex = ""): void
     {
         if (isset($this->regexType[$type])) {
             $regex = $this->regexType[$type];
@@ -257,7 +257,8 @@ class StringObjects
     }
 
   /**
-   * Checks whether the value which is in the desired path and added to the control list is valid or not
+   * Checks whether the value which is in the desired path
+   *  and added to the control list is valid or not
    *
    * @param string $path requested path
    *
@@ -283,14 +284,14 @@ class StringObjects
             return;
         }
 
-        $total_path = [];
+        $totalPath = [];
 
-        foreach ($pathArray as $path_) {
-            $total_path[] = $path_;
+        foreach ($pathArray as $pathPart) {
+            $totalPath[] = $pathPart;
 
-            if (is_array($total_path) && !empty($total_path)) {
-                $new_path = implode('/', $total_path);
-                $data[$new_path] = $value;
+            if (is_array($totalPath) && !empty($totalPath)) {
+                $newPath = implode('/', $totalPath);
+                $data[$newPath] = $value;
             }
         }
     }
@@ -341,19 +342,19 @@ class StringObjects
     private function deepSearch(Collection $obj, array $pathArray): array
     {
         $results = [];
-        $obj_key = key($pathArray);
+        $objKey = key($pathArray);
 
         while ($obj->valid()) {
-          // new assignment for each branch
-            $new_path = $pathArray;
-            $new_path[$obj_key] = $obj->key();
-            $new_path = implode('/', $new_path);
+            // new assignment for each branch
+            $newPath = $pathArray;
+            $newPath[$objKey] = $obj->key();
+            $newPath = implode('/', $newPath);
 
-          // get the object belonging to this branch
-            $get_obj = $this->getObj($new_path);
+            // get the object belonging to this branch
+            $getObj = $this->getObj($newPath);
 
-            if ($this->isPathExists($new_path)) {
-                $results[$new_path] = $get_obj;
+            if ($this->isPathExists($newPath)) {
+                $results[$newPath] = $getObj;
             }
 
             $obj->next();
@@ -382,23 +383,23 @@ class StringObjects
         }
 
         $pathArray = explode('/', $path);
-        $current_path = [];
+        $currentPath = [];
 
-        while (false !== $path_part = current($pathArray)) {
+        while (false !== $pathPart = current($pathArray)) {
             $obj = Collection::instance($obj);
 
-            if ($path_part === '*') {
+            if ($pathPart === '*') {
                 $obj = $this->deepSearch($obj, $pathArray);
                 $this->saveStoredValue($path, $obj);
                 return $obj;
             }
 
-            $current_path[] = $path_part;
-            $this->currentPath = implode('/', $current_path);
+            $currentPath[] = $pathPart;
+            $this->currentPath = implode('/', $currentPath);
 
             if ($obj->valid()) {
-                if ($obj->offsetExists($path_part)) {
-                    $obj = $obj->offsetGet($path_part);
+                if ($obj->offsetExists($pathPart)) {
+                    $obj = $obj->offsetGet($pathPart);
                     $this->saveStoredValue($this->currentPath, $obj);
                 }
             }
@@ -414,7 +415,8 @@ class StringObjects
    *
    * @param string $path The path of the object or array to be accessed
    *
-   * @return bool|object Returns $this if query is exists otherwise returns false
+   * @return bool|object Returns $this if query is exists
+   *                     otherwise returns false
    *
    * @throws OverflowException
    */
@@ -440,10 +442,12 @@ class StringObjects
     }
 
   /**
-   * Gets the value from the inside of the loaded object or returns the default value
+   * Gets the value from the inside of the loaded object
+   *  or returns the default value
    *
-   * @param string $path requested object path like data/child_data instead of data->child_data
-   * @param mixed $default default value will return if value not exists
+   * @param string $path requested object path like
+   *               data/child_data instead of data->child_data
+   * @param mixed  $default default value will return if value not exists
    *
    * @return mixed
    */
