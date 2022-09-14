@@ -150,7 +150,7 @@ class TestScenarios extends TestCase
         $this->assertSame(
             [
                 'a/0/b' => 'I`m here!',
-            'a/1/b' => 'I am here'
+                'a/1/b' => 'I am here'
             ],
             $data->get('a/*/b')
         );

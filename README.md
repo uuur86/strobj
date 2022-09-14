@@ -1,4 +1,5 @@
-## PHP String Objects
+
+# PHP String Objects
 
 This repository allows you to access objects via string.
 You can also check if their values are valid.
@@ -56,22 +57,26 @@ use StrObj\StringObjects;
 
 require('vendor/autoload.php');
 
-$persons = (object)array(
-  "persons" => array(
-    (object)array(
-      "name" => "John-Doe",
-      "age" => "twelve"
-    ),
-    (object)array(
-      "name" => "Molly Doe",
-      "age" => 14
-    ),
-    (object)array(
-      "name" => "Lorem Ipsum",
-      "age" => 21
-    )
-  )
-);
+$persons = json_decode('{
+    persons: [
+        {
+            name: "John Doe",
+            age: "twelve"
+        },
+        {
+            name: "Molly Doe",
+            age: 14
+        },
+        {
+            name: "Lorem Doe",
+            age: 34
+        },
+        {
+            name: "Ipsum Doe",
+            age: 21
+        }
+    ]
+}');
 
 $test = StringObjects::instance($persons);
 

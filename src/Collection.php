@@ -6,24 +6,28 @@
 namespace StrObj;
 
 use RecursiveArrayIterator;
-use Traversable;
+use Iterator;
+use JsonSerializable;
 
-class Collection extends RecursiveArrayIterator implements Traversable
+class Collection extends RecursiveArrayIterator implements Iterator, JsonSerializable
 {
-  /**
-   * @inheritdoc
-   */
+    /**
+     * @inheritdoc
+     */
     public function __construct($data)
     {
-        if (empty($data) || !in_array(gettype($data), ['array', 'object'])) {
+        if (empty($data) || !(is_array($data) || is_object($data)) || is_callable($data)) {
             return;
         }
+
+        $this->data = $data;
 
         parent::__construct($data);
     }
 
-
-
+    /**
+     * @inheritdoc
+     */
     public static function instance($data)
     {
         if ($data instanceof Collection) {
@@ -31,5 +35,13 @@ class Collection extends RecursiveArrayIterator implements Traversable
         }
 
         return new static($data);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function jsonSerialize()
+    {
+        return $this->data;
     }
 }

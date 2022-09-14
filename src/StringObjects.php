@@ -38,61 +38,62 @@ use function memory_get_usage;
 
 class StringObjects
 {
-  /**
-   * The object to use
-   *
-   * @var object|array
-   */
+    /**
+     * The object to use
+     *
+     * @var object|array
+     */
     private $obj = null;
 
-  /**
-   * Latest query path info
-   *
-   * @var string
-   */
+    /**
+     * Latest query path info
+     *
+     * @var string
+     */
     private $currentPath = null;
 
-  /**
-   * Stored object values
-   *
-   * @var array
-   */
+    /**
+     * Stored object values
+     *
+     * @var array
+     */
     private $paths = [];
 
-  /**
-   * Query results
-   *
-   * @var array
-   */
+    /**
+     * Query results
+     *
+     * @var array
+     */
     private $results = [];
 
-  /**
-   * The object paths about validation errors
-   *
-   * @var array
-   */
+    /**
+     * The object paths about validation errors
+     *
+     * @var array
+     */
     private $validationErrors = [];
 
-  /**
-   * User defined regex templates
-   *
-   * @var array
-   */
+    /**
+     * User defined regex templates
+     *
+     * @var array
+     */
     private $regexType = [];
 
-  /**
-   * Memory limit in bytes
-   *
-   * @var int
-   */
+    /**
+     * Memory limit in bytes
+     *
+     * @var int
+     */
     private $memoryLimit = 0;
 
-  /**
-   * Constructor
-   *
-   * @param object|array    $obj The object to use
-   * @param int             $memory The memory limit
-   */
+
+    /**
+     * Constructor
+     *
+     * @param object|array    $obj        The object to use
+     * @param int             $memory     The memory limit
+     */
     public function __construct($obj, int $memory)
     {
         $this->obj = $obj;
@@ -100,14 +101,15 @@ class StringObjects
         $this->setMemoryLimit($memory);
     }
 
-  /**
-   * You can provide an array or any traversable object
-   *
-   * @param object  $obj The object to use
-   * @param int     $memory The memory limit
-   *
-   * @return bool|static
-   */
+
+    /**
+     * You can provide an array or any traversable object
+     *
+     * @param object  $obj        The object to use
+     * @param int     $memory     The memory limit
+     *
+     * @return bool|static
+     */
     public static function instance($obj, int $memory = 50)
     {
         if (empty($obj)) {
@@ -117,13 +119,14 @@ class StringObjects
         return new static($obj, $memory);
     }
 
-  /**
-   * Converts the string to bytes
-   *
-   * @param string|int  $amount
-   *
-   * @return int
-   */
+
+    /**
+     * Converts the string to bytes
+     *
+     * @param string|int  $amount
+     *
+     * @return int
+     */
     public function convertToByte($amount): int
     {
         $value = (string)(int)$amount;
@@ -140,11 +143,12 @@ class StringObjects
         return $value;
     }
 
-  /**
-   * Memory leak protection
-   *
-   * @param int     $mem
-   */
+
+    /**
+     * Memory leak protection
+     *
+     * @param int     $mem
+     */
     private function setMemoryLimit(int $mem): void
     {
         // Its check only once for performance.
@@ -169,12 +173,13 @@ class StringObjects
         $this->memoryLimit = $mem;
     }
 
-  /**
-   * Registers regex type
-   *
-   * @param string  $key type key name
-   * @param string  $regex regex pattern
-   */
+
+    /**
+     * Registers regex type
+     *
+     * @param string  $key type key name
+     * @param string  $regex regex pattern
+     */
     public function addRegexType(string $key, string $regex): void
     {
         if (!empty($key) && !empty($regex)) {
@@ -182,14 +187,15 @@ class StringObjects
         }
     }
 
-  /**
-   * Checks if the value is valid or not
-   *
-   * @param string  $path requested path
-   * @param string  $type pre-defined validator type
-   * @param bool    $required field is required?
-   * @param string  $selfRegex self defined regex text
-   */
+
+    /**
+     * Checks if the value is valid or not
+     *
+     * @param string  $path       requested path
+     * @param string  $type       pre-defined validator type
+     * @param bool    $required   field is required?
+     * @param string  $selfRegex  self defined regex text
+     */
     public function validator(string $path, string $type, $required = false, $selfRegex = ""): void
     {
         if (isset($this->regexType[$type])) {
@@ -203,17 +209,17 @@ class StringObjects
         }
     }
 
-  /**
-   * Validates the object path
-   *
-   * @param string  $path
-   * @param string  $regex
-   * @param bool    $required
-   *
-   * @return bool
-   *
-   * @throws UnexpectedValueException
-   */
+    /**
+     * Validates the object path
+     *
+     * @param string  $path
+     * @param string  $regex
+     * @param bool    $required
+     *
+     * @return bool
+     *
+     * @throws UnexpectedValueException
+     */
     private function validate(string $path, string $regex, bool $required): bool
     {
         $result = true;
@@ -256,26 +262,26 @@ class StringObjects
         return $result;
     }
 
-  /**
-   * Checks whether the value which is in the desired path
-   *  and added to the control list is valid or not
-   *
-   * @param string  $path requested path
-   *
-   * @return bool
-   */
+    /**
+     * Checks whether the value which is in the desired path
+     *  and added to the control list is valid or not
+     *
+     * @param string  $path   requested path
+     *
+     * @return bool
+     */
     public function isValid(?string $path): bool
     {
         return $this->isPathExists($path) && !isset($this->validationErrors[$path]);
     }
 
-  /**
-   * Sets the value to the all parent paths.
-   *
-   * @param array   $data
-   * @param string  $path
-   * @param mixed   $value
-   */
+    /**
+     * Sets the value to the all parent paths.
+     *
+     * @param array   $data
+     * @param string  $path
+     * @param mixed   $value
+     */
     public function setAllPaths(&$data, $path, $value): void
     {
         $pathArray = explode('/', $path);
@@ -296,49 +302,49 @@ class StringObjects
         }
     }
 
-  /**
-   * Saves the value to cache for performance
-   *
-   * @param string  $path requested path
-   * @param mixed   $obj
-   */
+    /**
+     * Saves the value to cache for performance
+     *
+     * @param string  $path   requested path
+     * @param mixed   $obj
+     */
     private function saveStoredValue(string $path, $obj): void
     {
         $this->paths[$path] = $obj;
     }
 
-  /**
-   * Gets the stored value for performance. This function is used by get method.
-   *
-   * @param string  $path requested path
-   *
-   * @return mixed
-   */
+    /**
+     * Gets the stored value for performance. This function is used by get method.
+     *
+     * @param string  $path    requested path
+     *
+     * @return mixed
+     */
     private function getStoredValue(string $path)
     {
         return $this->paths[$path];
     }
 
-  /**
-   * Checks whether the object path exists or not
-   *
-   * @param string  $path
-   *
-   * @return bool
-   */
+    /**
+     * Checks whether the object path exists or not
+     *
+     * @param string  $path
+     *
+     * @return bool
+     */
     public function isPathExists(?string $path): bool
     {
         return array_key_exists($path, $this->paths);
     }
 
-  /**
-   * Performs an extensive search within the object.
-   *
-   * @param Collection $obj     The object to be searched in
-   * @param array $pathArray    The array of the object path
-   *
-   * @return array
-   */
+    /**
+     * Performs an extensive search within the object.
+     *
+     * @param Collection  $obj        The object to be searched in
+     * @param array       $pathArray  The array of the object path
+     *
+     * @return array
+     */
     private function deepSearch(Collection $obj, array $pathArray): array
     {
         $results = [];
@@ -363,13 +369,13 @@ class StringObjects
         return $results;
     }
 
-  /**
-   * Returns the requested object with the given path.
-   *
-   * @param string  $path The path of the object or array to be accessed
-   *
-   * @return mixed
-   */
+    /**
+     * Returns the requested object with the given path.
+     *
+     * @param string  $path The path of the object or array to be accessed
+     *
+     * @return mixed
+     */
     private function getObj(string $path)
     {
         $obj = $this->obj;
@@ -410,16 +416,16 @@ class StringObjects
         return $obj;
     }
 
-  /**
-   * Searches the requested object with the given path.
-   *
-   * @param string  $path The path of the object or array to be accessed
-   *
-   * @return bool|object Returns $this if query is exists
-   *                     otherwise returns false
-   *
-   * @throws OverflowException
-   */
+    /**
+     * Searches the requested object with the given path.
+     *
+     * @param string  $path The path of the object or array to be accessed
+     *
+     * @return bool|object    Returns $this if query is exists
+     *                        otherwise returns false
+     *
+     * @throws OverflowException
+     */
     public function query(string $path)
     {
         if (memory_get_usage() > $this->memoryLimit) {
@@ -441,16 +447,17 @@ class StringObjects
         return $this;
     }
 
-  /**
-   * Gets the value from the inside of the loaded object
-   *  or returns the default value
-   *
-   * @param string $path    requested object path like
-   *                        data/child_data instead of data->child_data
-   * @param mixed  $default default value will return if value not exists
-   *
-   * @return mixed
-   */
+
+    /**
+     * Gets the value from the inside of the loaded object
+     *  or returns the default value
+     *
+     * @param string  $path       requested object path like
+     *                            data/child_data instead of data->child_data
+     * @param mixed   $default    default value will return if value not exists
+     *
+     * @return mixed
+     */
     public function get(string $path, $default = false)
     {
         $results = $this->query($path);
@@ -461,11 +468,11 @@ class StringObjects
         return $default;
     }
 
-  /**
-   * Returns query results
-   *
-   * @return mixed
-   */
+    /**
+     * Returns query results
+     *
+     * @return mixed
+     */
     public function getResults()
     {
         return $this->results;
