@@ -1,6 +1,7 @@
 # strobj
 
 ## PHP String Objects
+
 This repository allows you to access objects via string. You can also check if their values are valid.
 
 ```bash
@@ -8,11 +9,13 @@ composer require uuur86/strobj
 ```
 
 ### TESTS
+
 ```bash
 php vendor/bin/phpunit tests/TestScenarios
 ```
 
 ### BASIC USAGE
+
 ```php
 use StrObj\StringObjects;
 

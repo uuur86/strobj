@@ -157,13 +157,13 @@ class StringObjects
 
         $mem *= $mbToByte;
 
-        $ini_get_mem = ini_get('memory_limit') ?
+        $iniGetMem = ini_get('memory_limit') ?
         $this->convertToByte(ini_get('memory_limit')) : 0;
 
-        if (empty($ini_get_mem)) {
+        if (empty($iniGetMem)) {
             $mem = $default;
-        } elseif ($mem > $ini_get_mem) {
-            $mem = $ini_get_mem;
+        } elseif ($mem > $iniGetMem) {
+            $mem = $iniGetMem;
         }
 
         $this->memoryLimit = $mem;
@@ -188,14 +188,14 @@ class StringObjects
    * @param string $path requested path
    * @param string $type pre-defined validator type
    * @param bool $required field is required?
-   * @param string $self_regex self defined regex text
+   * @param string $selfRegex self defined regex text
    */
-    public function validator(string $path, string $type, bool $required = false, string $self_regex = ""): void
+    public function validator(string $path, string $type, bool $required = false, string $selfRegex = ""): void
     {
         if (isset($this->regexType[$type])) {
             $regex = $this->regexType[$type];
-        } elseif (!empty($self_regex)) {
-            $regex = $self_regex;
+        } elseif (!empty($selfRegex)) {
+            $regex = $selfRegex;
         }
 
         if (!empty($regex)) {
@@ -277,15 +277,15 @@ class StringObjects
    */
     public function setAllPaths(&$data, $path, $value): void
     {
-        $path_array = explode('/', $path);
+        $pathArray = explode('/', $path);
 
-        if (!is_array($path_array)) {
+        if (!is_array($pathArray)) {
             return;
         }
 
         $total_path = [];
 
-        foreach ($path_array as $path_) {
+        foreach ($pathArray as $path_) {
             $total_path[] = $path_;
 
             if (is_array($total_path) && !empty($total_path)) {
@@ -334,18 +334,18 @@ class StringObjects
    * Performs an extensive search within the object.
    *
    * @param Collection $obj The object to be searched in
-   * @param array $path_array The array of the object path
+   * @param array $pathArray The array of the object path
    *
    * @return array
    */
-    private function deepSearch(Collection $obj, array $path_array): array
+    private function deepSearch(Collection $obj, array $pathArray): array
     {
         $results = [];
-        $obj_key = key($path_array);
+        $obj_key = key($pathArray);
 
         while ($obj->valid()) {
           // new assignment for each branch
-            $new_path = $path_array;
+            $new_path = $pathArray;
             $new_path[$obj_key] = $obj->key();
             $new_path = implode('/', $new_path);
 
@@ -381,14 +381,14 @@ class StringObjects
             return $this->getStoredValue($path);
         }
 
-        $path_array = explode('/', $path);
+        $pathArray = explode('/', $path);
         $current_path = [];
 
-        while (false !== $path_part = current($path_array)) {
+        while (false !== $path_part = current($pathArray)) {
             $obj = Collection::instance($obj);
 
             if ($path_part === '*') {
-                $obj = $this->deepSearch($obj, $path_array);
+                $obj = $this->deepSearch($obj, $pathArray);
                 $this->saveStoredValue($path, $obj);
                 return $obj;
             }
@@ -403,7 +403,7 @@ class StringObjects
                 }
             }
 
-            next($path_array);
+            next($pathArray);
         }
 
         return $obj;
