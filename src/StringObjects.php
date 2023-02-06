@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace StrObj;
 
 use OverflowException;
+use StrObj\Data\DataCache;
 use StrObj\Interfaces\DataStructures\DataInterface;
 use UnexpectedValueException;
 use StrObj\Data\DataObject;
@@ -81,8 +82,9 @@ class StringObjects
     public function __construct(object $data)
     {
         $this->obj = new DataObject($data);
+        $this->cache = new DataCache();
         $this->validation = new Validation($this->obj);
-        $this->middleware = new Middleware($this->obj);
+        $this->middleware = new Middleware();
     }
 
     /**
@@ -118,9 +120,10 @@ class StringObjects
      */
     public function get(?string $path = '', $default = false)
     {
-        // if ($this->isCached($path)) {
-        //     return $this->getCachedValue($path);
-        // }
+        if ($this->cache->isCached($path)) {
+            var_dump('cached');
+            return $this->cache->get($path);
+        }
 
         $result = $this->obj->get($path);
 
@@ -128,7 +131,7 @@ class StringObjects
             return $default;
         }
 
-        // $this->saveCachedValue($path, $result);
+        $this->cache->save($path, $result);
 
         return $result;
     }

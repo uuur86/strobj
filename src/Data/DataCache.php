@@ -17,21 +17,9 @@ class DataCache
      * @param string    $path   requested path
      * @param mixed     $obj
      */
-    private function save(string $path, $obj): void
+    public function save(string $path, $obj): void
     {
         $this->paths[$path] = $obj;
-
-        $path = explode('/', $path);
-
-        if (!is_array($path)) {
-            return;
-        }
-
-        while (count($path) > 1) {
-            array_pop($path);
-            $path_txt = implode('/', $path);
-            $this->save($path_txt, $obj);
-        }
     }
 
     /**
@@ -41,9 +29,9 @@ class DataCache
      *
      * @return mixed
      */
-    private function get(string $path): mixed
+    public function get(string $path): mixed
     {
-        if (!$this->isPathExists($path)) {
+        if (!$this->isCached($path)) {
             return false;
         }
 
@@ -59,18 +47,6 @@ class DataCache
      *                otherwise returns false
      */
     public function isCached(string $path)
-    {
-        return $this->isPathExists($path);
-    }
-
-    /**
-     * Checks the path is exists in cache
-     *
-     * @param string $path
-     *
-     * @return bool
-     */
-    private function isPathExists(string $path): bool
     {
         return isset($this->paths[$path]);
     }

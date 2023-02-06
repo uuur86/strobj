@@ -107,6 +107,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         }
 
         // Warning! DO NOT REMOVE! This solution contains a bug fix for php
+        // https://github.com/php/php-src/issues/10519
         // due to the fact that the php reference bug appears when new keys are created
         if (!empty($create_key)) {
             $path_arr_r = array_reverse($path_arr);

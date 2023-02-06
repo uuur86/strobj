@@ -23,7 +23,7 @@ class Middleware
     /**
      * Memory leak protection
      *
-     * @param int     $mem
+     * @param int     $memory
      */
     private function setMemoryLimit(int $memory): void
     {
@@ -35,17 +35,17 @@ class Middleware
         $mbToByte = 1024 * 1024;
         $default = 50 * $mbToByte;
 
-        $mem *= $mbToByte;
+        $memory *= $mbToByte;
 
         $iniGetMem = ini_get('memory_limit') ?
             $this->convertToByte(ini_get('memory_limit')) : 0;
 
         if (empty($iniGetMem)) {
-            $mem = $default;
-        } elseif ($mem > $iniGetMem) {
-            $mem = $iniGetMem;
+            $memory = $default;
+        } elseif ($memory > $iniGetMem) {
+            $memory = $iniGetMem;
         }
 
-        $this->memoryLimit = $mem;
+        $this->memoryLimit = $memory;
     }
 }

@@ -34,7 +34,7 @@ class Validation
      *
      * @throws UnexpectedValueException
      */
-    private function validate(string $path, string $regex, bool $required): bool
+    public function validate(string $path, string $regex, bool $required): bool
     {
         $result = true;
 
