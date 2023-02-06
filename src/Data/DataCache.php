@@ -23,6 +23,16 @@ class DataCache
     }
 
     /**
+     * Clears the cache
+     *
+     * @param string $path requested path
+     */
+    public function clear(string $path): void
+    {
+        unset($this->paths[$path]);
+    }
+
+    /**
      * Gets the stored value for performance. This function is used by get method.
      *
      * @param string $path requested path

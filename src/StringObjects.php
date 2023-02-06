@@ -81,7 +81,7 @@ class StringObjects
      */
     public function __construct(object $data)
     {
-        $this->obj = new DataObject($data);
+        $this->obj   = new DataObject($data);
         $this->cache = new DataCache();
         $this->validation = new Validation($this->obj);
         $this->middleware = new Middleware();
@@ -121,7 +121,6 @@ class StringObjects
     public function get(?string $path = '', $default = false)
     {
         if ($this->cache->isCached($path)) {
-            var_dump('cached');
             return $this->cache->get($path);
         }
 

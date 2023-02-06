@@ -83,7 +83,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         $data       = &$this;
         $set_key    = null;
         $create_key = null;
-        $path_ = $this->pathInit($path);
+        $path_      = $this->pathInit($path);
 
         if (!$path_) {
             return;
@@ -126,7 +126,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
             }
 
             if (is_array($value)) {
-                $data->offsetSet($create_key, (object)$value);
+                $data->offsetSet($create_key, $value);
                 $this->offsetSet($set_key, $data->getArrayCopy());
 
                 return;
@@ -134,6 +134,18 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         }
 
         $data->offsetSet($set_key, $value);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetSet($index, $val)
+    {
+        if (is_array($val)) {
+            $val = (object)$val;
+        }
+
+        parent::offsetSet($index, $val);
     }
 
     /**
