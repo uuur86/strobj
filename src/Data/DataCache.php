@@ -41,10 +41,6 @@ class DataCache
      */
     public function get(string $path): mixed
     {
-        if (!$this->isCached($path)) {
-            return false;
-        }
-
         return $this->paths[$path];
     }
 

@@ -79,12 +79,18 @@ class TestScenarios extends TestCase
             $test->get('persons/4/age')
         );
 
+        // outputs all persons after set
+        var_dump($test->get('persons/*/age'));
+
+        // sets value to persons/4/age
+        $test->set('persons/4/age', 200);
+
         $this->assertSame(
-            199,
+            200,
             $test->get('persons/4/age')
         );
 
-        // outputs all persons after set
+        // outputs all persons after second set
         var_dump($test->get('persons/*/age'));
 
         // outputs all persons as array

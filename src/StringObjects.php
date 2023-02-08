@@ -19,11 +19,10 @@ declare(strict_types=1);
 namespace StrObj;
 
 use OverflowException;
-use StrObj\Data\DataCache;
-use StrObj\Interfaces\DataStructures\DataInterface;
 use UnexpectedValueException;
 use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
+use StrObj\Interfaces\DataStructures\DataInterface;
 
 use function is_array;
 use function is_string;
@@ -61,20 +60,6 @@ class StringObjects
     private Middleware $middleware;
 
     /**
-     * Latest query path
-     *
-     * @var string
-     */
-    private ?string $currentPath = null;
-
-    /**
-     * Cached object values
-     *
-     * @var array
-     */
-    private array $paths = [];
-
-    /**
      * Constructor
      *
      * @param object|array    $obj        The object to use
@@ -82,7 +67,6 @@ class StringObjects
     public function __construct(object $data)
     {
         $this->obj   = new DataObject($data);
-        $this->cache = new DataCache();
         $this->validation = new Validation($this->obj);
         $this->middleware = new Middleware();
     }
@@ -120,17 +104,11 @@ class StringObjects
      */
     public function get(?string $path = '', $default = false)
     {
-        if ($this->cache->isCached($path)) {
-            return $this->cache->get($path);
-        }
-
         $result = $this->obj->get($path);
 
         if ($result === false) {
             return $default;
         }
-
-        $this->cache->save($path, $result);
 
         return $result;
     }
@@ -141,19 +119,10 @@ class StringObjects
      * @param string $path       requested object path like
      *                           data/child_data instead of data->child_data
      * @param mixed  $value      value to be set
-     *
-     * @return bool
      */
-    public function set(string $path, $value): bool
+    public function set(string $path, $value): void
     {
-        $objData = $this->obj->set($path, $value);
-
-        if ($objData instanceof Collection) {
-            $this->obj = $objData;
-            return true;
-        }
-
-        return false;
+        $this->obj->set($path, $value);
     }
 
     /**

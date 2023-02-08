@@ -15,16 +15,56 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     private array $paths = [];
 
     /**
+     * Latest query path
+     *
+     * @var string
+     */
+    private ?string $currentPath = null;
+
+    /**
+     * Cache object
+     *
+     * @var DataCache
+     */
+    private DataCache $cache;
+
+    /**
      * Init data object
      */
     public function pathInit(string $path): DataPath
     {
+        $this->currentPath = $path;
+        $this->cache = new DataCache();
+
         if (!isset($this->paths[$path])) {
             $this->paths[$path] = new DataPath($path);
         }
 
         return $this->paths[$path];
     }
+
+    /**
+     * Get latest query path
+     *
+     * @return string
+     */
+    public function getCurrentPath(): string
+    {
+        return $this->currentPath;
+    }
+
+    /**
+     * Save data to cache
+     *
+     * @param string $path
+     * @param mixed $value
+     */
+    public function cache(string $path, mixed $value): void
+    {
+        $this->cache->save($path, $value);
+    }
+
+
 
     /**
      * Get value if exists, otherwise return null
@@ -35,6 +75,10 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function get(string $path): mixed
     {
+        if ($this->cache->isCached($path)) {
+            return $this->cache->get($path);
+        }
+
         $this->rewind();
         $path_ = $this->pathInit($path);
 
@@ -88,6 +132,8 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         if (!$path_) {
             return;
         }
+
+        $this->cache($path, $value);
 
         $path_arr = $path_->getArray();
 
