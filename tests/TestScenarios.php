@@ -45,7 +45,35 @@ class TestScenarios extends TestCase
         $persons = $this->samplePersonsData();
 
         // converts json string to object if input is string
-        $test = StringObjects::instance($persons);
+        $test = StringObjects::instance(
+            $persons,
+            [
+                'patterns' => [
+                    'age' => '#^[0-9]+$#siu',
+                    'name' => '#^[a-zA-Z ]+$#siu', // only letters and spaces
+                ],
+                'rules' => [
+                    [
+                        'path' => 'persons/*/age',
+                        'pattern' => 'age',
+                        'required' => true
+                    ],
+                    [
+                        'path' => 'persons/*/name',
+                        'pattern' => 'name',
+                        'required' => true
+                    ],
+                ],
+                'middleware' => [
+                    'memory_limit' => 1024 * 1024 * 3, // 3MB
+                ]
+            ]
+        );
+
+        $this->assertFalse($test->isValid('persons/0/age'));
+        $this->assertTrue($test->isValid('persons/1/age'));
+        $this->assertFalse($test->isValid('persons/*/age'));
+        $this->assertFalse($test->isValid('persons'));
 
         // sets value to persons/0/name
         $test->set('persons/0/name', 'John D.');
@@ -91,6 +119,7 @@ class TestScenarios extends TestCase
         );
 
         // outputs all persons after second set
+        var_dump($test->get('persons/4/age'));
         var_dump($test->get('persons/*/age'));
 
         // outputs all persons as array

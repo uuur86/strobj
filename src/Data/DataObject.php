@@ -29,12 +29,23 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     private DataCache $cache;
 
     /**
+     * Constructor
+     *
+     * @param object|array $obj  The object to use
+     */
+    public function __construct($data)
+    {
+        parent::__construct($data);
+
+        $this->cache = new DataCache();
+    }
+
+    /**
      * Init data object
      */
     public function pathInit(string $path): DataPath
     {
         $this->currentPath = $path;
-        $this->cache = new DataCache();
 
         if (!isset($this->paths[$path])) {
             $this->paths[$path] = new DataPath($path);
@@ -64,8 +75,6 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         $this->cache->save($path, $value);
     }
 
-
-
     /**
      * Get value if exists, otherwise return null
      *
@@ -79,6 +88,18 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
             return $this->cache->get($path);
         }
 
+        $value = $this->query($path);
+
+        $this->cache($path, $value);
+
+        return $value;
+    }
+
+    /**
+     * Query data with given path
+     */
+    public function query(string $path): mixed
+    {
         $this->rewind();
         $path_ = $this->pathInit($path);
 
@@ -236,6 +257,10 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
 
     /**
      * Data is exists or not
+     *
+     * @param string $path
+     *
+     * @return bool
      */
     public function has(string $path): bool
     {

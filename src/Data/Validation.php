@@ -14,94 +14,110 @@ class Validation
      *
      * @var array
      */
-    private array $validationErrors = [];
+    private array $validationStatus = [];
 
     /**
-     * User defined regex templates
+     * Rules
+     */
+    private array $rules = [];
+
+    /**
+     * User defined regex patterns
      *
      * @var array
      */
-    private array $regexType = [];
+    private array $patterns = [];
 
     /**
-     * Validates the object path
+     * The object which will be validated
      *
-     * @param string $path
-     * @param string $regex
-     * @param bool   $required
+     * @var DataObject
+     */
+    private DataObject $obj;
+
+    /**
+     * Constructor
      *
-     * @return bool  true if valid, false if not
+     * @param DataObject $obj  The object to use
+     */
+    public function __construct(DataObject $obj)
+    {
+        $this->obj = $obj;
+    }
+
+    /**
+     * Validates the value with the given regex on the given path
      *
      * @throws UnexpectedValueException
      */
-    public function validate(string $path, string $regex, bool $required): bool
+    public function validate(): void
     {
-        $result = true;
-
-        if (!$this->isPathExists($path)) {
-            $this->setAllPaths($this->validationErrors, $path, false);
-        }
-
-        $values = $this->get($path);
-
-        if (!$required && !$values) {
-            return true;
-        }
-
-        if (is_string($values) && !empty($values)) {
-            $result = preg_match($regex, $values);
-
-            if ($result === 0 || ($required && empty($values))) {
-                $this->setAllPaths($this->validationErrors, $path, false);
-                return false;
-            } elseif ($result === 1) {
-                return true;
-            } elseif ($result === false) {
-                throw new UnexpectedValueException("StrObj Error: Validation error!");
-            }
-
-            return $result;
-        }
-
-        if (!$result && !empty($path)) {
-            $this->setAllPaths($this->validationErrors, $path, false);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Registers regex type
-     *
-     * @param string  $key type key name
-     * @param string  $regex regex pattern
-     */
-    public function addRegexType(string $key, string $regex): void
-    {
-        if (!empty($key) && !empty($regex)) {
-            $this->regexType[$key] = $regex;
+        foreach ($this->rules as ["path" => $path, "pattern" => $pattern, "required" => $required]) {
+            $value = $this->obj->query($path);
+            $this->addValidationStatus($path, $value, $pattern, $required);
         }
     }
 
     /**
-     * Checks if the value is valid or not
+     * Check error status for the given path
      *
-     * @param string  $path       requested path
-     * @param string  $type       pre-defined validator type
-     * @param bool    $required   field is required?
-     * @param string  $selfRegex  self defined regex text
+     * @param string $path      requested path
+     * @param string $pattern   regex pattern
+     * @param mixed  $value     value to be checked
+     * @param bool   $required  is required
+     *
+     * @return bool
+     *
+     * @throws UnexpectedValueException
      */
-    public function validator(string $path, string $type, $required = false, $selfRegex = ""): void
+    public function checkErrorStatus(string $path, string $pattern, $value, bool $required): bool
     {
-        if (isset($this->regexType[$type])) {
-            $regex = $this->regexType[$type];
-        } elseif (!empty($selfRegex)) {
-            $regex = $selfRegex;
+        $value   = (string) $value;
+        $pattern = $this->getPattern($pattern);
+        $result  = preg_match($pattern, $value);
+
+        if ($result === false) {
+            throw new UnexpectedValueException("StrObj Error: Validation error!");
         }
 
-        if (!empty($regex)) {
-            $this->validate($path, $regex, $required);
+        return (!$required && empty($value)) || $result === 1;
+    }
+
+    /**
+     * Searches for the given pattern name in the patterns array and returns it
+     * if it is found. Otherwise, it returns the given pattern name as a regex pattern.
+     *
+     * @param string $pattern  pattern name or regex pattern
+     *
+     * @return string
+     */
+    public function getPattern(string $pattern): string
+    {
+        if (isset($this->patterns[$pattern])) {
+            return $this->patterns[$pattern];
         }
+
+        return $pattern;
+    }
+
+    /**
+     * Registers new pattern
+     *
+     * @param array $patterns  patterns array to be registered
+     */
+    public function setPatterns(array $patterns): void
+    {
+        $this->patterns = $patterns;
+    }
+
+    /**
+     * Adds new rule to the validation list
+     *
+     * @param array $rules  rules array to be added
+     */
+    public function setRules(array $rules): void
+    {
+        $this->rules = array_merge($this->rules, $rules);
     }
 
     /**
@@ -112,34 +128,64 @@ class Validation
      *
      * @return bool
      */
-    public function isValid(?string $path): bool
+    public function isValid(string $path): bool
     {
-        return $this->isPathExists($path) && !isset($this->validationErrors[$path]);
+        if (!isset($this->validationStatus[$path])) {
+            $this->validate();
+        }
+
+        return $this->validationStatus[$path] ?? true;
     }
 
     /**
-     * Sets the value to the all parent paths.
+     * Adds new validation error status to the validationStatus array
      *
-     * @param array     $data
-     * @param string    $path
-     * @param mixed     $value
+     * @param string $path    requested path
+     * @param bool   $status  validation status
+     *
+     * @return bool
      */
-    public function setAllPaths(array &$data, string $path, $value): void
+    public function setValidationStatus(string $path, $value, string $pattern, bool $required): bool
     {
-        $pathArray = explode('/', $path);
+        $status = $this->checkErrorStatus($path, $pattern, $value, $required);
+        $this->validationStatus[$path] = $status;
 
-        if (!is_array($pathArray)) {
-            return;
+        return $status;
+    }
+
+    /**
+     * Sets the status to the all parent paths.
+     *
+     * @param DataPath  $path
+     * @param bool      $status
+     */
+    public function addValidationStatus(string $path, $value, string $pattern, bool $required): void
+    {
+        $status = true;
+
+        if (is_array($value)) {
+            foreach ($value as $key => $val) {
+                $path_sub = $path;
+
+                if (substr_count($path, "*") > 0) {
+                    $path_sub = substr_replace($path, $key, strpos($path, "*"), 1);
+                }
+
+                if (!$this->setValidationStatus($path_sub, $val, $pattern, $required)) {
+                    $status = false;
+                }
+            }
         }
 
-        $totalPath = [];
+        $path = DataPath::init($path);
 
-        foreach ($pathArray as $pathPart) {
-            $totalPath[] = $pathPart;
+        if ($path->valid()) {
+            $new_branches = $path->getBranches();
 
-            if (is_array($totalPath) && !empty($totalPath)) {
-                $newPath = implode('/', $totalPath);
-                $data[$newPath] = $value;
+            if (count($new_branches) > 0) {
+                $new_branches = array_combine($new_branches, array_fill(0, count($new_branches), $status));
+                $diff = array_diff_key($new_branches, $this->validationStatus);
+                $this->validationStatus = array_merge($this->validationStatus, $diff);
             }
         }
     }
