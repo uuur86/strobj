@@ -72,10 +72,12 @@ class DataPath extends ArrayIterator implements Iterator
     /**
      * Find all sub branches
      */
-    public function findBranches(array $path, DataInterface $data)
+    public function getBranches()
     {
-        $branches = &$this->map;
+        $path        = $this->getArrayCopy();
+        $branches    = &$this->map;
         $branch_path = array_shift($path);
+        $branches[]  = $branch_path;
 
         while ($key = current($path)) {
             $branch_path .= '/' . $key;
@@ -83,6 +85,8 @@ class DataPath extends ArrayIterator implements Iterator
 
             next($path);
         }
+
+        return $branches;
     }
 
     /**

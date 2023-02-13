@@ -62,34 +62,45 @@ class StringObjects
     /**
      * Constructor
      *
-     * @param object|array    $obj        The object to use
+     * @param object $obj   The object to use
      */
-    public function __construct(object $data)
+    public function __construct(object $data, array $options)
     {
-        $this->obj   = new DataObject($data);
+        $this->obj        = new DataObject($data);
         $this->validation = new Validation($this->obj);
-        $this->middleware = new Middleware();
+
+        if (isset($options['middleware'])) {
+            $this->middleware = new Middleware($options['middleware']);
+
+            $this->middleware->memoryLeakProtection();
+        }
+
+        if (isset($options['patterns'])) {
+            $this->validation->setPatterns($options['patterns']);
+        }
+
+        if (isset($options['rules'])) {
+            $this->validation->setRules($options['rules']);
+        }
+
+        $this->validation->validate();
     }
 
     /**
      * You can provide an array or any traversable object
      *
-     * @param object  $obj        The object to use
-     * @param int     $memory     The memory limit
+     * @param mixed $obj        The object to use
+     * @param array $options    Options
      *
      * @return bool|static
      */
-    public static function instance($obj)
+    public static function instance($obj, array $options = [])
     {
         if (is_string($obj)) {
             $obj = json_decode($obj);
         }
 
-        if (!$obj || empty($obj)) {
-            return $obj;
-        }
-
-        return new static($obj);
+        return new static($obj, $options);
     }
 
     /**
@@ -159,15 +170,19 @@ class StringObjects
     }
 
     /**
-     * Adds a validator to the object
+     * The object is valid or not
+     *
+     * @return bool
      */
-    public function addValidator(string $path, callable $validator): void
+    public function isValid(string $path): bool
     {
-        $this->validation->add($path, $validator);
+        return $this->validation->isValid($path);
     }
 
     /**
      * Set a memory limit
+     *
+     * @param int $memory  memory limit
      */
     public function setMemoryLimit(int $memory): void
     {

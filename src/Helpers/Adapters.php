@@ -26,4 +26,19 @@ trait Adapters
 
         return $value;
     }
+
+    /**
+     * Converts bytes to string
+     *
+     * @param int $bytes
+     *
+     * @return string
+     */
+    public function convertToString(int $bytes): string
+    {
+        $unit = ['b', 'kb', 'mb', 'gb', 'tb', 'pb'];
+        $level = floor(log($bytes, 1024));
+        $bytes = $bytes / pow(1024, $level);
+        return sprintf('%d %s', $bytes, $unit[$level]);
+    }
 }

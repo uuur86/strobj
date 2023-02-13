@@ -2,6 +2,7 @@
 
 namespace StrObj;
 
+use OverflowException;
 use StrObj\Helpers\Adapters;
 
 class Middleware
@@ -13,11 +14,31 @@ class Middleware
      *
      * @var int
      */
-    private int $memoryLimit = 0;
+    private array $options = [];
 
-    public function __construct(int $memory = 50)
+    public function __construct(array $options = [])
     {
-        $this->setMemoryLimit($memory);
+        $this->options = $options;
+    }
+
+    /**
+     * Set middleware options
+     *
+     * @param array $options
+     */
+    public function set(string $name, $value): void
+    {
+        $this->options[$name] = $value;
+    }
+
+    /**
+     * Get middleware options
+     *
+     * @return array
+     */
+    public function get(string $name)
+    {
+        return $this->options[$name] ?? null;
     }
 
     /**
@@ -28,7 +49,7 @@ class Middleware
     private function setMemoryLimit(int $memory): void
     {
         // Its check only once for performance.
-        if ($this->memoryLimit > 0) {
+        if ($this->get('memory_limit') > 0) {
             return;
         }
 
@@ -46,6 +67,23 @@ class Middleware
             $memory = $iniGetMem;
         }
 
-        $this->memoryLimit = $memory;
+        $this->set('memory_limit', $memory);
+    }
+
+    /**
+     * Memory leak protection
+     */
+    public function memoryLeakProtection(): void
+    {
+        $memoryUsage = memory_get_usage();
+
+        if ($memoryUsage > $this->get('memory_limit')) {
+            throw new OverflowException(
+                sprintf(
+                    'Memory limit exceeded. Memory usage: %s',
+                    $this->convertToString($memoryUsage)
+                )
+            );
+        }
     }
 }
