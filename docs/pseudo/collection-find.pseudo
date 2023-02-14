@@ -1,0 +1,51 @@
+/**
+ * TEST PSEUDO MAP - EXPERIMENTAL
+ */
+
+class Collection inherits RecursiveArrayIterator
+{
+    private string currentKey
+
+    private RecursiveArrayIterator storage
+
+    public function find (string path)
+    {
+        call rewind()
+        data = storage
+        path = explode('/', path)
+
+        while (key = current(path))
+        {
+            dkey = key()
+
+            if (!dkey)
+            {
+                break
+            }
+
+            if (dkey !== key)
+            {
+                call next()
+                continue
+            }
+
+            if (hasChildren())
+            {
+                data = getChildren()
+            }
+
+            if (!next(path))
+            {
+                currentKey = key
+
+                break
+            }
+
+            continue
+        }
+
+        return data
+    }
+}
+
+movies/persons/4

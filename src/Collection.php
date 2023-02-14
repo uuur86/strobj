@@ -1,47 +1,92 @@
 <?php
+
 /**
  * @package strobj
  */
 
 namespace StrObj;
 
-use RecursiveArrayIterator;
+use ArrayIterator;
 use Iterator;
 use JsonSerializable;
 
-class Collection extends RecursiveArrayIterator implements Iterator, JsonSerializable
+class Collection extends ArrayIterator implements Iterator, JsonSerializable
 {
     /**
-     * @inheritdoc
+     * @var ObjPath[]
      */
-    public function __construct($data)
+    private ObjPath $pathInfo = [];
+
+    /**
+     * @var ObjData[]
+     */
+    private array $pathData = [];
+
+    /**
+     * {@inheritdoc}
+     */
+    public function __construct()
     {
-        if (empty($data) || !(is_array($data) || is_object($data)) || is_callable($data)) {
-            return;
-        }
-
-        $this->data = $data;
-
-        parent::__construct($data);
+        parent::__construct([]);
     }
 
     /**
-     * @inheritdoc
+     * Init new collection
      */
-    public static function instance($data)
+    public static function init()
     {
-        if ($data instanceof Collection) {
-            return $data;
-        }
-
-        return new static($data);
+        return new static();
     }
 
     /**
-     * @inheritdoc
+     * Add new data to collection, if path exists, it will be overwritten
+     *
+     * @param ObjPath $path
+     * @param ObjData $value
+     */
+    public function set(ObjPath $path, ObjData $value)
+    {
+        $path_key = $path->getPath();
+
+        $this->pathInfo[$path_key] = $path;
+        $this->pathData[$path_key] = $value;
+
+        $this->offsetSet($path_key, $value);
+    }
+
+    /**
+     * currentKey getter function
+     *
+     * @param string $key path key
+     *
+     * @return ObjData
+     */
+    public function get(string $key): ObjData
+    {
+        if ($this->offsetExists($key)) {
+            return $this->offsetGet($key);
+        }
+
+        return new ObjData();
+    }
+
+    /**
+     * Get result data as array
+     *
+     * @param array $default [optional]
+     *
+     * @return array
+     */
+    public function toArray(array $default = [])
+    {
+        return $this->getArrayCopy() ?? $default;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function jsonSerialize()
     {
-        return $this->data;
+        return $this;
     }
 }
