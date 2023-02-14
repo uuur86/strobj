@@ -41,4 +41,34 @@ trait Adapters
         $bytes = $bytes / pow(1024, $level);
         return sprintf('%d %s', $bytes, $unit[$level]);
     }
+
+    /**
+     * Casts the value to the given type
+     *
+     * @param mixed   $value
+     * @param string  $type
+     *
+     * @return mixed
+     */
+    public function castType($value, string $type)
+    {
+        switch ($type) {
+            case 'int':
+                return (int) $value;
+            case 'float':
+                return (float) $value;
+            case 'bool':
+                return (bool) $value;
+            case 'string':
+                return (string) $value;
+            case 'array':
+                return (array) $value;
+            case 'object':
+                return (object) $value;
+            case 'json':
+                return json_decode($value);
+            default:
+                return $value;
+        }
+    }
 }

@@ -9,17 +9,22 @@ class DataCache
     /**
      * @var array
      */
-    private array $paths;
+    private array $paths = [];
 
     /**
      * Saves the value to cache for performance
      *
      * @param string    $path   requested path
-     * @param mixed     $obj
+     * @param mixed     $data
      */
-    public function save(string $path, $obj): void
+    public function save(string $path, $data): void
     {
-        $this->paths[$path] = $obj;
+        if (is_array($data)) {
+            $paths = DataPath::init($path)->findPaths($path, $data);
+            $this->addPaths($paths);
+        }
+
+        $this->setPath($path, $data);
     }
 
     /**
@@ -42,6 +47,18 @@ class DataCache
     public function get(string $path): mixed
     {
         return $this->paths[$path];
+    }
+
+    public function setPath(string $path, $data): void
+    {
+        if (substr_count($path, '*') < 1) {
+            $this->paths[$path] = $data;
+        }
+    }
+
+    protected function addPaths(array $paths): void
+    {
+        $this->paths = array_merge($this->paths, $paths);
     }
 
     /**

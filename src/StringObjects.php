@@ -11,7 +11,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 2.0.0
+ * @version 2.1.3
  */
 
 declare(strict_types=1);
@@ -20,6 +20,7 @@ namespace StrObj;
 
 use OverflowException;
 use UnexpectedValueException;
+use StrObj\Data\DataFilters;
 use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
 use StrObj\Interfaces\DataStructures\DataInterface;
@@ -60,30 +61,34 @@ class StringObjects
     private Middleware $middleware;
 
     /**
+     * Filters object
+     *
+     * @var DataFilters
+     */
+    private DataFilters $filters;
+
+    /**
      * Constructor
      *
      * @param object $obj   The object to use
      */
     public function __construct(object $data, array $options)
     {
-        $this->obj        = new DataObject($data);
-        $this->validation = new Validation($this->obj);
+        $this->obj = new DataObject($data);
 
         if (isset($options['middleware'])) {
             $this->middleware = new Middleware($options['middleware']);
-
             $this->middleware->memoryLeakProtection();
         }
 
-        if (isset($options['patterns'])) {
-            $this->validation->setPatterns($options['patterns']);
+        if (isset($options['validation'])) {
+            $this->validation = new Validation($this->obj, $options['validation']);
+            $this->validation->validate();
         }
 
-        if (isset($options['rules'])) {
-            $this->validation->setRules($options['rules']);
+        if (isset($options['filters'])) {
+            $this->filters = new DataFilters($options['filters']);
         }
-
-        $this->validation->validate();
     }
 
     /**
@@ -119,6 +124,10 @@ class StringObjects
 
         if ($result === false) {
             return $default;
+        }
+
+        if (isset($this->filters)) {
+            $result = $this->filters->filter($path, $result);
         }
 
         return $result;
