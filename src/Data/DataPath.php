@@ -12,8 +12,7 @@ use StrObj\Interfaces\DataStructures\DataInterface;
 class DataPath extends ArrayIterator implements Iterator
 {
     /**
-     * Parser trait
-     * parsePath method
+     * Data Parser trait
      */
     use DataParsers;
 
@@ -42,7 +41,7 @@ class DataPath extends ArrayIterator implements Iterator
      * @param string        $path
      * @param DataInterface $data
      *
-     * @return ObjPath
+     * @return DataPath
      */
     public static function init(string $path)
     {

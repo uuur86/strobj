@@ -48,25 +48,61 @@ class TestScenarios extends TestCase
         $test = StringObjects::instance(
             $persons,
             [
-                'patterns' => [
-                    'age' => '#^[0-9]+$#siu',
-                    'name' => '#^[a-zA-Z ]+$#siu', // only letters and spaces
-                ],
-                'rules' => [
-                    [
-                        'path' => 'persons/*/age',
-                        'pattern' => 'age',
-                        'required' => true
+                'validation' => [
+                    'patterns' => [
+                        'age' => '#^[0-9]+$#siu',
+                        'name' => '#^[a-zA-Z ]+$#siu', // only letters and spaces
                     ],
-                    [
-                        'path' => 'persons/*/name',
-                        'pattern' => 'name',
-                        'required' => true
+                    'rules' => [
+                        [
+                            'path' => 'persons/*/age',
+                            'pattern' => 'age',
+                            'required' => true
+                        ],
+                        [
+                            'path' => 'persons/*/name',
+                            'pattern' => 'name',
+                            'required' => true
+                        ],
                     ],
                 ],
                 'middleware' => [
                     'memory_limit' => 1024 * 1024 * 3, // 3MB
-                ]
+                ],
+                'filters' => [
+                    'persons/*/age' => [
+                        'type' => 'int',
+                        'callback' => function ($value) {
+                            return $value > 10;
+                        }
+                    ],
+                    'persons/*/name' => [
+                        'type' => 'string',
+                        'callback' => function ($value) {
+                            return preg_match('#^[a-zA-Z ]+$#siu', $value);
+                        }
+                    ],
+                ],
+                // TODO: add below features
+                'debug' => true,
+                'log' => [
+                    'path' => __DIR__ . '/logs',
+                    'file' => 'test.log',
+                    'level' => 'debug',
+                ],
+                'cache' => [
+                    'path' => __DIR__ . '/cache',
+                    'file' => 'test.cache',
+                    'ttl' => 3600,
+                ],
+                'output' => [
+                    'format' => 'array',
+                    'structure' => [
+                        'data' => [
+                            'names' => 'persons/*/name',
+                        ],
+                    ]
+                ],
             ]
         );
 
@@ -109,6 +145,7 @@ class TestScenarios extends TestCase
 
         // outputs all persons after set
         var_dump($test->get('persons/*/age'));
+        var_dump($test->get('persons/*/name'));
 
         // sets value to persons/4/age
         $test->set('persons/4/age', 200);

@@ -5,6 +5,7 @@ namespace StrObj\Data;
 use ArrayIterator;
 use Iterator;
 use JsonSerializable;
+
 use StrObj\Interfaces\DataStructures\DataInterface;
 
 class Validation
@@ -40,9 +41,17 @@ class Validation
      *
      * @param DataObject $obj  The object to use
      */
-    public function __construct(DataObject $obj)
+    public function __construct(DataObject $obj, array $options)
     {
         $this->obj = $obj;
+
+        if (isset($options['rules'])) {
+            $this->rules = $options['rules'];
+        }
+
+        if (isset($options['patterns'])) {
+            $this->patterns = $options['patterns'];
+        }
     }
 
     /**
@@ -162,29 +171,21 @@ class Validation
     public function addValidationStatus(string $path, $value, string $pattern, bool $required): void
     {
         $status = true;
+        $path = DataPath::init($path);
+        $path_txt = $path->getRaw();
 
-        if (is_array($value)) {
-            foreach ($value as $key => $val) {
-                $path_sub = $path;
+        if ($path->valid()) {
+            $parent_branches = $path->getBranches();
 
-                if (substr_count($path, "*") > 0) {
-                    $path_sub = substr_replace($path, $key, strpos($path, "*"), 1);
-                }
-
+            $relative_path = $path->findPaths($path_txt, $value, function ($path_sub, $val) use (&$status, $required, $pattern) {
                 if (!$this->setValidationStatus($path_sub, $val, $pattern, $required)) {
                     $status = false;
                 }
-            }
-        }
+            });
 
-        $path = DataPath::init($path);
-
-        if ($path->valid()) {
-            $new_branches = $path->getBranches();
-
-            if (count($new_branches) > 0) {
-                $new_branches = array_combine($new_branches, array_fill(0, count($new_branches), $status));
-                $diff = array_diff_key($new_branches, $this->validationStatus);
+            if (count($parent_branches) > 0) {
+                $parent_branches = array_combine($parent_branches, array_fill(0, count($parent_branches), $status));
+                $diff = array_diff_key($parent_branches, $this->validationStatus);
                 $this->validationStatus = array_merge($this->validationStatus, $diff);
             }
         }
