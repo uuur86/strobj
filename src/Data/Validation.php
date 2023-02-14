@@ -177,14 +177,21 @@ class Validation
         if ($path->valid()) {
             $parent_branches = $path->getBranches();
 
-            $relative_path = $path->findPaths($path_txt, $value, function ($path_sub, $val) use (&$status, $required, $pattern) {
-                if (!$this->setValidationStatus($path_sub, $val, $pattern, $required)) {
-                    $status = false;
+            $relative_path = $path->findPaths(
+                $path_txt,
+                $value,
+                function ($path_sub, $val) use (&$status, $required, $pattern) {
+                    if (!$this->setValidationStatus($path_sub, $val, $pattern, $required)) {
+                        $status = false;
+                    }
                 }
-            });
+            );
 
             if (count($parent_branches) > 0) {
-                $parent_branches = array_combine($parent_branches, array_fill(0, count($parent_branches), $status));
+                $parent_branches = array_combine(
+                    $parent_branches,
+                    array_fill(0, count($parent_branches), $status)
+                );
                 $diff = array_diff_key($parent_branches, $this->validationStatus);
                 $this->validationStatus = array_merge($this->validationStatus, $diff);
             }

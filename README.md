@@ -20,192 +20,132 @@ or
 php vendor/bin/phpunit tests/TestScenarios
 ```
 
-## BASIC USAGE
+## GETTING STARTED
+
+### BASIC USAGE
 
 ```php
 use StrObj\StringObjects;
 
 require('vendor/autoload.php');
 
-$persons = (object)array(
-  "persons" => array(
-    (object)array(
-      "name" => "John Doe",
-      "age" => 12
-    ),
-    (object)array(
-      "name" => "Molly Doe",
-      "age" => 14
-    ),
-    (object)array(
-      "name" => "Lorem Ipsum",
-      "age" => 21
-    )
-  )
-);
-
-$test = StringObjects::instance($persons);
-
-// prints all persons
-var_dump($test->get('persons'));
-
-// prints first person's name
-var_dump($test->get('persons/0/name'));
-
-// prints all person's name
-var_dump($test->get('persons/*/name'));
-// result:
-```
-
-### DATA Validation
-
-```php
-use StrObj\StringObjects;
-
-require('vendor/autoload.php');
-
-$persons = json_decode('{
-    persons: [
-        {
-            name: "John Doe",
-            age: "twelve"
-        },
-        {
-            name: "Molly Doe",
-            age: 14
-        },
-        {
-            name: "Lorem Doe",
-            age: 34
-        },
-        {
-            name: "Ipsum Doe",
-            age: 21
-        }
-    ]
-}');
-
-$test = StringObjects::instance($persons);
-
-// defines regex types which is going to use in control method
-$test->addRegexType('age', '#^[0-9]{1,3}$#siu');
-
-$test->addValidator('persons/*/age', 'age', true);
-$test->addValidator('persons/*/name', '', true, '#^[a-z0-9 ]+$#siu');
-
-// prints "persons/*/name values are not acceptable!"
-if ($test->isValid('persons/*/name')) {
-  var_dump($test->get('persons/*/name'));
-} else {
-  echo "persons/*/name values are not acceptable!";
-}
-
-// prints "persons/0/age value is not acceptable!"
-if ($test->isValid('persons/0/age')) {
-  var_dump($test->get('persons/0/age'));
-} else {
-  echo "persons/0/age value is not acceptable!";
-}
-
-// prints "14"
-if ($test->isValid('persons/1/age')) {
-  var_dump($test->get('persons/1/age'));
-} else {
-  echo "persons/1/age value is not acceptable!";
-}
-
-// prints "persons/*/age values are not acceptable!"
-if ($test->isValid('persons/*/age')) {
-  var_dump($test->get('persons/*/age'));
-} else {
-  echo "persons/*/age values are not acceptable!";
-}
-
-```
-
-### SET VALUES
-
-```php
-use StrObj\StringObjects;
-
-require('vendor/autoload.php');
-
+// String JSON data to be used
+// or you can use an object/array
 $persons = '{
-    persons: [
+    "persons": [
         {
-            name: "John Doe",
-            age: "twelve"
+            "name": "John Doe",
+            "age": "twelve"
         },
         {
-            name: "Molly Doe",
-            age: 14
+            "name": "Molly Doe",
+            "age": "14"
         },
         {
-            name: "Lorem Doe",
-            age: 34
+            "name": "Lorem Doe",
+            "age": "34"
         },
         {
-            name: "Ipsum Doe",
-            age: 21
+            "name": "Ipsum Doe",
+            "age": "21"
         }
     ]
 }';
 
-// converts json string to object if input is string
-$test = StringObjects::instance($persons);
+$test = StringObjects::instance(
+    $persons,
+    [
+        'validation' => [
+            'patterns' => [
+                // Add a new pattern named 'age' which only accepts numbers
+                'age' => '#^[0-9]+$#siu',
+                // Add a new pattern named 'name' which only accepts letters and spaces
+                'name' => '#^[a-zA-Z ]+$#siu',
+            ],
+            'rules' => [
+                // first rule
+                [
+                    // path scope to be checked
+                    'path' => 'persons/*/age',
+                    // uses 'age' pattern
+                    'pattern' => 'age',
+                    // makes it required
+                    'required' => true
+                ],
+                // second rule
+                [
+                    'path' => 'persons/*/name',
+                    'pattern' => 'name',
+                    'required' => true
+                ],
+            ],
+        ],
+        'middleware' => [
+            // Sets memory limit to 3MB
+            'memory_limit' => 1024 * 1024 * 3,
+        ],
+        // Output data filters
+        'filters' => [
+            // Filters all persons/*/age values
+            'persons/*/age' => [
+                // converts to integer
+                'type' => 'int',
+                // only accepts values greater than 10
+                'callback' => function ($value) {
+                    return $value > 10;
+                }
+            ],
+            'persons/*/name' => [
+                // converts to string (not necessary)
+                'type' => 'string',
+                // only accepts values which contains only letters and spaces
+                'callback' => function ($value) {
+                    return preg_match('#^[a-zA-Z ]+$#siu', $value);
+                }
+            ],
+        ],
+    ]
+);
 
-// sets value to persons/0/name
-$test->set('persons/0/name', 'John Doe');
+// False
+var_dump($test->isValid('persons/0/age'));
 
-// sets value to persons/0/age
+// True
+var_dump($test->isValid('persons/1/age'));
+
+// False
+var_dump($test->isValid('persons/*/age'));
+
+// False
+var_dump($test->isValid('persons'));
+
+// Updates value of persons/0/name
+$test->set('persons/0/name', 'John D.');
+
+// Updates value of persons/0/age
 $test->set('persons/0/age', 12);
 
-// sets value to persons/4/name
+// Adds a new person named "Neo Doe" with age 199
 $test->set('persons/4/name', 'Neo Doe');
+$test->set('persons/4/age', 199);
 
-// sets value to persons/4/age
-$test->set('persons/4/age', 1);
+// Outputs "John D."
+$test->get('persons/0/name');
 
-// outputs all persons
-var_dump($test->get('persons'));
-// results:
-// array(5) {
-//   [0]=>
-//   object(stdClass)#2 (2) {
-//     ["name"]=>
-//     string(8) "John Doe"
-//     ["age"]=>
-//     int(12)
-//   }
-//   [1]=>
-//   object(stdClass)#3 (2) {
-//     ["name"]=>
-//     string(8) "Molly Doe"
-//     ["age"]=>
-//     int(14)
-//   }
-//   [2]=>
-//   object(stdClass)#4 (2) {
-//     ["name"]=>
-//     string(9) "Lorem Doe"
-//     ["age"]=>
-//     int(34)
-//   }
-//   [3]=>
-//   object(stdClass)#5 (2) {
-//     ["name"]=>
-//     string(9) "Ipsum Doe"
-//     ["age"]=>
-//     int(21)
-//   }
-//   [4]=>
-//   object(stdClass)#6 (2) {
-//     ["name"]=>
-//     string(8) "Neo Doe"
-//     ["age"]=>
-//     int(1)
-//   }
-// }
+// Outputs "12"
+$test->get('persons/3/age');
+
+// Outputs "Neo Doe"
+$test->get('persons/4/name');
+
+// Outputs "199"
+$test->get('persons/4/age');
+
+// Updates value of persons/4/age to "200"
+$test->set('persons/4/age', 200);
+
+// Outputs "200"
+$test->get('persons/4/age');
 ```
 
 ## LICENSE
