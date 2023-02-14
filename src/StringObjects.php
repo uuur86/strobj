@@ -11,7 +11,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 2.1.3
+ * @version 2.1.3.1
  */
 
 declare(strict_types=1);
@@ -70,11 +70,12 @@ class StringObjects
     /**
      * Constructor
      *
-     * @param object $obj   The object to use
+     * @param object|array $data  The object to use
+     * @param array        $options Options
      */
-    public function __construct(object $data, array $options)
+    public function __construct($data, array $options = [])
     {
-        $this->obj = new DataObject($data);
+        $this->obj = new DataObject((object)$data);
 
         if (isset($options['middleware'])) {
             $this->middleware = new Middleware($options['middleware']);
