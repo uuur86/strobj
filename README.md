@@ -1,5 +1,12 @@
 
 # PHP String Objects
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=bugs)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 
 This repository allows you to access objects via string.
 You can also check if their values are valid.
