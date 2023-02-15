@@ -7,6 +7,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=bugs)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 
 This repository allows you to access objects via string.
 You can also check if their values are valid.
