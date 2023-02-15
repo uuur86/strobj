@@ -11,7 +11,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 2.1.4
+ * @version 2.1.6
  */
 
 declare(strict_types=1);

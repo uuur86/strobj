@@ -100,7 +100,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function query(?string $path = null): mixed
     {
-        if (empty($path)) {
+        if (strlen($path) === 0 || $path === '*') {
             return $this->getArrayCopy();
         }
 
