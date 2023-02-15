@@ -105,13 +105,8 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         }
 
         $this->rewind();
-        $path_ = $this->pathInit($path);
 
-        if (!$path_) {
-            return null;
-        }
-
-        $path_arr = $path_->getArray();
+        $path_arr = $this->pathInit($path)->getArray();
 
         $data = $this;
 
