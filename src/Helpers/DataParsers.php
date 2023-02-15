@@ -11,7 +11,7 @@ trait DataParsers
         $path_arr = preg_split('#[\/]+#', $path);
 
         if ($path_arr === false) {
-            return;
+            return [$path];
         }
 
         $path_arr = array_filter($path_arr, function ($value) {

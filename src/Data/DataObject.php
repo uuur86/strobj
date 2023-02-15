@@ -98,8 +98,12 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     /**
      * Query data with given path
      */
-    public function query(string $path): mixed
+    public function query(?string $path = null): mixed
     {
+        if (empty($path)) {
+            return $this->getArrayCopy();
+        }
+
         $this->rewind();
         $path_ = $this->pathInit($path);
 
@@ -108,25 +112,21 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         }
 
         $path_arr = $path_->getArray();
-        $branched = false;
 
         $data = $this;
 
-        foreach ($path_arr as $key) {
-            if ($key === '*') {
-                $branched = true;
-                continue;
-            }
+        while ($key = current($path_arr)) {
+            $next_key = next($path_arr);
 
-            if ($branched) {
-                return $data->getCols($key);
+            if ($key === '*') {
+                return $data->getCols($next_key);
             }
 
             if (!$data->findKey($key)) {
                 break;
             }
 
-            if ($data->hasChildren()) {
+            if ($next_key && $data->hasChildren()) {
                 $data = $data->getChildren();
                 continue;
             }
