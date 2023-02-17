@@ -9,28 +9,36 @@
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=bugs)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 
-This repository allows you to access objects via string.
-You can also check if their values are valid.
+# PHP String Objects
+
+PHP String Objects is a library that provides an easy and intuitive interface for working with PHP arrays and objects. With built-in validation and filtering, it makes it easier to access, manipulate and validate data, saving you time and frustration.
+
+* Allows accessing objects via strings
+* Allows checking if the values of objects are valid using pre-defined or custom validation rules
+* Provides middleware functionality to set memory limits or other configurations
+* Provides data filters to manipulate the values of objects
+* Can be used to set or get values of objects and arrays in a simplified manner
+
+## Installation
+
+To install the library, run the following Composer command:
 
 ```bash
 composer require uuur86/strobj
 ```
 
-## TESTS
+## USAGE
 
-```bash
-composer test
+To get started with PHP String Objects, include the following code at the top of your PHP file:
+
+```php
+use StrObj\StringObjects;
+require('vendor/autoload.php');
 ```
-
-or
-
-```bash
-php vendor/bin/phpunit tests/TestScenarios
-```
-
-## GETTING STARTED
 
 ### BASIC USAGE
+
+Here is an example of how to use PHP String Objects to access and manipulate data in a JSON string:
 
 ```php
 use StrObj\StringObjects;
@@ -154,6 +162,20 @@ $test->set('persons/4/age', 200);
 
 // Outputs "200"
 $test->get('persons/4/age');
+```
+
+## DEVELOPMENT
+
+### TESTS
+
+```bash
+composer test
+```
+
+or
+
+```bash
+php vendor/bin/phpunit tests/TestScenarios
 ```
 
 ## LICENSE
