@@ -9,8 +9,6 @@
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=bugs)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 
-# PHP String Objects
-
 PHP String Objects is a library that provides an easy and intuitive interface for working with PHP arrays and objects. With built-in validation and filtering, it makes it easier to access, manipulate and validate data, saving you time and frustration.
 
 * Allows accessing objects via strings
