@@ -106,7 +106,7 @@ class StringObjects
             $obj = json_decode($obj);
         }
 
-        return new static($obj, $options);
+        return new self($obj, $options);
     }
 
     /**

@@ -5,7 +5,6 @@ namespace StrObj\Data;
 use ArrayIterator;
 use Iterator;
 use JsonSerializable;
-
 use StrObj\Helpers\DataParsers;
 use StrObj\Interfaces\DataStructures\DataInterface;
 

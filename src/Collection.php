@@ -9,16 +9,18 @@ namespace StrObj;
 use ArrayIterator;
 use Iterator;
 use JsonSerializable;
+use StrObj\Data\DataObject;
+use StrObj\Data\DataPath;
 
 class Collection extends ArrayIterator implements Iterator, JsonSerializable
 {
     /**
-     * @var ObjPath[]
+     * @var DataPath[]
      */
-    private ObjPath $pathInfo = [];
+    private array $pathInfo = [];
 
     /**
-     * @var ObjData[]
+     * @var DataObject[]
      */
     private array $pathData = [];
 
@@ -35,16 +37,16 @@ class Collection extends ArrayIterator implements Iterator, JsonSerializable
      */
     public static function init()
     {
-        return new static();
+        return new self();
     }
 
     /**
      * Add new data to collection, if path exists, it will be overwritten
      *
-     * @param ObjPath $path
-     * @param ObjData $value
+     * @param DataPath   $path
+     * @param DataObject $value
      */
-    public function set(ObjPath $path, ObjData $value)
+    public function set(DataPath $path, DataObject $value)
     {
         $path_key = $path->getPath();
 
@@ -59,15 +61,15 @@ class Collection extends ArrayIterator implements Iterator, JsonSerializable
      *
      * @param string $key path key
      *
-     * @return ObjData
+     * @return DataObject
      */
-    public function get(string $key): ObjData
+    public function get(string $key): DataObject
     {
         if ($this->offsetExists($key)) {
             return $this->offsetGet($key);
         }
 
-        return new ObjData();
+        return new DataObject([]);
     }
 
     /**
