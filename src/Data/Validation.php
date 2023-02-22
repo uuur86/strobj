@@ -5,8 +5,8 @@ namespace StrObj\Data;
 use ArrayIterator;
 use Iterator;
 use JsonSerializable;
-
 use StrObj\Interfaces\DataStructures\DataInterface;
+use UnexpectedValueException;
 
 class Validation
 {

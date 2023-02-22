@@ -1,3 +1,4 @@
 vendor/*
 composer.lock
 .vscode/*
+docs/report
