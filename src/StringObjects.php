@@ -11,7 +11,7 @@
  * @package strobj
  * @license GPLv2
  * @author Uğur Biçer <info@ugurbicer.com.tr>
- * @version 2.1.6
+ * @version 2.1.7
  */
 
 declare(strict_types=1);
@@ -184,7 +184,7 @@ class StringObjects
      *
      * @return bool
      */
-    public function isValid(string $path): bool
+    public function isValid(string $path = ''): bool
     {
         return $this->validation->isValid($path);
     }
