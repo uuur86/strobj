@@ -70,7 +70,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      * @param string $path
      * @param mixed $value
      */
-    public function cache(string $path, mixed $value): void
+    public function cache(string $path, $value): void
     {
         $this->cache->save($path, $value);
     }
@@ -82,7 +82,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      *
      * @return mixed
      */
-    public function get(string $path): mixed
+    public function get(string $path)
     {
         if ($this->cache->isCached($path)) {
             return $this->cache->get($path);
@@ -98,7 +98,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     /**
      * Query data with given path
      */
-    public function query(?string $path = null): mixed
+    public function query(?string $path = null)
     {
         if (strlen($path) === 0 || $path === '*') {
             return $this->getArrayCopy();
@@ -138,7 +138,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      * @param string $path
      * @param mixed $value
      */
-    public function set(string $path, mixed $value): void
+    public function set(string $path, $value): void
     {
         $data       = &$this;
         $set_key    = null;

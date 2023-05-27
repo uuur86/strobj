@@ -44,7 +44,7 @@ class DataCache
      *
      * @return mixed
      */
-    public function get(string $path): mixed
+    public function get(string $path)
     {
         return $this->paths[$path];
     }
