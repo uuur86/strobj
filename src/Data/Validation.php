@@ -137,10 +137,19 @@ class Validation
      *
      * @return bool
      */
-    public function isValid(string $path): bool
+    public function isValid(string $path = ''): bool
     {
         if (!isset($this->validationStatus[$path])) {
             $this->validate();
+        }
+
+        if ($path === '' || $path === '*') {
+            foreach ($this->validationStatus as $status) {
+                if (!$status) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         return $this->validationStatus[$path] ?? true;
@@ -165,8 +174,10 @@ class Validation
     /**
      * Sets the status to the all parent paths.
      *
-     * @param DataPath  $path
-     * @param bool      $status
+     * @param string  $path
+     * @param mixed   $value
+     * @param string  $pattern
+     * @param bool    $status
      */
     public function addValidationStatus(string $path, $value, string $pattern, bool $required): void
     {
@@ -177,15 +188,21 @@ class Validation
         if ($path->valid()) {
             $parent_branches = $path->getBranches();
 
-            $relative_path = $path->findPaths(
-                $path_txt,
-                $value,
-                function ($path_sub, $val) use (&$status, $required, $pattern) {
-                    if (!$this->setValidationStatus($path_sub, $val, $pattern, $required)) {
-                        $status = false;
+            if (is_array($value)) {
+                $relative_path = $path->findPaths(
+                    $path_txt,
+                    $value,
+                    function ($path_sub, $val) use (&$status, $required, $pattern) {
+                        if (!$this->setValidationStatus($path_sub, $val, $pattern, $required)) {
+                            $status = false;
+                        }
                     }
+                );
+            } else {
+                if (!$this->setValidationStatus($path_txt, $value, $pattern, $required)) {
+                    $status = false;
                 }
-            );
+            }
 
             if (count($parent_branches) > 0) {
                 $parent_branches = array_combine(
