@@ -186,7 +186,7 @@ Uğur Biçer - @uuur86
 
 ## CONTRIBUTING
 
-If you want to contribute to this project, you can send pull requests.
+If you want to contribute to this project, you can send pull requests. We expect all contributors to follow our [Code of Conduct](CONTRIBUTING.md).
 
 ## CONTACT
 
