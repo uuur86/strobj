@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the StrObj package.
+ *
+ * (c) Uğur Biçer <contact@codeplus.dev>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace StrObj\Helpers;
 
 trait Adapters
@@ -13,8 +22,8 @@ trait Adapters
      */
     public function convertToByte($amount): int
     {
-        $value = (int)$amount;
-        $unit = strtolower(substr($amount, strlen((string)$value)));
+        $value = (int) $amount;
+        $unit = strtolower(substr($amount, strlen((string) $value)));
 
         if ($unit == "g" || $unit == "gb") {
             $value *= 1024 * 1024 * 1024;

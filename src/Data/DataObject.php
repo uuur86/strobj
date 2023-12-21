@@ -1,10 +1,21 @@
 <?php
 
+/**
+ * This file is part of the StrObj package.
+ *
+ * (c) Uğur Biçer <contact@codeplus.dev>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @package  StrObj
+ * @version  GIT: <git_id>
+ * @link     https://github.com/uuur86/strobj
+ */
+
 namespace StrObj\Data;
 
-use ArrayIterator;
 use RecursiveArrayIterator;
-use StrObj\Helpers\DataParsers;
 use StrObj\Interfaces\DataStructures\DataInterface;
 
 class DataObject extends RecursiveArrayIterator implements DataInterface
@@ -171,7 +182,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         // Warning! DO NOT REMOVE! This solution contains a bug fix for php
         // https://github.com/php/php-src/issues/10519
         // due to the fact that the php reference bug appears when new keys are created
-        if (!empty($create_key)) {
+        if (! empty($create_key)) {
             $path_arr_r = array_reverse($path_arr);
 
             if ($path_arr_r[0] === $create_key) {
@@ -201,7 +212,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     /**
      * {@inheritdoc}
      */
-    public function offsetSet($index, $val)
+    public function offsetSet($index, $val): void
     {
         if (is_array($val)) {
             $val = (object)$val;
@@ -221,7 +232,17 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     /**
      * {@inheritdoc}
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
+    {
+        return $this->getArrayCopy();
+    }
+
+    /**
+     * To array function
+     *
+     * @return array
+     */
+    public function toArray(): array
     {
         return $this->getArrayCopy();
     }
@@ -245,9 +266,9 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     /**
      * {@inheritdoc}
      */
-    public function key()
+    public function key(): string
     {
-        return (string)parent::key();
+        return (string) parent::key();
     }
 
     /**

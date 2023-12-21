@@ -1,8 +1,19 @@
 <?php
 
-namespace StrObj\Data;
+/**
+ * This file is part of the StrObj package.
+ *
+ * (c) Uğur Biçer <contact@codeplus.dev>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @package  StrObj
+ * @version  GIT: <git_id>
+ * @link     https://github.com/uuur86/strobj
+ */
 
-use StrObj\Interfaces\DataStructures\DataInterface;
+namespace StrObj\Data;
 
 class DataCache
 {

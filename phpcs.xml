@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<ruleset name="CodePlusDev">
+    <description>PHP_CodeSniffer configuration for Project</description>
+
+    <arg name="tab-width" value="false" />
+
+    <!-- Run against the PSR12 standard -->
+    <rule ref="PSR12">
+        <!-- Don't require tabs for indentation -->
+        <exclude name="Generic.WhiteSpace.DisallowSpaceIndent" />
+        <exclude name="Squiz.Strings.DoubleQuoteUsage.NotRequired" />
+        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore" />
+
+        <properties>
+            <property name="minimumWarningSeverity" value="0" />
+            <property name="indent" value="4" />
+            <property name="tabIndent" value="false" />
+        </properties>
+    </rule>
+
+    <!-- Require spaces for indentation -->
+    <rule ref="Generic.WhiteSpace.ScopeIndent">
+        <properties>
+            <property name="indent" value="4" />
+            <property name="tabIndent" value="false" />
+        </properties>
+    </rule>
+
+    <rule ref="Generic.WhiteSpace.DisallowTabIndent">
+        <severity>0</severity>
+    </rule>
+</ruleset>

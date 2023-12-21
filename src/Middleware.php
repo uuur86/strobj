@@ -1,10 +1,26 @@
 <?php
 
+/**
+ * This file is part of the StrObj package.
+ *
+ * (c) Uğur Biçer <contact@codeplus.dev>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @package  StrObj
+ * @version  GIT: <git_id>
+ * @link     https://github.com/uuur86/strobj
+ */
+
 namespace StrObj;
 
 use OverflowException;
 use StrObj\Helpers\Adapters;
 
+/**
+ * Middleware class
+ */
 class Middleware
 {
     use Adapters;
@@ -12,41 +28,53 @@ class Middleware
     /**
      * Memory limit in bytes
      *
-     * @var int
+     * @var array
      */
-    private array $options = [];
+    private array $_options = [];
 
+    /**
+     * __construct function
+     *
+     * @param array $options only memory_limit for now
+     */
     public function __construct(array $options = [])
     {
-        $this->options = $options;
+        $this->_options = $options;
     }
 
     /**
      * Set middleware options
      *
-     * @param array $options
+     * @param string $name  The key parameter that uses in option key-value pair
+     * @param mixed  $value The value parameter that uses in option key-value pair
+     *
+     * @return void
      */
     public function set(string $name, $value): void
     {
-        $this->options[$name] = $value;
+        $this->_options[$name] = $value;
     }
 
     /**
      * Get middleware options
      *
-     * @return array
+     * @param string $name The key name that uses for getting the value
+     *
+     * @return mixed
      */
     public function get(string $name)
     {
-        return $this->options[$name] ?? null;
+        return $this->_options[$name] ?? null;
     }
 
     /**
      * Memory leak protection
      *
-     * @param int     $memory
+     * @param int $memory memory limit in Mb
+     *
+     * @return void
      */
-    private function setMemoryLimit(int $memory): void
+    public function setMemoryLimit(int $memory): void
     {
         // Its check only once for performance.
         if ($this->get('memory_limit') > 0) {
@@ -72,6 +100,8 @@ class Middleware
 
     /**
      * Memory leak protection
+     *
+     * @return void
      */
     public function memoryLeakProtection(): void
     {

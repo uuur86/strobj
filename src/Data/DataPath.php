@@ -1,10 +1,22 @@
 <?php
 
+/**
+ * This file is part of the StrObj package.
+ *
+ * (c) Uğur Biçer <contact@codeplus.dev>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @package  StrObj
+ * @version  GIT: <git_id>
+ * @link     https://github.com/uuur86/strobj
+ */
+
 namespace StrObj\Data;
 
 use ArrayIterator;
 use Iterator;
-use JsonSerializable;
 use StrObj\Helpers\DataParsers;
 use StrObj\Interfaces\DataStructures\DataInterface;
 
@@ -25,6 +37,8 @@ class DataPath extends ArrayIterator implements Iterator
      */
     private array $map = [];
 
+
+
     public function __construct(string $path)
     {
         $this->path = $path;
@@ -44,7 +58,7 @@ class DataPath extends ArrayIterator implements Iterator
      */
     public static function init(string $path)
     {
-        return new DataPath($path);
+        return new self($path);
     }
 
     /**
