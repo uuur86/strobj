@@ -103,8 +103,6 @@ class StringObjects
                 $data = (object) $data;
             } catch (Exception) {
                 throw new Exception("Input data is not valid!\r\n" . print_r($data, true), 23);
-
-                return false;
             }
         }
 
