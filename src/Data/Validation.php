@@ -183,15 +183,15 @@ class Validation
     /**
      * Sets the status to the all parent paths.
      *
-     * @param string  $path
-     * @param mixed   $value
-     * @param string  $pattern
-     * @param bool    $status
+     * @param string $path    Data path
+     * @param mixed  $value   Data value
+     * @param string $pattern Validation pattern
+     * @param bool   $status  Is value required
      */
     public function addValidationStatus(string $path, $value, string $pattern, bool $required): void
     {
-        $status = true;
-        $path = DataPath::init($path);
+        $status   = true;
+        $path     = DataPath::init($path);
         $path_txt = $path->getRaw();
 
         if ($path->valid()) {
@@ -202,13 +202,13 @@ class Validation
                     $path_txt,
                     $value,
                     function ($path_sub, $val) use (&$status, $required, $pattern) {
-                        if (!$this->setValidationStatus($path_sub, $val, $pattern, $required)) {
+                        if (! $this->setValidationStatus($path_sub, $val, $pattern, $required)) {
                             $status = false;
                         }
                     }
                 );
             } else {
-                if (!$this->setValidationStatus($path_txt, $value, $pattern, $required)) {
+                if (! $this->setValidationStatus($path_txt, $value, $pattern, $required)) {
                     $status = false;
                 }
             }

@@ -32,7 +32,11 @@
 		"phpmetrics/phpmetrics": "^2.8"
 	},
     "scripts": {
-        "test": "phpunit --debug tests/TestScenarios",
+        "test": [
+			"phpunit --debug tests/TestDataObject",
+			"phpunit --debug tests/TestDataPath",
+			"phpunit --debug tests/TestValidation"
+		],
         "phpstan": "phpstan analyse src tests",
         "analyze": "php ./vendor/bin/phpmetrics --report-html=docs/report ."
     }

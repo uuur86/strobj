@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace StrObj;
 
+use Exception;
 use StrObj\Data\DataFilters;
 use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
@@ -61,12 +62,12 @@ class StringObjects
     /**
      * Constructor
      *
-     * @param object|array $data    The object to use
-     * @param array        $options Options
+     * @param object $obj     The object to use
+     * @param array  $options Options
      */
-    public function __construct($data, array $options = [])
+    public function __construct(object $obj, array $options = [])
     {
-        $this->_obj = new DataObject((object) $data);
+        $this->_obj = new DataObject($obj);
 
         if (isset($options['middleware'])) {
             $this->_middleware = new Middleware($options['middleware']);
@@ -86,18 +87,28 @@ class StringObjects
     /**
      * You can provide an array or any traversable object
      *
-     * @param mixed $obj     The object to use
+     * @param mixed $data    The mixed type of object data to use
      * @param array $options Options
      *
-     * @return bool|static
+     * @return static|bool
      */
-    public static function instance($obj, array $options = [])
+    public static function instance($data, array $options = [])
     {
-        if (is_string($obj)) {
-            $obj = json_decode($obj);
+        if (is_string($data)) {
+            $data = json_decode($data);
         }
 
-        return new self($obj, $options);
+        if (! is_object($data)) {
+            try {
+                $data = (object) $data;
+            } catch (Exception) {
+                throw new Exception("Input data is not valid!\r\n" . print_r($data, true), 23);
+
+                return false;
+            }
+        }
+
+        return new self($data, $options);
     }
 
     /**

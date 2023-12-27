@@ -91,8 +91,8 @@ class DataPath extends ArrayIterator implements Iterator
         $branch_path = array_shift($path);
         $branches[]  = $branch_path;
 
-        while ($key = current($path)) {
-            $branch_path .= '/' . $key;
+        while (false !== ($key = current($path))) {
+            $branch_path .= '/' . (string) $key;
             $branches[] = $branch_path;
 
             next($path);

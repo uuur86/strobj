@@ -17,6 +17,7 @@ namespace StrObj\Data;
 
 use Closure;
 use StrObj\Helpers\Adapters;
+use StrObj\Helpers\DataParsers;
 
 class DataFilters
 {
@@ -24,6 +25,11 @@ class DataFilters
      * Adapter trait
      */
     use Adapters;
+
+    /**
+     * DataParsers trait
+     */
+    use DataParsers;
 
     /**
      * @var array
@@ -51,6 +57,9 @@ class DataFilters
     public function filter(string $path, $data)
     {
         if (!isset($this->options[$path])) {
+            // TODO: #19 find inclusive path
+            // $path = $this->findInclusivePaths($path, $this->options);
+
             return $data;
         }
 
