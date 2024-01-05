@@ -107,11 +107,10 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     }
 
     /**
-     * Query data with given path
+     * Queries the data with the given path.
      *
-     * @param string $path string path of the requested value - default null
-     *
-     * @return mixed
+     * @param string|null $path The path of the requested value. Default is null.
+     * @return mixed Returns the queried data or null if not found.
      */
     public function query(?string $path = null)
     {
@@ -125,10 +124,12 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
 
         $data = $this;
 
+        // Advances in the data structure based on the given key and next key.
         while (false !== ($key = current($path_arr))) {
             $next_key = next($path_arr);
             $next_key = $next_key !== false ? (string) $next_key : false;
 
+            // Retrieves sub-datasets based on the '*' wildcard key.
             if ($key === '*') {
                 return $data->getCols($next_key);
             }

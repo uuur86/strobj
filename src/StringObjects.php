@@ -95,15 +95,23 @@ class StringObjects
     public static function instance($data, array $options = [])
     {
         if (is_string($data)) {
-            $data = json_decode($data);
+            $decodedData = json_decode($data);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception("JSON decoding error: " . json_last_error_msg(), 22);
+            }
+
+            $data = $decodedData;
+        } elseif (! is_array($data) && ! is_object($data)) {
+            throw new Exception("Input data is neither an object nor an array.", 24);
         }
 
-        if (! is_object($data)) {
-            try {
-                $data = (object) $data;
-            } catch (Exception) {
-                throw new Exception("Input data is not valid!\r\n" . print_r($data, true), 23);
-            }
+        if (is_array($data)) {
+            $data = (object) $data;
+        }
+
+        if (!is_object($data)) {
+            throw new Exception("Input data is not a valid object!\r\n" . print_r($data, true), 23);
         }
 
         return new self($data, $options);
