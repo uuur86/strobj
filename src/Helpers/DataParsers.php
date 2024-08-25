@@ -65,4 +65,30 @@ trait DataParsers
 
         return $paths;
     }
+
+    /**
+     * Finds the most inclusive path in the options array
+     *
+     * @param string $path
+     * @param array  $options
+     *
+     * @return string
+     */
+    protected function findInclusivePaths(string $path, array $options): string
+    {
+        foreach ($options as $optionPath => $value) {
+            $asterixIndex = 0;
+
+            while ($asterixPos = strpos($optionPath, '*', $asterixIndex)) {
+                $asterixIndex = $asterixPos + 1;
+                $path = substr_replace($path, '*', $asterixPos, strpos($path, '/', $asterixPos) - $asterixPos);
+            }
+
+            if ($path === $optionPath) {
+                return $optionPath;
+            }
+        }
+
+        return '';
+    }
 }

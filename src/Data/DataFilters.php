@@ -57,18 +57,23 @@ class DataFilters
     public function filter(string $path, $data)
     {
         if (!isset($this->options[$path])) {
-            // TODO: #19 find inclusive path
-            // $path = $this->findInclusivePaths($path, $this->options);
+            $path = $this->findInclusivePaths($path, $this->options);
 
-            return $data;
+            if (empty($path)) {
+                return $data;
+            }
         }
 
         $filters = $this->options[$path];
 
         if (is_array($data)) {
-            return array_filter($data, function ($item) use ($filters) {
-                return $this->filterValue($item, $filters);
+            array_walk_recursive($data, function (&$item, $key) use ($filters, $path) {
+                if (!is_array($item) && substr($path, strrpos($path, '/') + 1) === $key) {
+                    $item = $this->filterValue($item, $filters);
+                }
             });
+
+            return $data;
         }
 
         return $this->filterValue($data, $filters);
@@ -84,11 +89,11 @@ class DataFilters
      */
     private function filterValue($value, $filters)
     {
-        $filterType = $filters['type'] ?? 'string';
-        $filterArgs = $filters['args'] ?? [];
+        $isFiltered     = false;
+        $filterType     = $filters['type'] ?? 'string';
+        $filterArgs     = $filters['args'] ?? [];
         $filterCallback = $filters['callback'] ?? null;
-
-        $value = $this->castType($value, $filterType);
+        $value          = $this->castType($value, $filterType);
 
         if (is_callable($filterCallback) && $filterCallback instanceof Closure) {
             $args = [$value];
@@ -99,9 +104,9 @@ class DataFilters
                 $args[] = $filterArgs;
             }
 
-            return call_user_func_array($filterCallback, $args);
+            $isFiltered = ! call_user_func_array($filterCallback, $args);
         }
 
-        return $value;
+        return $isFiltered ? false : $value;
     }
 }
