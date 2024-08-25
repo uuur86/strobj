@@ -81,5 +81,9 @@ class TestDataFilters extends TestCase
         );
 
         $this->assertFalse($test_value_age['persons'][0]['age']);
+        $this->assertSame(34, $test_value_age['persons'][2]['age']);
+
+        print_r($test_value_name);
+        print_r($test_value_age);
     }
 }

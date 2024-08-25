@@ -35,6 +35,7 @@
         "test": [
 			"phpunit --debug tests/TestDataObject",
 			"phpunit --debug tests/TestDataPath",
+			"phpunit --debug tests/TestDataFilters",
 			"phpunit --debug tests/TestValidation"
 		],
         "phpstan": "phpstan analyse src tests",
