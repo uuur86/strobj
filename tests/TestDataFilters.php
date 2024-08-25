@@ -51,7 +51,7 @@ class TestDataFilters extends TestCase
             'persons/*/age' => [
                 'type' => 'int',
                 'callback' => function ($value) {
-                    return ($value > 10);
+                    return $value > 10;
                 }
             ],
             'persons/*/name' => [
@@ -81,7 +81,7 @@ class TestDataFilters extends TestCase
         );
 
         $this->assertFalse($test_value_age['persons'][0]['age']);
-        $this->assertSame($test_value_age['persons'][2]['age'], 34);
+        $this->assertSame(34, $test_value_age['persons'][2]['age']);
 
         print_r($test_value_name);
         print_r($test_value_age);
