@@ -142,7 +142,7 @@ class Validation
      * Checks whether the value which is in the desired path
      * and added to the control list is valid or not
      *
-     * @param string $path  requested path
+     * @param string $path requested path
      *
      * @return bool
      */
@@ -167,8 +167,10 @@ class Validation
     /**
      * Adds new validation error status to the validationStatus array
      *
-     * @param string $path    requested path
-     * @param bool   $status  validation status
+     * @param string $path     requested path
+     * @param mixed  $value    Data value
+     * @param string $pattern  Validation pattern
+     * @param bool   $required Is value required
      *
      * @return bool
      */
@@ -183,10 +185,10 @@ class Validation
     /**
      * Sets the status to the all parent paths.
      *
-     * @param string $path    Data path
-     * @param mixed  $value   Data value
-     * @param string $pattern Validation pattern
-     * @param bool   $status  Is value required
+     * @param string $path     Data path
+     * @param mixed  $value    Data value
+     * @param string $pattern  Validation pattern
+     * @param bool   $required Is value required
      */
     public function addValidationStatus(string $path, $value, string $pattern, bool $required): void
     {

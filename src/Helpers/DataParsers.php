@@ -52,8 +52,9 @@ trait DataParsers
         $paths = [];
 
         foreach ($data as $key => $val) {
-            if (substr_count($path, "*") > 0) {
-                $path_ = substr_replace($path, $key, strpos($path, "*"), 1);
+            $pos = strpos($path, "*");
+            if ($pos !== false) {
+                $path_ = substr_replace($path, (string)$key, $pos, 1);
 
                 if ($closure) {
                     $val = $closure($path_, $val);

@@ -49,10 +49,9 @@ class DataPath extends ArrayIterator implements Iterator
     }
 
     /**
-     * Inıt path
+     * Init path
      *
-     * @param string        $path
-     * @param DataInterface $data
+     * @param string $path
      *
      * @return DataPath
      */

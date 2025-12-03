@@ -42,7 +42,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     /**
      * Constructor
      *
-     * @param array|object $obj The object to use
+     * @param array|object $data The object to use
      */
     public function __construct($data)
     {
@@ -53,6 +53,10 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
 
     /**
      * Init data object
+     *
+     * @param string $path
+     *
+     * @return DataPath
      */
     public function pathInit(string $path): DataPath
     {
@@ -93,7 +97,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      *
      * @return mixed
      */
-    public function get(string $path)
+    public function get(?string $path = null)
     {
         if ($this->cache->isCached($path)) {
             return $this->cache->get($path);
@@ -173,10 +177,6 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
 
         // Returned DataPath object
         $path_ = $this->pathInit($path);
-
-        if (!$path_) {
-            return;
-        }
 
         // Add given value to the cache
         $this->cache($path, $value);
@@ -312,6 +312,16 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function has(string $path): bool
     {
-        return in_array($path, $this->paths, true);
+        return array_key_exists($path, $this->paths);
+    }
+
+    /**
+     * @return DataObject|null
+     */
+    #[\ReturnTypeWillChange]
+    public function getChildren()
+    {
+        /** @var DataObject|null */
+        return parent::getChildren();
     }
 }

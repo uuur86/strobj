@@ -36,28 +36,28 @@ class StringObjects
      *
      * @var DataObject
      */
-    private DataObject $_obj;
+    private DataObject $obj;
 
     /**
      * Validation object
      *
      * @var Validation
      */
-    private Validation $_validation;
+    private Validation $validation;
 
     /**
      * Middleware object
      *
      * @var Middleware
      */
-    private Middleware $_middleware;
+    private Middleware $middleware;
 
     /**
      * Filters object
      *
      * @var DataFilters
      */
-    private DataFilters $_filters;
+    private DataFilters $filters;
 
     /**
      * Constructor
@@ -65,22 +65,22 @@ class StringObjects
      * @param object $obj     The object to use
      * @param array  $options Options
      */
-    public function __construct(object $obj, array $options = [])
+    final public function __construct(object $obj, array $options = [])
     {
-        $this->_obj = new DataObject($obj);
+        $this->obj = new DataObject($obj);
 
         if (isset($options['middleware'])) {
-            $this->_middleware = new Middleware($options['middleware']);
-            $this->_middleware->memoryLeakProtection();
+            $this->middleware = new Middleware($options['middleware']);
+            $this->middleware->memoryLeakProtection();
         }
 
         if (isset($options['validation'])) {
-            $this->_validation = new Validation($this->_obj, $options['validation']);
-            $this->_validation->validate();
+            $this->validation = new Validation($this->obj, $options['validation']);
+            $this->validation->validate();
         }
 
         if (isset($options['filters'])) {
-            $this->_filters = new DataFilters($options['filters']);
+            $this->filters = new DataFilters($options['filters']);
         }
     }
 
@@ -90,7 +90,8 @@ class StringObjects
      * @param mixed $data    The mixed type of object data to use
      * @param array $options Options
      *
-     * @return static|bool
+     * @return static
+     * @throws Exception
      */
     public static function instance($data, array $options = [])
     {
@@ -114,7 +115,7 @@ class StringObjects
             throw new Exception("Input data is not a valid object!\r\n" . print_r($data, true), 23);
         }
 
-        return new self($data, $options);
+        return new static($data, $options);
     }
 
     /**
@@ -129,14 +130,14 @@ class StringObjects
      */
     public function get(?string $path = '', $default = false)
     {
-        $result = $this->_obj->get($path);
+        $result = $this->obj->get($path);
 
         if ($result === false) {
             return $default;
         }
 
-        if (isset($this->_filters)) {
-            $result = $this->_filters->filter($path, $result);
+        if (isset($this->filters)) {
+            $result = $this->filters->filter($path, $result);
         }
 
         return $result;
@@ -153,7 +154,7 @@ class StringObjects
      */
     public function set(string $path, $value): void
     {
-        $this->_obj->set($path, $value);
+        $this->obj->set($path, $value);
     }
 
     /**
@@ -166,7 +167,7 @@ class StringObjects
      */
     public function has(string $path): bool
     {
-        return $this->_obj->has($path);
+        return $this->obj->has($path);
     }
 
     /**
@@ -176,7 +177,7 @@ class StringObjects
      */
     public function toJson(): string
     {
-        return json_encode($this->_obj);
+        return json_encode($this->obj);
     }
 
     /**
@@ -186,7 +187,7 @@ class StringObjects
      */
     public function toArray(): array
     {
-        return $this->_obj->toArray();
+        return $this->obj->toArray();
     }
 
     /**
@@ -198,7 +199,7 @@ class StringObjects
      */
     public function isValid(string $path = ''): bool
     {
-        return $this->_validation->isValid($path);
+        return $this->validation->isValid($path);
     }
 
     /**
@@ -210,6 +211,6 @@ class StringObjects
      */
     public function setMemoryLimit(int $memory): void
     {
-        $this->_middleware->setMemoryLimit($memory);
+        $this->middleware->setMemoryLimit($memory);
     }
 }
