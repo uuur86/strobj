@@ -30,7 +30,7 @@ class Middleware
      *
      * @var array
      */
-    private array $_options = [];
+    private array $options = [];
 
     /**
      * __construct function
@@ -39,7 +39,7 @@ class Middleware
      */
     public function __construct(array $options = [])
     {
-        $this->_options = $options;
+        $this->options = $options;
     }
 
     /**
@@ -52,7 +52,7 @@ class Middleware
      */
     public function set(string $name, $value): void
     {
-        $this->_options[$name] = $value;
+        $this->options[$name] = $value;
     }
 
     /**
@@ -64,7 +64,7 @@ class Middleware
      */
     public function get(string $name)
     {
-        return $this->_options[$name] ?? null;
+        return $this->options[$name] ?? null;
     }
 
     /**

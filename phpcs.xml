@@ -9,7 +9,6 @@
         <!-- Don't require tabs for indentation -->
         <exclude name="Generic.WhiteSpace.DisallowSpaceIndent" />
         <exclude name="Squiz.Strings.DoubleQuoteUsage.NotRequired" />
-        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore" />
 
         <properties>
             <property name="minimumWarningSeverity" value="0" />

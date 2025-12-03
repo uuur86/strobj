@@ -22,17 +22,7 @@ use StrObj\Data\Validation;
 class TestValidation extends TestCase
 {
     /**
-     * Test Constructor.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Fetches the raw JSON data as a string format
-     *
-     * @param boolean $isArray
      *
      * @return string
      */
