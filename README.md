@@ -19,6 +19,8 @@ PHP String Objects is a library that provides an easy and intuitive interface fo
 
 ## Installation
 
+Requires PHP 7.4 or newer, with the JSON and mbstring extensions.
+
 To install the library, run the following Composer command:
 
 ```bash
@@ -35,6 +37,12 @@ require('vendor/autoload.php');
 ```
 
 ### BASIC USAGE
+
+Existing applications keep their legacy behavior with `StringObjects::instance()`.
+New examples use `StringObjects::consistent()` for explicit defaults, detached
+values and strict configuration. See [Compatibility](docs/compatibility.md) for
+observable differences, preserved API signatures and the direct `offsetSet()`
+migration path.
 
 Here is an example of how to use PHP String Objects to access and manipulate data in a JSON string:
 
@@ -66,7 +74,7 @@ $persons = '{
     ]
 }';
 
-$test = StringObjects::instance(
+$test = StringObjects::consistent(
     $persons,
     [
         'validation' => [
@@ -143,10 +151,10 @@ $test->set('persons/0/age', 12);
 $test->set('persons/4/name', 'Neo Doe');
 $test->set('persons/4/age', 199);
 
-// Outputs "John D."
+// Returns false: the configured name predicate rejects the dot in "John D."
 $test->get('persons/0/name');
 
-// Outputs "12"
+// Outputs 21 (the fourth person's age, cast to int)
 $test->get('persons/3/age');
 
 // Outputs "Neo Doe"
@@ -162,19 +170,48 @@ $test->set('persons/4/age', 200);
 $test->get('persons/4/age');
 ```
 
+## EXAMPLES
+
+Start the examples server and open `http://localhost:8000/` for a landing page
+with links to both interactive demos. Select table columns and change filters
+over complex JSON, or add, list, edit and delete products through a form with
+validation and persistent SQLite storage. See [examples/README.md](examples/README.md)
+for setup, a walkthrough and extension points.
+
 ## DEVELOPMENT
 
 ### TESTS
 
 ```bash
+composer install
 composer test
+composer test:unit
+composer test:regression
+composer test:integration
 ```
 
-or
+With Xdebug coverage mode or PCOV enabled:
 
 ```bash
-php vendor/bin/phpunit tests/TestScenarios
+composer test:coverage
 ```
+
+Alternatively, with phpdbg available: `composer test:coverage:phpdbg`.
+
+The coverage command requires 100% executable-line coverage for every PHP file
+in `src/`. Missing reports, omitted source files, uncovered lines, test warnings,
+risky tests and unexpected test output fail the checks. See [Testing](docs/testing.md)
+for phpdbg commands, behavior contracts and verification details.
+
+Run production static analysis with `composer phpstan`.
+
+### FORMATTING
+
+VS Code and Cursor use `valeryanm.vscode-phpsab` with the shared `phpcs.xml`
+rules. Press **Shift+Alt+F** to format a PHP document. Formatting on save and
+paste stays disabled. Use `composer format -- <changed paths>` to format from
+the terminal and `composer format:check -- <changed paths>` to verify the result.
+See [Formatting](docs/formatting.md) for setup and spacing conventions.
 
 ## LICENSE
 

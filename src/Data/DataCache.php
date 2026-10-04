@@ -13,6 +13,8 @@
  * @link     https://github.com/uuur86/strobj
  */
 
+declare(strict_types=1);
+
 namespace StrObj\Data;
 
 class DataCache
@@ -21,7 +23,6 @@ class DataCache
      * @var array
      */
     private array $paths = [];
-
     /**
      * Saves the value to cache for performance
      *
@@ -31,8 +32,7 @@ class DataCache
     public function save(string $path, $data): void
     {
         if (is_array($data)) {
-            $paths = DataPath::init($path)->findPaths($path, $data);
-            $this->addPaths($paths);
+            $this->addPaths(DataPath::init($path)->findPaths($path, $data));
         }
 
         $this->setPath($path, $data);
@@ -41,11 +41,18 @@ class DataCache
     /**
      * Clears the cache
      *
-     * @param string $path requested path
+     * @param string $path Requested path.
      */
     public function clear(string $path): void
     {
+
         unset($this->paths[$path]);
+    }
+
+    /** Clears all entries without changing the existing overridable clear() signature. */
+    public function clearAll(): void
+    {
+        $this->paths = [];
     }
 
     /**
@@ -57,19 +64,34 @@ class DataCache
      */
     public function get(string $path)
     {
-        return $this->paths[$path];
+        return $this->paths[$path] ?? null;
     }
 
+    /**
+     * Stores concrete paths, including null and false values.
+     *
+     * @param string $path Concrete path.
+     * @param mixed  $data Value to cache.
+     *
+     * @return void
+     */
     public function setPath(string $path, $data): void
     {
-        if (substr_count($path, '*') < 1) {
+        if (strpos($path, '*') === false) {
             $this->paths[$path] = $data;
         }
     }
 
+    /**
+     * Merges projected entries without renumbering numeric keys.
+     *
+     * @param array $paths Path/value entries.
+     *
+     * @return void
+     */
     protected function addPaths(array $paths): void
     {
-        $this->paths = array_merge($this->paths, $paths);
+        $this->paths = array_replace($this->paths, $paths);
     }
 
     /**
@@ -82,6 +104,7 @@ class DataCache
      */
     public function isCached(string $path)
     {
-        return isset($this->paths[$path]);
+
+        return array_key_exists($path, $this->paths);
     }
 }

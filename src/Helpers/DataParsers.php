@@ -13,53 +13,104 @@
  * @link     https://github.com/uuur86/strobj
  */
 
+declare(strict_types=1);
+
 namespace StrObj\Helpers;
 
 use Closure;
+use InvalidArgumentException;
 
 trait DataParsers
 {
+    /**
+     * Parses slash-separated segments; zero and Unicode keys are preserved.
+     *
+     * @param string $path Path to parse.
+     *
+     * @return string[]
+     * @throws \InvalidArgumentException If the path exceeds 512 segments.
+     */
     public function parsePath(string $path)
     {
-        $path_arr = preg_split('#[\/]+#', $path);
 
-        if ($path_arr === false) {
-            return [$path];
+        $segments = array_values(array_filter(explode('/', $path), static function (string $segment): bool {
+
+            return $segment !== '';
+        }));
+
+        if (count($segments) > 512) {
+            throw new InvalidArgumentException('A path cannot exceed 512 segments.');
         }
 
-        $path_arr = array_filter($path_arr, function ($value) {
-            return preg_match('#[^\/]+#siu', $value);
-        });
-
-        return $path_arr;
+        return $segments;
     }
 
     /**
-     * Find relative paths
+     * Normalizes repeated, leading and trailing separators.
+     *
+     * @param string $path Path to normalize.
+     *
+     * @return string
+     */
+    public function normalizePath(string $path): string
+    {
+        return implode('/', $this->parsePath($path));
+    }
+
+    /**
+     * Matches complete segments; each wildcard matches one segment.
+     *
+     * @param string $pattern Literal/wildcard pattern.
+     * @param string $path    Concrete path to compare.
+     *
+     * @return bool
+     */
+    public function matchesPath(string $pattern, string $path): bool
+    {
+        $patternSegments = $this->parsePath($pattern);
+        $pathSegments = $this->parsePath($path);
+
+        if (count($patternSegments) !== count($pathSegments)) {
+            return false;
+        }
+
+        foreach ($patternSegments as $index => $segment) {
+            if ($segment !== '*' && $segment !== $pathSegments[$index]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Expands wildcard paths from a projected value array, preserving its keys.
      *
      * @param string  $path     The path to find
-     * @param array   $data     The data to search for paths
-     * @param Closure $closure  The closure to run on each path
+     * @param array        $data    Projected values for each wildcard level.
+     * @param Closure|null $closure Optional callback receiving concrete path and value.
      *
      * @return array
      */
     public function findPaths(string $path, array $data, ?Closure $closure = null): array
     {
-        if (substr_count($path, "*") === 0) {
-            return [$path => $data];
+        $position = strpos($path, '*');
+
+        if ($position === false) {
+            return [$path => $closure === null ? $data : $closure($path, $data)];
         }
 
         $paths = [];
 
-        foreach ($data as $key => $val) {
-            if (substr_count($path, "*") > 0) {
-                $path_ = substr_replace($path, $key, strpos($path, "*"), 1);
+        foreach ($data as $key => $value) {
+            $concrete = substr_replace($path, (string) $key, $position, 1);
 
-                if ($closure) {
-                    $val = $closure($path_, $val);
+            if (strpos($concrete, '*') !== false) {
+                if (is_array($value)) {
+                    $paths = array_replace($paths, $this->findPaths($concrete, $value, $closure));
                 }
-
-                $paths[$path_] = $val;
+            } else {
+                $paths[$concrete] = $closure === null ? $value : $closure($concrete, $value);
             }
         }
 
@@ -67,7 +118,8 @@ trait DataParsers
     }
 
     /**
-     * Finds the most inclusive path in the options array
+     * Finds the matching option with the most literal path segments.
+     * Equal specificity keeps the first configured option.
      *
      * @param string $path
      * @param array  $options
@@ -76,19 +128,44 @@ trait DataParsers
      */
     protected function findInclusivePaths(string $path, array $options): string
     {
-        foreach ($options as $optionPath => $value) {
-            $asterixIndex = 0;
+        return $this->selectMatchingPath($path, $options, true);
+    }
 
-            while ($asterixPos = strpos($optionPath, '*', $asterixIndex)) {
-                $asterixIndex = $asterixPos + 1;
-                $path = substr_replace($path, '*', $asterixPos, strpos($path, '/', $asterixPos) - $asterixPos);
+    /**
+     * Selects a matching pattern with either configuration order or literal specificity.
+     *
+     * @param string $path Concrete query path.
+     * @param array $options Configured path patterns.
+     * @param bool $preferSpecific Prefer the most literal matching pattern.
+     * @return string
+     */
+    protected function selectMatchingPath(string $path, array $options, bool $preferSpecific): string
+    {
+        $best = '';
+        $specificity = -1;
+
+        foreach ($options as $optionPath => $value) {
+            $optionPath = (string) $optionPath;
+
+            if (!$this->matchesPath($optionPath, $path)) {
+                continue;
             }
 
-            if ($path === $optionPath) {
+            if (!$preferSpecific) {
                 return $optionPath;
+            }
+
+            $score = count(array_filter($this->parsePath($optionPath), static function (string $segment): bool {
+
+                return $segment !== '*';
+            }));
+
+            if ($score > $specificity) {
+                $best = $optionPath;
+                $specificity = $score;
             }
         }
 
-        return '';
+        return $best;
     }
 }

@@ -18,14 +18,16 @@ declare(strict_types=1);
 namespace StrObj;
 
 use Exception;
+use ArrayIterator;
+use InvalidArgumentException;
 use StrObj\Data\DataFilters;
 use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
 
-use function is_string;
-
 /**
  * StringObjects class
+ *
+ * @phpstan-consistent-constructor Subclasses keep the constructor accepted by instance().
  */
 class StringObjects
 {
@@ -36,52 +38,61 @@ class StringObjects
      *
      * @var DataObject
      */
-    private DataObject $_obj;
 
+
+    private DataObject $_obj;
     /**
      * Validation object
      *
      * @var Validation
      */
     private Validation $_validation;
-
     /**
      * Middleware object
      *
      * @var Middleware
      */
     private Middleware $_middleware;
-
     /**
      * Filters object
      *
      * @var DataFilters
      */
     private DataFilters $_filters;
+    /**
+     * Whether output filters are configured.
+     *
+     * @var bool
+     */
+    private bool $hasFilters;
+    /** @var bool Whether the explicit consistent behavior profile is enabled. */
+    private bool $consistent;
 
     /**
      * Constructor
      *
-     * @param object $obj     The object to use
-     * @param array  $options Options
+     * @param object       $obj     The object to use
+     * @param array        $options Options
      */
     public function __construct(object $obj, array $options = [])
     {
-        $this->_obj = new DataObject($obj);
 
-        if (isset($options['middleware'])) {
-            $this->_middleware = new Middleware($options['middleware']);
-            $this->_middleware->memoryLeakProtection();
+        $this->consistent = Behavior::isConsistent($options);
+
+        foreach (['middleware', 'validation', 'filters'] as $option) {
+            if (isset($options[$option]) && !is_array($options[$option])) {
+                throw new InvalidArgumentException($option . ' options must be an array.');
+            }
         }
 
-        if (isset($options['validation'])) {
-            $this->_validation = new Validation($this->_obj, $options['validation']);
-            $this->_validation->validate();
-        }
-
-        if (isset($options['filters'])) {
-            $this->_filters = new DataFilters($options['filters']);
-        }
+        $this->_middleware = new Middleware($options['middleware'] ?? [], $this->consistent);
+        $this->_middleware->memoryLeakProtection();
+        $this->_obj = $this->consistent ? DataObject::snapshot($obj) : new DataObject($obj);
+        $this->_validation = new Validation($this->_obj, $options['validation'] ?? [], $this->consistent);
+        $this->_validation->validate();
+        $this->_filters = new DataFilters($options['filters'] ?? [], $this->consistent);
+        $this->hasFilters = !empty($options['filters']);
+        $this->_middleware->memoryLeakProtection();
     }
 
     /**
@@ -90,38 +101,56 @@ class StringObjects
      * @param mixed $data    The mixed type of object data to use
      * @param array $options Options
      *
-     * @return static|bool
+     * @return self|static Legacy factories return self; consistent factories preserve subclasses.
      */
     public static function instance($data, array $options = [])
     {
         if (is_string($data)) {
-            $decodedData = json_decode($data);
+            $decoded = json_decode($data);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new Exception("JSON decoding error: " . json_last_error_msg(), 22);
+                throw new Exception('JSON decoding error: ' . json_last_error_msg(), 22);
             }
 
-            $data = $decodedData;
-        } elseif (! is_array($data) && ! is_object($data)) {
-            throw new Exception("Input data is neither an object nor an array.", 24);
+            $data = $decoded;
+
+            if (!is_array($data) && !is_object($data)) {
+                throw new Exception('JSON input must contain an object or array.', 23);
+            }
+        } elseif (!is_array($data) && !is_object($data)) {
+            throw new Exception('Input data is neither an object nor an array.', 24);
         }
+
+        $consistent = Behavior::isConsistent($options);
 
         if (is_array($data)) {
-            $data = (object) $data;
+            $data = $consistent ? new ArrayIterator($data) : (object) $data;
         }
 
-        if (!is_object($data)) {
-            throw new Exception("Input data is not a valid object!\r\n" . print_r($data, true), 23);
-        }
+        return $consistent ? new static($data, $options) : new self($data, $options);
+    }
+    /**
+     * Creates an instance with explicit defaults, detached values and strict configuration.
+     *
+     * @param mixed $data Input array, object or JSON document.
+     * @param array $options Middleware, validation and filter options.
+     * @return static
+     */
+    public static function consistent($data, array $options = [])
+    {
+        $options['behavior'] = Behavior::CONSISTENT;
+        /** @var static $instance Consistent mode instantiates the called class. */
+        $instance = static::instance($data, $options);
 
-        return new self($data, $options);
+        return $instance;
     }
 
     /**
      * Gets the value from the inside of the loaded object
-     *  or returns the default value
+     * Legacy behavior substitutes the default for false and returns null for missing fields.
+     * Consistent behavior preserves false/null and substitutes only for missing fields.
      *
-     * @param string $path    requested object path like
+     * @param string|null $path    requested object path like
      *                        data/child_data instead of data->child_data
      * @param mixed  $default default value will return if value not exists
      *
@@ -129,17 +158,25 @@ class StringObjects
      */
     public function get(?string $path = '', $default = false)
     {
-        $result = $this->_obj->get($path);
+        $this->_middleware->memoryLeakProtection();
+        $path = $path ?? '';
 
-        if ($result === false) {
+        if (!$this->consistent) {
+            $result = $this->_obj->get($path);
+
+            if ($result === false) {
+                return $default;
+            }
+
+            return $this->hasFilters ? $this->_filters->filter($path, $result) : $result;
+        }
+
+        if (strpos($path, '*') === false && !$this->_obj->has($path)) {
             return $default;
         }
 
-        if (isset($this->_filters)) {
-            $result = $this->_filters->filter($path, $result);
-        }
-
-        return $result;
+        return $this->hasFilters
+        ? $this->_obj->queryWithTransform($path, [$this->_filters, 'filterAt']) : $this->_obj->get($path);
     }
 
     /**
@@ -153,6 +190,7 @@ class StringObjects
      */
     public function set(string $path, $value): void
     {
+        $this->_middleware->memoryLeakProtection();
         $this->_obj->set($path, $value);
     }
 
@@ -166,17 +204,24 @@ class StringObjects
      */
     public function has(string $path): bool
     {
+        $this->_middleware->memoryLeakProtection();
+
         return $this->_obj->has($path);
     }
 
     /**
      * Returns the object as a JSON string
      *
+     * @throws \JsonException In consistent mode, when data cannot be JSON encoded.
+     *
      * @return string
      */
     public function toJson(): string
     {
-        return json_encode($this->_obj);
+        $this->_middleware->memoryLeakProtection();
+
+        return $this->consistent
+        ? json_encode($this->_obj->toJsonValue(), JSON_THROW_ON_ERROR) : json_encode($this->_obj);
     }
 
     /**
@@ -186,11 +231,13 @@ class StringObjects
      */
     public function toArray(): array
     {
+        $this->_middleware->memoryLeakProtection();
+
         return $this->_obj->toArray();
     }
 
     /**
-     * The object is valid or not
+     * Checks current data against configured rules; no rules means valid
      *
      * @param string $path data path ( /data/0/text )
      *
@@ -198,13 +245,15 @@ class StringObjects
      */
     public function isValid(string $path = ''): bool
     {
+        $this->_middleware->memoryLeakProtection();
+
         return $this->_validation->isValid($path);
     }
 
     /**
-     * Set a memory limit
+     * Set a per-instance memory guard without changing php.ini
      *
-     * @param int $memory memory limit
+     * @param int $memory memory limit in megabytes
      *
      * @return void
      */

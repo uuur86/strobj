@@ -1,44 +1,52 @@
 {
-	"description": "This repository allows you to access objects via string.",
-	"name": "uuur86/strobj",
-	"type": "library",
-	"license": "GPL-2.0-or-later",
-	"support": {
-		"source": "https://github.com/uuur86/strobj"
-	},
-	"authors": [
-		{
-			"name": "Uğur Biçer",
-			"email": "info@ugurbicer.com.tr",
-			"role": "lead"
-		}
-	],
-	"autoload": {
-    		"psr-4": {
-      			"StrObj\\": "src/"
-		}
-	},
-	"require": {
-		"php": ">=7.2",
+    "description": "This repository allows you to access objects via string.",
+    "name": "uuur86/strobj",
+    "type": "library",
+    "license": "GPL-2.0-or-later",
+    "support": {
+        "source": "https://github.com/uuur86/strobj"
+    },
+    "authors": [
+        {
+            "name": "Uğur Biçer",
+            "email": "info@ugurbicer.com.tr",
+            "role": "lead"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "StrObj\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=7.4",
         "ext-json": "*",
         "ext-mbstring": "*"
-	},
-	"require-dev": {
+    },
+    "require-dev": {
         "symfony/console": "^4.4",
-		"phpunit/phpunit": "^8.5",
+        "phpunit/phpunit": "^9.6",
         "phpstan/phpstan": "^1.8",
         "squizlabs/php_codesniffer": "^3.5",
         "friendsofphp/php-cs-fixer": "^2.16 || ^3.0",
-		"phpmetrics/phpmetrics": "^2.8"
-	},
+        "phpmetrics/phpmetrics": "^2.8"
+    },
     "scripts": {
-        "test": [
-			"phpunit --debug tests/TestDataObject",
-			"phpunit --debug tests/TestDataPath",
-			"phpunit --debug tests/TestDataFilters",
-			"phpunit --debug tests/TestValidation"
-		],
-        "phpstan": "phpstan analyse src tests",
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite Unit",
+        "test:regression": "phpunit --testsuite Regression",
+        "test:integration": "phpunit --testsuite Integration",
+        "test:coverage": [
+            "phpunit --coverage-clover build/coverage/clover.xml --coverage-html build/coverage/html --coverage-text",
+            "@php tools/check-coverage.php build/coverage/clover.xml"
+        ],
+        "test:coverage:phpdbg": [
+            "phpdbg -qrr vendor/bin/phpunit --coverage-clover build/coverage/clover.xml --coverage-html build/coverage/html --coverage-text",
+            "@php tools/check-coverage.php build/coverage/clover.xml"
+        ],
+        "format": "@php tools/format.php",
+        "format:check": "phpcs --standard=phpcs.xml",
+        "phpstan": "phpstan analyse",
         "analyze": "php ./vendor/bin/phpmetrics --report-html=docs/report ."
     }
 }

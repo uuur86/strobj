@@ -13,67 +13,104 @@
  * @link     https://github.com/uuur86/strobj
  */
 
+declare(strict_types=1);
+
 namespace StrObj\Data;
 
+use InvalidArgumentException;
+use StrObj\Helpers\DataParsers;
 use UnexpectedValueException;
 
 class Validation
 {
+    use DataParsers;
+
     /**
      * The object paths which have validation errors
      *
      * @var array
      */
-    private array $validationStatus = [];
 
+
+    private array $validationStatus = [];
     /**
      * Rules
      */
     private array $rules = [];
-
     /**
      * User defined regex patterns
      *
      * @var array
      */
     private array $patterns = [];
-
     /**
      * The object which will be validated
      *
      * @var DataObject
      */
     private DataObject $obj;
+    /**
+     * The data revision reflected by the stored validation results.
+     *
+     * @var int|null
+     */
+    private ?int $validatedRevision = null;
+    /** @var bool Whether rule flags require exact boolean values. */
+    private bool $consistent;
 
     /**
      * Constructor
      *
      * @param DataObject $obj  The object to use
+     * @param array      $options Named patterns and validation rules.
+     * @param bool       $consistent Enable strict configuration checking.
      */
-    public function __construct(DataObject $obj, array $options)
+    public function __construct(DataObject $obj, array $options, bool $consistent = false)
     {
+
         $this->obj = $obj;
-
-        if (isset($options['rules'])) {
-            $this->rules = $options['rules'];
-        }
-
-        if (isset($options['patterns'])) {
-            $this->patterns = $options['patterns'];
-        }
+        $this->consistent = $consistent;
+        $this->setPatterns($options['patterns'] ?? []);
+        $this->setRules($options['rules'] ?? []);
+    }
+    /** @return self A validator with strict rule configuration. */
+    public static function consistent(DataObject $obj, array $options): self
+    {
+        return new self($obj, $options, true);
     }
 
     /**
-     * Validates the value with the given regex on the given path
+     * Validates current data with every configured rule and records its revision
      *
      * @throws UnexpectedValueException
      */
     public function validate(): void
     {
-        foreach ($this->rules as ["path" => $path, "pattern" => $pattern, "required" => $required]) {
-            $value = $this->obj->query($path);
-            $this->addValidationStatus($path, $value, $pattern, $required);
+        $this->validationStatus = [];
+        $this->validatedRevision = null;
+
+        foreach ($this->rules as $rule) {
+            $status = true;
+            $matches = $this->obj->findMatches($rule['path']);
+
+            if ($matches === []) {
+                $status = $this->checkErrorStatus($rule['path'], $rule['pattern'], null, $rule['required']);
+            }
+
+            foreach ($matches as $path => $match) {
+                $result = $this->setValidationStatus(
+                    (string) $path,
+                    $match['value'],
+                    $rule['pattern'],
+                    $rule['required']
+                );
+                $status = $result && $status;
+            }
+
+            $this->recordStatus($rule['path'], $status);
         }
+
+        $this->validatedRevision = $this->obj->getRevision();
     }
 
     /**
@@ -90,15 +127,22 @@ class Validation
      */
     public function checkErrorStatus(string $path, string $pattern, $value, bool $required): bool
     {
-        $value   = (string) $value;
-        $pattern = $this->getPattern($pattern);
-        $result  = preg_match($pattern, $value);
-
-        if ($result === false) {
-            throw new UnexpectedValueException("StrObj Error: Validation error!");
+        if (!is_scalar($value) && $value !== null) {
+            return false;
         }
 
-        return (!$required && empty($value)) || $result === 1;
+        $text = is_bool($value) ? (string) (int) $value : (string) $value;
+        $result = @preg_match($this->getPattern($pattern), $text);
+
+        if ($result === false) {
+            throw new UnexpectedValueException('Invalid validation pattern for path: ' . $path);
+        }
+
+        if ($value === null || $value === '') {
+            return !$required;
+        }
+
+        return $result === 1;
     }
 
     /**
@@ -111,11 +155,7 @@ class Validation
      */
     public function getPattern(string $pattern): string
     {
-        if (isset($this->patterns[$pattern])) {
-            return $this->patterns[$pattern];
-        }
-
-        return $pattern;
+        return $this->patterns[$pattern] ?? $pattern;
     }
 
     /**
@@ -125,17 +165,47 @@ class Validation
      */
     public function setPatterns(array $patterns): void
     {
+        foreach ($patterns as $pattern) {
+            if (!is_string($pattern)) {
+                throw new InvalidArgumentException('Validation patterns must be strings.');
+            }
+        }
+
         $this->patterns = $patterns;
+        $this->validationStatus = [];
+        $this->validatedRevision = null;
     }
 
     /**
-     * Adds new rule to the validation list
+     * Adds rules to the validation list; required defaults to false
      *
      * @param array $rules  rules array to be added
      */
     public function setRules(array $rules): void
     {
-        $this->rules = array_merge($this->rules, $rules);
+        $normalized = [];
+
+        foreach ($rules as $rule) {
+            if (
+                !is_array($rule) || !isset($rule['path'], $rule['pattern']) ||
+                ($this->consistent ? !is_string($rule['path']) : !is_scalar($rule['path'])) ||
+                ($this->consistent ? !is_string($rule['pattern']) : !is_scalar($rule['pattern'])) ||
+                (array_key_exists('required', $rule) &&
+                    ($this->consistent ? !is_bool($rule['required']) : !is_scalar($rule['required'])))
+            ) {
+                throw new InvalidArgumentException('Rules require string path/pattern and a boolean required flag.');
+            }
+
+            $normalized[] = [
+                'path' => $this->normalizePath((string) $rule['path']),
+                'pattern' => (string) $rule['pattern'],
+                'required' => (bool) ($rule['required'] ?? false),
+                ];
+        }
+
+        $this->rules = array_merge($this->rules, $normalized);
+        $this->validationStatus = [];
+        $this->validatedRevision = null;
     }
 
     /**
@@ -148,34 +218,46 @@ class Validation
      */
     public function isValid(string $path = ''): bool
     {
-        if (!isset($this->validationStatus[$path])) {
+        if ($this->validatedRevision !== $this->obj->getRevision()) {
             $this->validate();
         }
 
+        $path = $this->normalizePath($path);
+
         if ($path === '' || $path === '*') {
-            foreach ($this->validationStatus as $status) {
-                if (!$status) {
-                    return false;
-                }
-            }
-            return true;
+            return !in_array(false, $this->validationStatus, true);
         }
 
-        return $this->validationStatus[$path] ?? true;
+        if (array_key_exists($path, $this->validationStatus)) {
+            return $this->validationStatus[$path];
+        }
+
+        $status = true;
+
+        foreach ($this->rules as $rule) {
+            if ($this->matchesPath($rule['path'], $path)) {
+                $result = $this->checkErrorStatus($path, $rule['pattern'], $this->obj->query($path), $rule['required']);
+                $status = $result && $status;
+            }
+        }
+
+        return $status;
     }
 
     /**
      * Adds new validation error status to the validationStatus array
      *
      * @param string $path    requested path
-     * @param bool   $status  validation status
+     * @param mixed  $value    Value to validate.
+     * @param string $pattern  Pattern name or regex.
+     * @param bool   $required Whether null and empty string are forbidden.
      *
      * @return bool
      */
     public function setValidationStatus(string $path, $value, string $pattern, bool $required): bool
     {
         $status = $this->checkErrorStatus($path, $pattern, $value, $required);
-        $this->validationStatus[$path] = $status;
+        $this->recordStatus($path, $status);
 
         return $status;
     }
@@ -186,41 +268,47 @@ class Validation
      * @param string $path    Data path
      * @param mixed  $value   Data value
      * @param string $pattern Validation pattern
-     * @param bool   $status  Is value required
+     * @param bool   $required Is value required
      */
     public function addValidationStatus(string $path, $value, string $pattern, bool $required): void
     {
-        $status   = true;
-        $path     = DataPath::init($path);
-        $path_txt = $path->getRaw();
+        $status = true;
 
-        if ($path->valid()) {
-            $parent_branches = $path->getBranches();
+        if (is_array($value) && strpos($path, '*') !== false) {
+            $paths = DataPath::init($path)->findPaths($path, $value);
 
-            if (is_array($value)) {
-                $relative_path = $path->findPaths(
-                    $path_txt,
-                    $value,
-                    function ($path_sub, $val) use (&$status, $required, $pattern) {
-                        if (! $this->setValidationStatus($path_sub, $val, $pattern, $required)) {
-                            $status = false;
-                        }
-                    }
-                );
-            } else {
-                if (! $this->setValidationStatus($path_txt, $value, $pattern, $required)) {
-                    $status = false;
-                }
+            if ($paths === []) {
+                $status = !$required;
             }
 
-            if (count($parent_branches) > 0) {
-                $parent_branches = array_combine(
-                    $parent_branches,
-                    array_fill(0, count($parent_branches), $status)
-                );
-                $diff = array_diff_key($parent_branches, $this->validationStatus);
-                $this->validationStatus = array_merge($this->validationStatus, $diff);
+            foreach ($paths as $concrete => $item) {
+                $result = $this->setValidationStatus((string) $concrete, $item, $pattern, $required);
+                $status = $result && $status;
             }
+        } else {
+            $status = $this->setValidationStatus($path, $value, $pattern, $required);
+        }
+
+        $this->recordStatus($path, $status);
+    }
+
+    /**
+     * Combines rule results with logical AND for a path and its parents.
+     *
+     * @param string $path   Concrete path or wildcard rule path.
+     * @param bool   $status Result to combine.
+     *
+     * @return void
+     */
+    private function recordStatus(string $path, bool $status): void
+    {
+        $this->validatedRevision = $this->obj->getRevision();
+        $path = $this->normalizePath($path);
+        $branches = DataPath::init($path)->getBranches();
+        $branches[] = $path;
+
+        foreach ($branches as $branch) {
+            $this->validationStatus[$branch] = ($this->validationStatus[$branch] ?? true) && $status;
         }
     }
 }

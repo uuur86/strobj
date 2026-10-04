@@ -13,8 +13,11 @@
  * @link     https://github.com/uuur86/strobj
  */
 
+declare(strict_types=1);
+
 namespace StrObj;
 
+use InvalidArgumentException;
 use OverflowException;
 use StrObj\Helpers\Adapters;
 
@@ -30,16 +33,31 @@ class Middleware
      *
      * @var array
      */
+
+
     private array $_options = [];
+    /** @var bool Whether memory limits require exact integer values. */
+    private bool $consistent;
 
     /**
      * __construct function
      *
-     * @param array $options only memory_limit for now
+     * @param array $options memory_limit is bytes; omitted or -1 disables the local guard
+     * @param bool $consistent Enable strict option checking.
      */
-    public function __construct(array $options = [])
+    public function __construct(array $options = [], bool $consistent = false)
     {
-        $this->_options = $options;
+
+        $this->consistent = $consistent;
+
+        foreach ($options as $name => $value) {
+            $this->set((string) $name, $value);
+        }
+    }
+    /** @return self Middleware with strict option checking. */
+    public static function consistent(array $options = []): self
+    {
+        return new self($options, true);
     }
 
     /**
@@ -52,6 +70,20 @@ class Middleware
      */
     public function set(string $name, $value): void
     {
+        if ($name === 'memory_limit') {
+            $bytes = $value;
+
+            if (!$this->consistent && is_string($value) && is_numeric($value)) {
+                $bytes = $value + 0;
+            }
+
+            $validType = is_int($bytes) || (!$this->consistent && is_float($bytes) && is_finite($bytes));
+
+            if (!$validType || ($bytes <= 0 && $bytes != -1)) {
+                throw new InvalidArgumentException('memory_limit must be positive bytes or -1.');
+            }
+        }
+
         $this->_options[$name] = $value;
     }
 
@@ -68,7 +100,7 @@ class Middleware
     }
 
     /**
-     * Memory leak protection
+     * Updates the local memory guard; -1 in php.ini means no global cap.
      *
      * @param int $memory memory limit in Mb
      *
@@ -76,44 +108,40 @@ class Middleware
      */
     public function setMemoryLimit(int $memory): void
     {
-        // Its check only once for performance.
-        if ($this->get('memory_limit') > 0) {
-            return;
+        if ($memory <= 0 || $memory > intdiv(PHP_INT_MAX, 1024 * 1024)) {
+            throw new InvalidArgumentException('Memory limit must be a positive representable number of megabytes.');
         }
 
-        $mbToByte = 1024 * 1024;
-        $default = 50 * $mbToByte;
+        $bytes = $memory * 1024 * 1024;
+        $phpLimit = $this->convertToByte(ini_get('memory_limit'));
 
-        $memory *= $mbToByte;
-
-        $iniGetMem = ini_get('memory_limit') ?
-            $this->convertToByte(ini_get('memory_limit')) : 0;
-
-        if (empty($iniGetMem)) {
-            $memory = $default;
-        } elseif ($memory > $iniGetMem) {
-            $memory = $iniGetMem;
+        if ($phpLimit > 0) {
+            $bytes = min($bytes, $phpLimit);
         }
 
-        $this->set('memory_limit', $memory);
+        $this->set('memory_limit', $bytes);
     }
 
     /**
-     * Memory leak protection
+     * Checks current memory use against the enabled local guard
      *
      * @return void
      */
     public function memoryLeakProtection(): void
     {
-        $memoryUsage = memory_get_usage();
+        $limit = $this->get('memory_limit');
 
-        if ($memoryUsage > $this->get('memory_limit')) {
-            throw new OverflowException(
-                sprintf(
-                    'Memory limit exceeded. Memory usage: %s',
-                    $this->convertToString($memoryUsage)
-                )
-            );
+        if ($limit === null || $limit == -1) {
+            return;
+        }
+
+        $usage = memory_get_usage();
+
+        if ($usage > $limit) {
+            throw new OverflowException(sprintf(
+                'Memory limit exceeded. Memory usage: %s',
+                $this->convertToString($usage)
+            ));
         }
     }
 }

@@ -38,7 +38,7 @@ class TestValidation extends TestCase
      */
     public function getTestData()
     {
-        return file_get_contents('tests/test-data.json');
+        return file_get_contents(dirname(__DIR__) . '/test-data.json');
     }
 
     public function testValidation()
