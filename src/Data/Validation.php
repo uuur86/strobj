@@ -26,6 +26,17 @@ class Validation
     use DataParsers;
 
     /**
+     * PCRE runtime errors caused by the validated value rather than the pattern.
+     */
+    private const VALUE_ERRORS = [
+        PREG_BACKTRACK_LIMIT_ERROR,
+        PREG_RECURSION_LIMIT_ERROR,
+        PREG_BAD_UTF8_ERROR,
+        PREG_BAD_UTF8_OFFSET_ERROR,
+        PREG_JIT_STACKLIMIT_ERROR,
+    ];
+
+    /**
      * The object paths which have validation errors
      *
      * @var array
@@ -121,9 +132,10 @@ class Validation
      * @param mixed  $value     value to be checked
      * @param bool   $required  is required
      *
-     * @return bool
+     * @return bool False also when the value makes the pattern fail at runtime
+     *              (malformed UTF-8, backtrack, recursion or JIT stack limits).
      *
-     * @throws UnexpectedValueException
+     * @throws UnexpectedValueException When the pattern itself cannot be used.
      */
     public function checkErrorStatus(string $path, string $pattern, $value, bool $required): bool
     {
@@ -135,7 +147,12 @@ class Validation
         $result = @preg_match($this->getPattern($pattern), $text);
 
         if ($result === false) {
-            throw new UnexpectedValueException('Invalid validation pattern for path: ' . $path);
+            // Errors caused by the value fail closed; only an unusable pattern is a configuration error.
+            if (!in_array(preg_last_error(), self::VALUE_ERRORS, true)) {
+                throw new UnexpectedValueException('Invalid validation pattern for path: ' . $path);
+            }
+
+            $result = 0;
         }
 
         if ($value === null || $value === '') {
