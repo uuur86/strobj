@@ -17,9 +17,9 @@ declare(strict_types=1);
 
 namespace StrObj;
 
-use Exception;
 use ArrayIterator;
 use InvalidArgumentException;
+use JsonException;
 use StrObj\Data\DataFilters;
 use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
@@ -101,6 +101,9 @@ class StringObjects
      * @param mixed $data    The mixed type of object data to use
      * @param array $options Options
      *
+     * @throws InvalidArgumentException With code 22 for invalid JSON, 23 for a scalar
+     *                                  JSON document and 24 for unsupported input.
+     *
      * @return self|static Legacy factories return self; consistent factories preserve subclasses.
      */
     public static function instance($data, array $options = [])
@@ -109,16 +112,16 @@ class StringObjects
             $decoded = json_decode($data);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new Exception('JSON decoding error: ' . json_last_error_msg(), 22);
+                throw new InvalidArgumentException('JSON decoding error: ' . json_last_error_msg(), 22);
             }
 
             $data = $decoded;
 
             if (!is_array($data) && !is_object($data)) {
-                throw new Exception('JSON input must contain an object or array.', 23);
+                throw new InvalidArgumentException('JSON input must contain an object or array.', 23);
             }
         } elseif (!is_array($data) && !is_object($data)) {
-            throw new Exception('Input data is neither an object nor an array.', 24);
+            throw new InvalidArgumentException('Input data is neither an object nor an array.', 24);
         }
 
         $consistent = Behavior::isConsistent($options);
@@ -212,7 +215,7 @@ class StringObjects
     /**
      * Returns the object as a JSON string
      *
-     * @throws \JsonException In consistent mode, when data cannot be JSON encoded.
+     * @throws JsonException When data cannot be JSON encoded, for example NAN or invalid UTF-8.
      *
      * @return string
      */
@@ -220,8 +223,17 @@ class StringObjects
     {
         $this->_middleware->memoryLeakProtection();
 
-        return $this->consistent
-        ? json_encode($this->_obj->toJsonValue(), JSON_THROW_ON_ERROR) : json_encode($this->_obj);
+        if ($this->consistent) {
+            return json_encode($this->_obj->toJsonValue(), JSON_THROW_ON_ERROR);
+        }
+
+        $json = json_encode($this->_obj);
+
+        if ($json === false) {
+            throw new JsonException(json_last_error_msg(), json_last_error());
+        }
+
+        return $json;
     }
 
     /**
