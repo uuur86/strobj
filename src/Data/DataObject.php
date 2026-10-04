@@ -189,6 +189,8 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      * Save data to the auxiliary cache
      * Retained for API compatibility; get() always resolves the current data.
      *
+     * @deprecated 3.0 The cache is no longer read; this method will be removed in the next major version.
+     *
      * @param string $path
      * @param mixed  $value
      */
@@ -547,11 +549,15 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     }
 
     /**
-     * Find path
+     * Moves the iterator to a root field
+     * After a successful call, key() and current() return that field, so callers
+     * can continue iterating from it. When the key is missing, the method returns
+     * false and leaves the iterator past the last entry. Use has() for a lookup
+     * that does not move the iterator.
      *
-     * @param string $key
+     * @param string $key Root field name.
      *
-     * @return bool
+     * @return bool Whether the field exists.
      */
     public function findKey(string $key): bool
     {

@@ -22,7 +22,10 @@ use OverflowException;
 use StrObj\Helpers\Adapters;
 
 /**
- * Middleware class
+ * Optional process-wide memory guard used by StringObjects
+ * The guard compares memory_get_usage() for the whole PHP process with the
+ * configured byte limit before each facade operation. It is not a request
+ * middleware and does not detect leaks; it stops work once usage exceeds the limit.
  */
 class Middleware
 {
@@ -120,7 +123,10 @@ class Middleware
     }
 
     /**
-     * Checks current memory use against the enabled local guard
+     * Throws OverflowException when the process's memory usage exceeds the configured limit
+     * The name is kept for compatibility; the check does not detect memory leaks.
+     *
+     * @throws OverflowException When usage exceeds the limit.
      *
      * @return void
      */

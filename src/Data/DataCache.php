@@ -17,6 +17,12 @@ declare(strict_types=1);
 
 namespace StrObj\Data;
 
+/**
+ * Path/value store kept for API compatibility
+ *
+ * @deprecated 3.0 Reads always resolve current data and no longer consult this cache.
+ *             It will be removed in the next major version.
+ */
 class DataCache
 {
     /**

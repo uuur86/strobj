@@ -19,6 +19,20 @@ use StrObj\Tests\Fixtures\Legacy;
 /** Preserves consumer contracts recorded from the v2.1 source before this change. */
 final class CompatibilityTest extends TestCase
 {
+    /** Internal helpers removed from the facade in 3.0; every other v2.1 method is kept. */
+    private const REMOVED_IN_3_0 = [
+        StringObjects::class => ['convertToByte', 'convertToString', 'castType'],
+    ];
+
+    public function testInternalHelpersAreNoLongerPartOfTheFacade(): void
+    {
+        foreach (self::REMOVED_IN_3_0 as $class => $methods) {
+            foreach ($methods as $method) {
+                self::assertFalse(method_exists($class, $method), $class . '::' . $method);
+            }
+        }
+    }
+
     public function testPublishedApiSignaturesAndConsumerOverridesRemainCompatible(): void
     {
         $contract = json_decode(
@@ -31,7 +45,7 @@ final class CompatibilityTest extends TestCase
         foreach ($contract as $class => $methods) {
             $overrides = '';
 
-            foreach ($methods as $name => $expected) {
+            foreach (array_diff_key($methods, array_flip(self::REMOVED_IN_3_0[$class] ?? [])) as $name => $expected) {
                 $method = new ReflectionMethod($class, $name);
                 $label = $class . '::' . $name;
                 self::assertNotFalse($method->getDocComment(), $label . ' documentation must be retained.');
@@ -176,9 +190,10 @@ final class CompatibilityTest extends TestCase
         self::assertSame('[]', Legacy::of((object) [])->toJson());
         self::assertSame('{}', StringObjects::instance((object) [])->toJson());
         self::assertSame([], (new DataObject((object) []))->jsonSerialize());
-        self::assertSame('12', $legacy->castType('12', 'integer'));
-        self::assertNull($legacy->castType('{', 'json'));
-        self::assertSame(12, $legacy->castTypeStrict('12', 'int'));
+        $casts = new DataFilters([]);
+        self::assertSame('12', $casts->castType('12', 'integer'));
+        self::assertNull($casts->castType('{', 'json'));
+        self::assertSame(12, $casts->castTypeStrict('12', 'int'));
     }
 
     public function testLegacyFactoryAndConstructorKeepTheirSubclassContracts(): void

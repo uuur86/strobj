@@ -15,6 +15,11 @@ namespace StrObj\Helpers;
 
 use InvalidArgumentException;
 
+/**
+ * Conversion helpers shared by the library's components
+ *
+ * @internal These methods are implementation details and may change without notice.
+ */
 trait Adapters
 {
     /**

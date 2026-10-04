@@ -13,6 +13,9 @@ The project follows [Semantic Versioning](https://semver.org/).
   values are detached from the input, and configuration is checked strictly.
   Keep the 2.x results with `['behavior' => Behavior::LEGACY]`.
   See [docs/compatibility.md](docs/compatibility.md) for every difference.
+- `StringObjects` no longer exposes the internal `castType()`, `convertToByte()`
+  and `convertToString()` helpers. They remain on the components that use them
+  and are marked `@internal`.
 - The license changes from GPL-2.0-or-later to MIT. Releases up to 2.1.9 remain
   available under GPL-2.0-or-later.
 
@@ -20,6 +23,8 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 - `StrObj\Behavior` with the `CONSISTENT` (default) and `LEGACY` behaviors,
   selected with the `behavior` option.
+- `StringObjects::ERROR_INVALID_JSON`, `ERROR_SCALAR_JSON` and
+  `ERROR_UNSUPPORTED_INPUT` name the exception codes 22, 23 and 24.
 - `DataObject::snapshot()`, `DataObject::setOffset()`, `DataObject::queryWithTransform()`,
   `DataCache::clearAll()`, `DataFilters::filterAt()` and `consistent()` factories
   for `Middleware`, `Validation` and `DataFilters`.
@@ -41,6 +46,10 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Reads always resolve the current data. The read cache was removed, so reads
   no longer return stale values or retain memory for every queried path.
   `DataObject::cache()` and `DataCache` remain available.
+
+### Deprecated
+
+- `DataCache` and `DataObject::cache()`: reads no longer consult the cache.
 
 ### Fixed
 

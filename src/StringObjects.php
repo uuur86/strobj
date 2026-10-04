@@ -32,7 +32,14 @@ use StrObj\Helpers\PathResolver;
  */
 class StringObjects
 {
-    use Helpers\Adapters;
+    /** Exception code: the JSON input cannot be decoded. */
+    public const ERROR_INVALID_JSON = 22;
+
+    /** Exception code: the JSON input contains a scalar instead of an object or array. */
+    public const ERROR_SCALAR_JSON = 23;
+
+    /** Exception code: the input is neither an array, an object nor a JSON string. */
+    public const ERROR_UNSUPPORTED_INPUT = 24;
 
     /**
      * The main data object
@@ -101,8 +108,8 @@ class StringObjects
      * @param mixed $data    The mixed type of object data to use
      * @param array $options Behavior, middleware, validation and filter options
      *
-     * @throws InvalidArgumentException With code 22 for invalid JSON, 23 for a scalar
-     *                                  JSON document and 24 for unsupported input.
+     * @throws InvalidArgumentException With code ERROR_INVALID_JSON (22), ERROR_SCALAR_JSON (23)
+     *                                  or ERROR_UNSUPPORTED_INPUT (24).
      *
      * @return self|static The legacy behavior returns self; the consistent behavior preserves subclasses.
      */
@@ -112,17 +119,26 @@ class StringObjects
             $decoded = json_decode($data);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new InvalidArgumentException('JSON decoding error: ' . json_last_error_msg(), 22);
+                throw new InvalidArgumentException(
+                    'JSON decoding error: ' . json_last_error_msg(),
+                    self::ERROR_INVALID_JSON
+                );
             }
 
             if (!is_array($decoded) && !is_object($decoded)) {
-                throw new InvalidArgumentException('JSON input must contain an object or array.', 23);
+                throw new InvalidArgumentException(
+                    'JSON input must contain an object or array.',
+                    self::ERROR_SCALAR_JSON
+                );
             }
 
             // A decoded root has no outside references, so it can be rebuilt with consistent keys.
             $data = is_object($decoded) ? PathResolver::objectFromEntries((array) $decoded) : $decoded;
         } elseif (!is_array($data) && !is_object($data)) {
-            throw new InvalidArgumentException('Input data is neither an object nor an array.', 24);
+            throw new InvalidArgumentException(
+                'Input data is neither an object nor an array.',
+                self::ERROR_UNSUPPORTED_INPUT
+            );
         }
 
         $consistent = Behavior::isConsistent($options);
