@@ -13,6 +13,8 @@ The project follows [Semantic Versioning](https://semver.org/).
   values are detached from the input, and configuration is checked strictly.
   Keep the 2.x results with `['behavior' => Behavior::LEGACY]`.
   See [docs/compatibility.md](docs/compatibility.md) for every difference.
+- The license changes from GPL-2.0-or-later to MIT. Releases up to 2.1.9 remain
+  available under GPL-2.0-or-later.
 
 ### Added
 

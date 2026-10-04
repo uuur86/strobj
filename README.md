@@ -231,7 +231,7 @@ See [Formatting](docs/formatting.md) for setup and spacing conventions.
 
 ## LICENSE
 
-GPL-2.0-or-later
+MIT. See [LICENSE](LICENSE). Releases up to 2.1.9 were published under GPL-2.0-or-later.
 
 ## AUTHOR
 

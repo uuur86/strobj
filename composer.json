@@ -2,7 +2,7 @@
     "description": "This repository allows you to access objects via string.",
     "name": "uuur86/strobj",
     "type": "library",
-    "license": "GPL-2.0-or-later",
+    "license": "MIT",
     "support": {
         "source": "https://github.com/uuur86/strobj"
     },
