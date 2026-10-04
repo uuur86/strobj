@@ -173,6 +173,12 @@ $test->set('persons/4/age', 200);
 $test->get('persons/4/age');
 ```
 
+## DOCUMENTATION
+
+The [wiki](https://github.com/uuur86/strobj/wiki) covers values and defaults,
+validation, filters, error handling, Laravel and custom PHP integration, security
+and migration from 2.1. Its source is in [docs/wiki](docs/wiki).
+
 ## EXAMPLES
 
 Start the examples server and open `http://localhost:8000/` for a landing page
