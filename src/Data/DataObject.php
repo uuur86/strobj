@@ -29,8 +29,9 @@ use Traversable;
  * Inherited asort/ksort sort values/keys and forward PHP's native comparison flags.
  * Inherited natsort/natcasesort sort values in natural/case-insensitive natural order.
  * Inherited uasort/uksort accept native comparators and preserve keys.
- * Shared storage observation invalidates cached reads after these operations,
- * including partial mutations before a comparator throws.
+ * Reads always resolve the current storage. Revision checks observe the storage,
+ * so validation also refreshes after these operations, including partial
+ * mutations before a comparator throws.
  *
  * @see RecursiveArrayIterator::asort()
  * @see RecursiveArrayIterator::ksort()
@@ -42,17 +43,13 @@ use Traversable;
 class DataObject extends RecursiveArrayIterator implements DataInterface
 {
     /**
-     * @var DataPath[]
-     */
-    private array $paths = [];
-    /**
      * Latest query path
      *
      * @var string
      */
     private string $currentPath = '';
     /**
-     * Cache object
+     * Auxiliary cache populated only by cache(); reads never consult it.
      *
      * @var DataCache
      */
@@ -67,8 +64,13 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     /** @var bool Whether reads and writes detach mutable object state. */
     private bool $detached = false;
 
-    /** @var array Last observed SPL storage, used to detect inherited mutations. */
-    private array $observedData = [];
+    /**
+     * Storage observed by the latest revision check, used to detect inherited
+     * SPL mutations. Null after a library write, which already bumps the revision.
+     *
+     * @var array|null
+     */
+    private ?array $observedData = null;
 
     /**
      * Mutation counter used to invalidate validation results.
@@ -138,6 +140,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
 
     /**
      * Initializes the current path and returns an independent path iterator.
+     * Parsed paths are not retained, so distinct queries do not accumulate memory.
      *
      * @param string $path The slash-separated query path.
      *
@@ -149,21 +152,25 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         $canonical = $parsed->normalizePath($path);
         $this->currentPath = $canonical;
 
-        if (!isset($this->paths[$canonical])) {
-            $this->paths[$canonical] = new DataPath($canonical);
-        }
-
-        return new DataPath($this->paths[$canonical]->getRaw());
+        return new DataPath($canonical);
     }
 
     /**
      * Returns the revision of the current data.
+     * Inherited SPL mutations made since the previous check also advance it.
      *
      * @return int
      */
     public function getRevision(): int
     {
-        $this->readStorage();
+        $data = parent::getArrayCopy();
+
+        if ($this->observedData !== null && $data !== $this->observedData) {
+            $this->revision++;
+            $this->cache->clearAll();
+        }
+
+        $this->observedData = $data;
 
         return $this->revision;
     }
@@ -179,14 +186,14 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     }
 
     /**
-     * Save data to cache
+     * Save data to the auxiliary cache
+     * Retained for API compatibility; get() always resolves the current data.
      *
      * @param string $path
      * @param mixed  $value
      */
     public function cache(string $path, $value): void
     {
-        $this->readStorage();
         $canonical = $this->pathInit($path)->normalizePath($path);
         $this->cache->save($canonical, $this->copyStoredValue($value));
     }
@@ -200,21 +207,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function get(string $path)
     {
-        $this->readStorage();
-        $canonical = $this->pathInit($path)->normalizePath($path);
-
-        if (strpos($canonical, '*') !== false) {
-            return $this->query($canonical);
-        }
-
-        if ($this->cache->isCached($canonical)) {
-            return $this->copyStoredValue($this->cache->get($canonical));
-        }
-
-        $value = $this->query($canonical);
-        $this->cache($canonical, $value);
-
-        return $value;
+        return $this->query($path);
     }
 
     /**
@@ -244,7 +237,18 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
             return PathResolver::read($this->readStorage(), [], $transform, '', $this->detached);
         }
 
-        return PathResolver::read($this->readStorage(), $segments, $transform, '', $this->detached);
+        if ($segments[0] === '*') {
+            return PathResolver::read($this->readStorage(), $segments, $transform, '', $this->detached);
+        }
+
+        $key = array_shift($segments);
+        $root = $this->lookupRoot($key);
+
+        if (!$root['exists']) {
+            return null;
+        }
+
+        return PathResolver::read($root['value'], $segments, $transform, $key, $this->detached);
     }
 
     /**
@@ -256,7 +260,37 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function findMatches(string $path): array
     {
-        return PathResolver::select($this->readStorage(), $this->pathInit($path)->getArray(), '', $this->detached);
+        $segments = $this->pathInit($path)->getArray();
+
+        if ($segments === [] || $segments[0] === '*') {
+            return PathResolver::select($this->readStorage(), $segments, '', $this->detached);
+        }
+
+        $key = array_shift($segments);
+        $root = $this->lookupRoot($key);
+
+        if (!$root['exists']) {
+            return [implode('/', array_merge([$key], $segments)) => ['exists' => false, 'value' => null]];
+        }
+
+        return PathResolver::select($root['value'], $segments, $key, $this->detached);
+    }
+
+    /**
+     * Reads one root field through the SPL storage in constant time.
+     * Numeric property names of object roots are also found this way.
+     *
+     * @param string $key The root field.
+     *
+     * @return array{exists: bool, value: mixed}
+     */
+    private function lookupRoot(string $key): array
+    {
+        if (!parent::offsetExists($key)) {
+            return ['exists' => false, 'value' => null];
+        }
+
+        return ['exists' => true, 'value' => parent::offsetGet($key)];
     }
 
     /**
@@ -279,8 +313,10 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         }
 
         $value = $this->copyStoredValue($value);
-        $updated = PathResolver::write($this->readStorage(), $segments, $value, $this->detached);
-        $this->offsetSet($segments[0], $updated[$segments[0]]);
+        $key = array_shift($segments);
+        $root = $this->lookupRoot($key);
+        $updated = PathResolver::write($root['exists'] ? $root['value'] : [], $segments, $value, $this->detached);
+        $this->offsetSet($key, $updated);
     }
 
     /**
@@ -344,24 +380,17 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     {
         $this->cache->clearAll();
         $this->revision++;
-        $this->observedData = parent::getArrayCopy();
+        $this->observedData = null;
     }
 
     /**
-     * Detects mutations made by inherited SPL methods without overriding their signatures.
-     * PHP's array comparison also detects ordering changes and uses copy-on-write storage.
+     * Returns the complete iterator storage for whole-tree and root wildcard reads.
      *
      * @return array The current iterator storage.
      */
     private function readStorage(): array
     {
-        $data = parent::getArrayCopy();
-
-        if ($data !== $this->observedData) {
-            $this->invalidate();
-        }
-
-        return $data;
+        return parent::getArrayCopy();
     }
 
     /**
