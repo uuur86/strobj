@@ -2,8 +2,14 @@
 
 /**
  * This file is part of the StrObj package.
+ *
  * (c) Uğur Biçer <contact@fyndsoft.com>
- * See LICENSE for copyright and license information.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @package StrObj
+ * @link    https://github.com/uuur86/strobj
  */
 
 declare(strict_types=1);

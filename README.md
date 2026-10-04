@@ -1,5 +1,7 @@
 
 # PHP String Objects
+[![PHP tests](https://github.com/uuur86/strobj/actions/workflows/php.yml/badge.svg)](https://github.com/uuur86/strobj/actions/workflows/php.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
@@ -27,7 +29,7 @@ To install the library, run the following Composer command:
 composer require uuur86/strobj
 ```
 
-## USAGE
+## Usage
 
 To get started with PHP String Objects, include the following code at the top of your PHP file:
 
@@ -36,7 +38,7 @@ use StrObj\StringObjects;
 require('vendor/autoload.php');
 ```
 
-### BASIC USAGE
+### Basic usage
 
 `StringObjects::instance()` returns stored values unchanged (including `false`
 and `null`), applies a default only to missing or rejected values, detaches values
@@ -180,13 +182,13 @@ $test->set('persons/4/age', 200);
 $test->get('persons/4/age');
 ```
 
-## DOCUMENTATION
+## Documentation
 
 The [wiki](https://github.com/uuur86/strobj/wiki) covers values and defaults,
 validation, filters, error handling, Laravel and custom PHP integration, security
 and migration from 2.1. Its source is in [docs/wiki](docs/wiki).
 
-## EXAMPLES
+## Examples
 
 Start the examples server and open `http://localhost:8000/` for a landing page
 with links to both interactive demos. Select table columns and change filters
@@ -194,9 +196,9 @@ over complex JSON, or add, list, edit and delete products through a form with
 validation and persistent SQLite storage. See [examples/README.md](examples/README.md)
 for setup, a walkthrough and extension points.
 
-## DEVELOPMENT
+## Development
 
-### TESTS
+### Tests
 
 ```bash
 composer install
@@ -221,7 +223,7 @@ for phpdbg commands, behavior contracts and verification details.
 
 Run production static analysis with `composer phpstan`.
 
-### FORMATTING
+### Formatting
 
 VS Code and Cursor use `valeryanm.vscode-phpsab` with the shared `phpcs.xml`
 rules. Press **Shift+Alt+F** to format a PHP document. Formatting on save and
@@ -229,36 +231,31 @@ paste stays disabled. Use `composer format -- <changed paths>` to format from
 the terminal and `composer format:check -- <changed paths>` to verify the result.
 See [Formatting](docs/formatting.md) for setup and spacing conventions.
 
-## LICENSE
+## License
 
 MIT. See [LICENSE](LICENSE). Releases up to 2.1.9 were published under GPL-2.0-or-later.
 
-## AUTHOR
+## Author
 
-Uğur Biçer - @uuur86
+Uğur Biçer ([@uuur86](https://github.com/uuur86))
 
-## CONTRIBUTING
+## Contributing
 
-If you want to contribute to this project, you can send pull requests. See the [Contributing guide](CONTRIBUTING.md); all contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+Contributions are welcome. Read the [contributing guide](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md), and report bugs through
+[GitHub issues](https://github.com/uuur86/strobj/issues). For other questions,
+email contact@fyndsoft.com.
 
-## CONTACT
-
-You can contact me via email: contact@fyndsoft.com
-
-## BUGS
-
-You can report bugs via github issues.
-
-## SECURITY
+## Security
 
 Please do not report security issues in public issues. Follow the private reporting
 process in [SECURITY.md](SECURITY.md).
 
-## DONATE
+## Sponsoring
 
-If you want to support me, you can donate via github sponsors: <https://github.com/sponsors/uuur86>
+You can support the project through [GitHub Sponsors](https://github.com/sponsors/uuur86).
 
-## SEE ALSO
+## See also
 
-- [uuur86/wpoauth]( https://github.com/uuur86/wpoauth ) - Wordpress OAuth2 Client
-- [@codeplusdev]( https://github.com/codeplusdev ) - Codeplus Development
+- [uuur86/dalue](https://github.com/uuur86/dalue) — a data mapper built on StrObj
+- [uuur86/wpoauth](https://github.com/uuur86/wpoauth) — WordPress OAuth2 client

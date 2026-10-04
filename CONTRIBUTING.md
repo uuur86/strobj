@@ -1,62 +1,62 @@
 # Contributing to StrObj
 
-We welcome contributions to the StrObj project and are grateful for every kind of help provided. This document provides guidelines for contributing to the StrObj library.
+Thank you for helping improve StrObj. This guide explains how to propose changes
+so that they can be reviewed and released safely.
 
-## Table of Contents
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Submitting Changes](#submitting-changes)
-- [Coding Standards](#coding-standards)
-- [Pull Request Process](#pull-request-process)
-- [Reporting Bugs](#reporting-bugs)
-- [Feature Requests](#feature-requests)
+## Code of conduct
 
-## Code of Conduct
-This project adheres to a code of conduct. By participating, you are expected to uphold this code. Please read [Code of Conduct](CODE_OF_CONDUCT.md) for details.
+Everyone taking part in this project is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Getting Started
-Before you begin contributing to StrObj, please take a moment to:
-- Familiarize yourself with the [Code of Conduct](CODE_OF_CONDUCT.md).
-- Read the documentation and understand the library's functionality.
+## Reporting bugs and requesting features
 
-## Submitting Changes
-1. **Fork the Repository**
-   - Navigate to the StrObj repository on GitHub and click the "Fork" button.
+- Search the [existing issues](https://github.com/uuur86/strobj/issues) first.
+- Use the issue templates. A bug report needs the StrObj and PHP versions, the
+  `behavior` option in use, a minimal code sample, and the expected and actual
+  results.
+- Report security vulnerabilities privately, as described in
+  [SECURITY.md](SECURITY.md). Never open a public issue for them.
 
-2. **Clone the Fork**
-   - Clone your forked repository to your local machine.
+## Development setup
 
-3. **Create a New Branch**
-   - Create a branch for your changes: `git checkout -b feature/my-new-feature`.
+Requirements: PHP 7.4 or newer, Composer, and PCOV or Xdebug for coverage.
 
-4. **Make Your Changes**
-   - Implement your feature or bug fix.
+```bash
+git clone https://github.com/uuur86/strobj.git
+cd strobj
+composer install
+```
 
-5. **Commit Your Changes**
-   - Commit your changes with a clear commit message.
+## Making a change
 
-6. **Push to the Branch**
-   - Push your changes to your GitHub repository.
+1. Create a branch from the current development branch (`v2.2-dev` for 3.0).
+2. Write the change and a test that fails without it. Regression tests go in
+   `tests/Regression/` and reference the issue they cover.
+3. Keep public method signatures compatible unless the change targets a major
+   release, and describe user-visible changes in [CHANGELOG.md](CHANGELOG.md).
+4. Write code, comments, documentation and messages in English.
 
-7. **Create a Pull Request**
-   - Open a pull request in the original StrObj repository.
+## Checks
 
-## Coding Standards
-- Follow the [PSR-12](https://www.php-fig.org/psr/psr-12/) coding standards.
-- Write clear, understandable, and well-documented code.
+Every pull request must pass the same checks as CI:
 
-## Pull Request Process
-- Ensure any install or build dependencies are removed before the end of the layer when doing a build.
-- Update the README.md with details of changes to the interface, including new environment variables, exposed ports, useful file locations, and container parameters.
-- Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent.
+```bash
+composer test                                # unit, regression and integration tests
+composer test:coverage                       # 100% line coverage of src/
+composer phpstan                             # static analysis, PHP 7.4 target
+composer format:check -- <changed paths>     # PSR-12 and project spacing rules
+```
 
-## Reporting Bugs
-- Use GitHub Issues to report bugs.
-- Clearly describe the issue, including steps to reproduce the bug.
-- A code sample or an executable test case demonstrating the problem will help greatly.
+Format changed files with `composer format -- <changed paths>`. See
+[docs/testing.md](docs/testing.md) and [docs/formatting.md](docs/formatting.md)
+for details.
 
-## Feature Requests
-- Open an issue with a detailed explanation of the feature you would like to see, and how it would benefit users.
+## Pull requests
 
-Thank you for your interest in contributing to StrObj!
+- Keep each pull request focused on one change and link the related issue.
+- Explain what changes for users and how you tested it.
+- Update the README, the wiki source in [docs/wiki](docs/wiki) and the changelog
+  when behavior or public APIs change.
 
+By contributing, you agree that your contributions are licensed under the
+[MIT License](LICENSE).
