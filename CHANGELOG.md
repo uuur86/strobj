@@ -29,6 +29,8 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The `mbstring` extension is no longer required. Distribution archives contain
+  only the library, its license and its documentation.
 - `instance()` throws `InvalidArgumentException` (a subclass of `Exception`)
   for invalid input and keeps the error codes 22, 23 and 24.
 - `toJson()` throws `JsonException` when the data cannot be encoded, instead

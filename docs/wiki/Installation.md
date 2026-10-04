@@ -3,7 +3,7 @@
 ## Requirements
 
 - PHP 7.4 or newer (tested on 7.4 through 8.5)
-- The `json` and `mbstring` extensions
+- The `json` extension
 
 ## Composer
 

@@ -1,11 +1,20 @@
 {
-    "description": "This repository allows you to access objects via string.",
     "name": "uuur86/strobj",
+    "description": "Read, write, validate and filter nested arrays, objects and JSON documents with slash-separated paths.",
     "type": "library",
+    "keywords": [
+        "json",
+        "path",
+        "array",
+        "object",
+        "nested",
+        "dot-notation",
+        "data-access",
+        "validation",
+        "filter"
+    ],
+    "homepage": "https://github.com/uuur86/strobj",
     "license": "MIT",
-    "support": {
-        "source": "https://github.com/uuur86/strobj"
-    },
     "authors": [
         {
             "name": "Uğur Biçer",
@@ -13,23 +22,39 @@
             "role": "lead"
         }
     ],
+    "support": {
+        "issues": "https://github.com/uuur86/strobj/issues",
+        "source": "https://github.com/uuur86/strobj",
+        "docs": "https://github.com/uuur86/strobj/wiki",
+        "security": "https://github.com/uuur86/strobj/security/policy"
+    },
+    "require": {
+        "php": ">=7.4",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpmetrics/phpmetrics": "^2.8",
+        "phpstan/phpstan": "^1.8",
+        "phpunit/phpunit": "^9.6",
+        "squizlabs/php_codesniffer": "^3.5"
+    },
     "autoload": {
         "psr-4": {
             "StrObj\\": "src/"
         }
     },
-    "require": {
-        "php": ">=7.4",
-        "ext-json": "*",
-        "ext-mbstring": "*"
+    "autoload-dev": {
+        "psr-4": {
+            "StrObj\\Tests\\": "tests/"
+        }
     },
-    "require-dev": {
-        "symfony/console": "^4.4",
-        "phpunit/phpunit": "^9.6",
-        "phpstan/phpstan": "^1.8",
-        "squizlabs/php_codesniffer": "^3.5",
-        "friendsofphp/php-cs-fixer": "^2.16 || ^3.0",
-        "phpmetrics/phpmetrics": "^2.8"
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-v2.2-dev": "3.0.x-dev"
+        }
     },
     "scripts": {
         "test": "phpunit",

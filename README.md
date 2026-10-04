@@ -19,7 +19,7 @@ PHP String Objects is a library that provides an easy and intuitive interface fo
 
 ## Installation
 
-Requires PHP 7.4 or newer, with the JSON and mbstring extensions.
+Requires PHP 7.4 or newer with the JSON extension.
 
 To install the library, run the following Composer command:
 

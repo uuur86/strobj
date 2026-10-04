@@ -2,7 +2,7 @@
 
 StrObj reads, writes and validates nested PHP arrays, objects and JSON documents
 through slash-separated paths such as `order/items/0/sku`. It has no runtime
-dependencies beyond the JSON and mbstring extensions, so it fits any framework
+dependencies beyond the JSON extension, so it fits any framework
 or plain PHP application.
 
 ```php
