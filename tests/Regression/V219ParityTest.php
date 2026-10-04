@@ -6,6 +6,7 @@ namespace StrObj\Tests\Regression;
 
 use PHPUnit\Framework\TestCase;
 use StrObj\Data\DataObject;
+use StrObj\Helpers\PathResolver;
 use StrObj\StringObjects;
 
 /** Keeps legacy results that v2.1.9 applications already rely on. */
@@ -67,5 +68,20 @@ final class V219ParityTest extends TestCase
         $list = StringObjects::instance([['a' => 1], ['a' => 2]])->toArray();
         self::assertSame([0, 1], array_keys($list));
         self::assertSame(['a' => 2], $list[1]);
+    }
+
+    /** @see https://github.com/uuur86/strobj/issues/24 */
+    public function testRebuiltRootsMatchTheObjectCastOnEveryRuntime(): void
+    {
+        $entries = [['a' => 1], 'x' => 2, 5 => 3];
+        $object = PathResolver::objectFromEntries($entries);
+        self::assertEquals((object) $entries, $object);
+        self::assertSame(json_encode((object) $entries), json_encode($object));
+        self::assertTrue((new \ArrayObject($object))->offsetExists('5'));
+
+        $legacy = StringObjects::instance('{"0":{"a":1},"b":2}');
+        self::assertSame('{"0":{"a":1},"b":2}', $legacy->toJson());
+        $legacy->set('0/a', 3);
+        self::assertSame('{"0":{"a":3},"b":2}', $legacy->toJson());
     }
 }

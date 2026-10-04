@@ -23,6 +23,7 @@ use JsonException;
 use StrObj\Data\DataFilters;
 use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
+use StrObj\Helpers\PathResolver;
 
 /**
  * StringObjects class
@@ -112,11 +113,12 @@ class StringObjects
                 throw new InvalidArgumentException('JSON decoding error: ' . json_last_error_msg(), 22);
             }
 
-            $data = $decoded;
-
-            if (!is_array($data) && !is_object($data)) {
+            if (!is_array($decoded) && !is_object($decoded)) {
                 throw new InvalidArgumentException('JSON input must contain an object or array.', 23);
             }
+
+            // A decoded root has no outside references, so it can be rebuilt with consistent keys.
+            $data = is_object($decoded) ? PathResolver::objectFromEntries((array) $decoded) : $decoded;
         } elseif (!is_array($data) && !is_object($data)) {
             throw new InvalidArgumentException('Input data is neither an object nor an array.', 24);
         }
@@ -124,7 +126,7 @@ class StringObjects
         $consistent = Behavior::isConsistent($options);
 
         if (is_array($data)) {
-            $data = $consistent ? new ArrayIterator($data) : (object) $data;
+            $data = $consistent ? new ArrayIterator($data) : PathResolver::objectFromEntries($data);
         }
 
         return $consistent ? new static($data, $options) : new self($data, $options);

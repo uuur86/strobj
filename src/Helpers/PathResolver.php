@@ -12,6 +12,8 @@ namespace StrObj\Helpers;
 
 use InvalidArgumentException;
 use ArrayAccess;
+use ArrayObject;
+use stdClass;
 use Traversable;
 
 /** Resolves paths independently of mutable iterator cursors. */
@@ -30,6 +32,27 @@ final class PathResolver
     public static function copyValue($value, bool $asArrays = false, int $depth = 0)
     {
         return $asArrays ? ValueCopier::toArray($value) : ValueCopier::copy($value, $depth);
+    }
+
+    /**
+     * Creates a stdClass root whose fields are written through SPL storage.
+     * Before PHP 8.1, SPL cannot find numeric property names created by an
+     * (object) cast; writing them through SPL keeps every lookup consistent.
+     *
+     * @param array $entries Root fields.
+     *
+     * @return object
+     */
+    public static function objectFromEntries(array $entries): object
+    {
+        $object = new stdClass();
+        $storage = new ArrayObject($object);
+
+        foreach ($entries as $key => $value) {
+            $storage[$key] = $value;
+        }
+
+        return $object;
     }
 
     /**

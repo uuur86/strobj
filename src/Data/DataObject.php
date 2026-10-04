@@ -128,7 +128,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     {
         $data = $this->copyStoredValue(parent::getArrayCopy());
         $this->cache = new DataCache();
-        parent::__construct($this->objectRoot ? (object) $data : $data, $this->getFlags());
+        parent::__construct($this->objectRoot ? PathResolver::objectFromEntries($data) : $data, $this->getFlags());
         $this->observedData = parent::getArrayCopy();
     }
 
@@ -286,11 +286,15 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     private function lookupRoot(string $key): array
     {
-        if (!parent::offsetExists($key)) {
-            return ['exists' => false, 'value' => null];
+        if (parent::offsetExists($key)) {
+            return ['exists' => true, 'value' => parent::offsetGet($key)];
         }
 
-        return ['exists' => true, 'value' => parent::offsetGet($key)];
+        // SPL before PHP 8.1 misses numeric property names of objects supplied by the caller.
+        $fields = PHP_VERSION_ID < 80100 && $this->objectRoot ? (array) (object) parent::getArrayCopy() : [];
+        $exists = array_key_exists($key, $fields);
+
+        return ['exists' => $exists, 'value' => $exists ? $fields[$key] : null];
     }
 
     /**

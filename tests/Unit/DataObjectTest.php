@@ -98,7 +98,9 @@ final class DataObjectTest extends TestCase
         try {
             $object->{$method}('not_a_callable');
             self::fail('Invalid comparator should be rejected.');
-        } catch (\TypeError $exception) {
+        } catch (\Throwable $exception) {
+            // PHP 8 throws TypeError; PHP 7.4 raises a warning that PHPUnit converts to an exception.
+            self::assertNotInstanceOf(\PHPUnit\Framework\AssertionFailedError::class, $exception);
             self::assertSame(['b' => 2, 'a' => 1], $object->toArray());
             self::assertSame(0, $object->getRevision());
         }

@@ -35,7 +35,7 @@ final class CompatibilityTest extends TestCase
                 self::assertNotFalse($method->getDocComment(), $label . ' documentation must be retained.');
                 self::assertSame($expected['static'], $method->isStatic(), $label);
                 self::assertSame($expected['public'], $method->isPublic(), $label);
-                self::assertSame($expected['return'], (string) $method->getReturnType(), $label);
+                self::assertSame($expected['return'], $this->typeName($method->getReturnType()), $label);
                 $parameters = $method->getParameters();
                 self::assertGreaterThanOrEqual(count($expected['parameters']), count($parameters), $label);
                 $signature = [];
@@ -43,7 +43,7 @@ final class CompatibilityTest extends TestCase
                 foreach ($expected['parameters'] as $index => $parameter) {
                     $actual = $parameters[$index];
                     self::assertSame($parameter['name'], $actual->getName(), $label);
-                    self::assertSame($parameter['type'], (string) $actual->getType(), $label);
+                    self::assertSame($parameter['type'], $this->typeName($actual->getType()), $label);
                     self::assertSame($parameter['reference'], $actual->isPassedByReference(), $label);
                     self::assertSame($parameter['optional'], $actual->isOptional(), $label);
 
@@ -79,10 +79,22 @@ final class CompatibilityTest extends TestCase
         }
     }
 
+    /** Formats a type like PHP 8; PHP 7.4 omits the nullable marker when casting to string. */
+    private function typeName(?\ReflectionType $type): string
+    {
+        if (!$type instanceof \ReflectionNamedType) {
+            return (string) $type;
+        }
+
+        $nullable = $type->allowsNull() && !in_array($type->getName(), ['mixed', 'null'], true);
+
+        return ($nullable ? '?' : '') . $type->getName();
+    }
+
     private function signatureType(?\ReflectionNamedType $type): string
     {
         if ($type === null || $type->isBuiltin()) {
-            return (string) $type;
+            return $this->typeName($type);
         }
 
         return ($type->allowsNull() ? '?' : '') . '\\' . $type->getName();

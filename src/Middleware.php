@@ -70,8 +70,8 @@ class Middleware
         if ($name === 'memory_limit') {
             $bytes = $value;
 
-            if (!$this->consistent && is_string($value) && is_numeric($value)) {
-                $bytes = $value + 0;
+            if (!$this->consistent && is_string($value)) {
+                $bytes = $this->toNumber($value);
             }
 
             $validType = is_int($bytes) || (!$this->consistent && is_float($bytes) && is_finite($bytes));
@@ -127,6 +127,7 @@ class Middleware
     public function memoryLeakProtection(): void
     {
         $limit = $this->get('memory_limit');
+        $limit = is_string($limit) ? $this->toNumber($limit) : $limit;
 
         if ($limit === null || $limit == -1) {
             return;
@@ -140,5 +141,20 @@ class Middleware
                 $this->convertToString($usage)
             ));
         }
+    }
+
+    /**
+     * Converts a numeric string, ignoring surrounding whitespace on every PHP version.
+     * PHP 7.4 does not treat trailing whitespace as numeric; PHP 8 does.
+     *
+     * @param string $value Configured value.
+     *
+     * @return int|float|string The number, or the original string when it is not numeric.
+     */
+    private function toNumber(string $value)
+    {
+        $trimmed = trim($value);
+
+        return is_numeric($trimmed) ? $trimmed + 0 : $value;
     }
 }

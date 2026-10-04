@@ -91,7 +91,7 @@ final class ValueCopier
                     }
 
                     if (
-                        !$property->isInitialized($result)
+                        !self::isInitialized($property, $result)
                         || (method_exists($property, 'isReadOnly') && $property->isReadOnly())
                         || (method_exists($property, 'isVirtual') && $property->isVirtual())
                     ) {
@@ -149,6 +149,24 @@ final class ValueCopier
         (new ReflectionMethod($base, '__construct'))->invokeArgs($object, $arguments);
 
         return true;
+    }
+
+    /**
+     * Checks initialization in the declaring scope; get_object_vars() omits
+     * uninitialized and unset properties. Unlike ReflectionProperty::isInitialized(),
+     * this needs no setAccessible() call for private state before PHP 8.1.
+     *
+     * @return bool
+     */
+    private static function isInitialized(ReflectionProperty $property, object $object): bool
+    {
+        $check = static function (object $object, string $name): bool {
+            return array_key_exists($name, get_object_vars($object));
+        };
+        $scope = $property->getDeclaringClass();
+        $check = $scope->isInternal() ? $check : Closure::bind($check, null, $scope->getName());
+
+        return $check($object, $property->getName());
     }
 
     /**
