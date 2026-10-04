@@ -84,4 +84,53 @@ final class V219ParityTest extends TestCase
         $legacy->set('0/a', 3);
         self::assertSame('{"0":{"a":3},"b":2}', $legacy->toJson());
     }
+
+    /** @see https://github.com/uuur86/strobj/issues/35 */
+    public function testLegacyWildcardsReturnColumnsLikeVersion219(): void
+    {
+        $json = '{"list":[{"v":false,"w":{"x":1}},{"v":null},{},{"v":3}],"map":{"a":{"v":1},"b":{"v":2}},'
+        . '"groups":[{"p":[{"age":1}]},{"p":[]}],"s":5}';
+
+        foreach ([$json, json_decode($json, true)] as $input) {
+            $legacy = StringObjects::instance($input);
+            self::assertSame([false, null, 3], $legacy->get('list/*/v'));
+            self::assertSame([1, 2], $legacy->get('map/*/v'));
+            self::assertSame([], $legacy->get('list/*/missing'));
+            self::assertNull($legacy->get('missing/*/v'));
+            self::assertSame([], $legacy->get('s/*/v'));
+            self::assertCount(4, $legacy->get('list/*'));
+            // v2.1 ignores segments after the column.
+            self::assertEquals([(object) ['x' => 1]], json_decode(json_encode($legacy->get('list/*/w/x'))));
+            self::assertCount(2, $legacy->get('groups/*/p/*/age'));
+
+            $consistent = StringObjects::consistent($input);
+            self::assertSame([false, null, null, 3], $consistent->get('list/*/v'));
+            self::assertSame([1, null, null, null], $consistent->get('list/*/w/x'));
+            self::assertSame([[1], []], $consistent->get('groups/*/p/*/age'));
+        }
+    }
+
+    /** @see https://github.com/uuur86/strobj/issues/35 */
+    public function testLegacyColumnsUseConcretePathsForFiltersAndTransforms(): void
+    {
+        $legacy = StringObjects::instance(['persons' => [['age' => '12'], [], ['age' => '30']]], [
+            'filters' => ['persons/*/age' => ['type' => 'int']],
+        ]);
+        // v2.1 applies legacy leaf-name filters to arrays only, so column values keep their stored type.
+        self::assertSame(['12', '30'], $legacy->get('persons/*/age'));
+
+        $data = new DataObject(['rows' => [['a' => 1], ['b' => 2], ['a' => 3]]]);
+        $paths = [];
+        $values = $data->queryWithTransform('rows/*/a', static function (string $path, $value) use (&$paths) {
+            $paths[] = $path;
+
+            return $value * 10;
+        });
+        self::assertSame([10, 30], $values);
+        self::assertSame(['rows/0/a', 'rows/2/a'], $paths);
+
+        $rows = new DataObject([['a' => 1], ['b' => 2], ['a' => 3]]);
+        self::assertSame([1, 3], $rows->getCols('a'));
+        self::assertSame([1, null, 3], DataObject::snapshot([['a' => 1], ['b' => 2], ['a' => 3]])->getCols('a'));
+    }
 }

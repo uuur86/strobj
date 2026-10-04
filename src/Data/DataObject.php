@@ -237,6 +237,12 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
             return PathResolver::read($this->readStorage(), [], $transform, '', $this->detached);
         }
 
+        $wildcard = array_search('*', $segments, true);
+
+        if (!$this->detached && $wildcard !== false && isset($segments[$wildcard + 1])) {
+            return $this->readColumn(array_slice($segments, 0, $wildcard), $segments[$wildcard + 1], $transform);
+        }
+
         if ($segments[0] === '*') {
             return PathResolver::read($this->readStorage(), $segments, $transform, '', $this->detached);
         }
@@ -249,6 +255,46 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         }
 
         return PathResolver::read($root['value'], $segments, $transform, $key, $this->detached);
+    }
+
+    /**
+     * Reads a legacy wildcard column with the v2.1 array_column() contract.
+     * Rows without the column are skipped, the result is a list, and segments
+     * after the column are ignored. A missing prefix returns null; a scalar
+     * prefix returns an empty list.
+     *
+     * @param string[]      $prefix    Segments before the wildcard.
+     * @param string        $column    Segment after the wildcard.
+     * @param callable|null $transform Receives the concrete path and value.
+     *
+     * @return array|null
+     */
+    private function readColumn(array $prefix, string $column, ?callable $transform): ?array
+    {
+        $rows = $this->readStorage();
+
+        if ($prefix !== []) {
+            $match = current($this->findMatches(implode('/', $prefix)));
+
+            if (!$match['exists']) {
+                return null;
+            }
+
+            $rows = $match['value'];
+        }
+
+        $values = [];
+
+        foreach (is_array($rows) || is_object($rows) ? $rows : [] as $index => $row) {
+            $fields = is_array($row) ? $row : (is_object($row) ? get_object_vars($row) : []);
+
+            if (array_key_exists($column, $fields)) {
+                $path = implode('/', array_merge($prefix, [(string) $index, $column]));
+                $values[] = $transform === null ? $fields[$column] : $transform($path, $fields[$column]);
+            }
+        }
+
+        return $values;
     }
 
     /**

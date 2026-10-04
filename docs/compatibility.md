@@ -24,6 +24,7 @@ and test its own expectations before changing profiles.
 | Existing `null` | Returns `null` | Returns `null` |
 | Input/returned object references | Preserves existing live references | Copies writable object state |
 | Empty object root in facade JSON | `[]`, as before | `{}` |
+| Wildcard read `prefix/*/field` | `array_column()` contract from v2.1: rows without the field are skipped and later segments are ignored | One entry per row (`null` for a missing field); every segment and nested wildcard is resolved |
 | `toArray()` | Root fields with nested values unchanged, as in v2.1 | Every nested container converted to arrays through its JSON representation |
 | Unknown filter cast | Leaves the value unchanged | Throws `InvalidArgumentException` |
 | Invalid JSON cast | Returns `null` | Throws `JsonException` |
