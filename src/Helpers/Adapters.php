@@ -98,9 +98,29 @@ trait Adapters
         return $this->castValue($value, $type, true);
     }
 
-    /** @return mixed Shared cast implementation for both compatibility profiles. */
+    /**
+     * Shared cast implementation for both compatibility profiles.
+     * Values that PHP cannot cast without an error or warning are returned unchanged
+     * by the legacy profile and rejected by the strict profile.
+     *
+     * @param mixed  $value  Value to cast.
+     * @param string $type   Supported cast name.
+     * @param bool   $strict Reject unknown types, invalid JSON and impossible casts.
+     *
+     * @return mixed
+     * @throws InvalidArgumentException In strict mode, for unsupported types or values.
+     */
     private function castValue($value, string $type, bool $strict)
     {
+        if (!$this->isCastable($value, $type, $strict)) {
+            if ($strict) {
+                throw new InvalidArgumentException(
+                    sprintf('Cannot cast a value of type %s to %s.', gettype($value), $type)
+                );
+            }
+
+            return $value;
+        }
 
         if ($type === 'int') {
             return (int) $value;
@@ -127,7 +147,11 @@ trait Adapters
         }
 
         if ($type === 'json') {
-            return json_decode($value, false, 512, $strict ? JSON_THROW_ON_ERROR : 0);
+            if ($value === null) {
+                return null;
+            }
+
+            return json_decode((string) $value, false, 512, $strict ? JSON_THROW_ON_ERROR : 0);
         }
 
         if ($strict) {
@@ -135,5 +159,32 @@ trait Adapters
         }
 
         return $value;
+    }
+
+    /**
+     * Reports whether a cast completes without a PHP error or warning.
+     * Strict JSON casts accept strings only; legacy JSON casts also decode scalars and null.
+     *
+     * @param mixed  $value  Value to cast.
+     * @param string $type   Cast name.
+     * @param bool   $strict Whether the strict profile is active.
+     *
+     * @return bool
+     */
+    private function isCastable($value, string $type, bool $strict): bool
+    {
+        if ($type === 'int' || $type === 'float') {
+            return !is_object($value);
+        }
+
+        if ($type === 'string') {
+            return is_scalar($value) || $value === null || (is_object($value) && method_exists($value, '__toString'));
+        }
+
+        if ($type === 'json') {
+            return is_string($value) || (!$strict && (is_scalar($value) || $value === null));
+        }
+
+        return true;
     }
 }

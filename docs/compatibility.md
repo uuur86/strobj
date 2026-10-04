@@ -27,6 +27,7 @@ and test its own expectations before changing profiles.
 | `toArray()` | Root fields with nested values unchanged, as in v2.1 | Every nested container converted to arrays through its JSON representation |
 | Unknown filter cast | Leaves the value unchanged | Throws `InvalidArgumentException` |
 | Invalid JSON cast | Returns `null` | Throws `JsonException` |
+| Cast PHP cannot perform (object or array to string, object to number, non-string JSON) | Returns the value unchanged; scalar JSON casts decode as in v2.1 | Throws `InvalidArgumentException` |
 | Predicate callbacks | Closures, as before | All callable forms |
 | Tree filtering | Historical array leaf-name matching; objects cast directly | Complete path matching on a copied tree |
 | Callback argument arrays | Original keys, including PHP 8 named arguments | Positional values |
