@@ -4,7 +4,7 @@ Filters change what `get()` returns. They do not change stored data, `toJson()` 
 `toArray()`.
 
 ```php
-$product = StringObjects::consistent(['price' => '19.90', 'stock' => '-3'], [
+$product = StringObjects::instance(['price' => '19.90', 'stock' => '-3'], [
     'filters' => [
         'price' => ['type' => 'float'],
         'stock' => [
@@ -42,12 +42,12 @@ $product->has('stock');      // true
 ```
 
 - Filter paths may contain wildcards (`items/*/qty`). An exact path wins over a
-  wildcard. Among wildcards, the consistent profile picks the pattern with the most
-  literal segments; the legacy profile picks the first configured match.
+  wildcard. Among wildcards, the default behavior picks the pattern with the most
+  literal segments; the legacy behavior picks the first configured match.
 - The default type is `string`. Set `type` explicitly when filtering numbers,
   booleans, arrays or objects.
-- In the consistent profile, any `callable` can be used as `callback`, and a
-  rejected value returns the default passed to `get()`. In the legacy profile,
+- In the default behavior, any `callable` can be used as `callback`, and a
+  rejected value returns the default passed to `get()`. In the legacy behavior,
   only closures are called and a rejected value returns `false`.
 
 ## Casts that cannot be performed

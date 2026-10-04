@@ -7,6 +7,7 @@ namespace StrObj\Tests\Regression;
 use PHPUnit\Framework\TestCase;
 use StrObj\Data\DataFilters;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Legacy;
 
 /**
  * Pins the documented contract for false, null, missing and rejected values.
@@ -19,7 +20,7 @@ final class DefaultSemanticsTest extends TestCase
 
     public function testConsistentReadsReturnStoredValuesAndUseTheDefaultOnlyWhenMissing(): void
     {
-        $object = StringObjects::consistent(self::DATA);
+        $object = StringObjects::instance(self::DATA);
 
         foreach (self::DATA as $path => $stored) {
             self::assertTrue($object->has($path));
@@ -34,7 +35,7 @@ final class DefaultSemanticsTest extends TestCase
 
     public function testLegacyReadsKeepTheVersion219Contract(): void
     {
-        $object = StringObjects::instance(self::DATA);
+        $object = Legacy::of(self::DATA);
         self::assertSame('default', $object->get('f', 'default'));
         self::assertNull($object->get('n', 'default'));
         self::assertSame(0, $object->get('z', 'default'));
@@ -46,7 +47,7 @@ final class DefaultSemanticsTest extends TestCase
     public function testConsistentFilterRejectionReturnsTheDefaultAndKeepsStoredFalse(): void
     {
         $data = ['age' => 5, 'flag' => false, 'list' => [['age' => 20], ['age' => 3], []]];
-        $object = StringObjects::consistent($data, [
+        $object = StringObjects::instance($data, [
             'filters' => [
                 'age' => ['type' => 'int', 'callback' => static function (int $value): bool {
                     return $value > 10;
@@ -67,7 +68,7 @@ final class DefaultSemanticsTest extends TestCase
 
     public function testLegacyFilterRejectionStillReturnsFalse(): void
     {
-        $object = StringObjects::instance(['age' => 5], ['filters' => ['age' => [
+        $object = Legacy::of(['age' => 5], ['filters' => ['age' => [
             'type' => 'int',
             'callback' => static function (int $value): bool {
                 return $value > 10;

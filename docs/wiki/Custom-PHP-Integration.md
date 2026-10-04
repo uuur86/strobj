@@ -44,7 +44,7 @@ if ($body === false || strlen($body) > MAX_BODY_BYTES) {
 }
 
 try {
-    $contact = StringObjects::consistent($body, [
+    $contact = StringObjects::instance($body, [
         'validation' => ['rules' => [
             ['path' => 'name', 'pattern' => '/^.{2,80}$/u', 'required' => true],
             ['path' => 'email', 'pattern' => '/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i', 'required' => true],
@@ -121,7 +121,7 @@ final class JsonDocumentMiddleware implements MiddlewareInterface
         }
 
         try {
-            $document = StringObjects::consistent($body);
+            $document = StringObjects::instance($body);
         } catch (InvalidArgumentException $exception) {
             return $this->responses->createResponse(400);
         }
@@ -149,7 +149,7 @@ use StrObj\StringObjects;
 public function __invoke(Request $request): JsonResponse
 {
     try {
-        $payload = StringObjects::consistent($request->getContent());
+        $payload = StringObjects::instance($request->getContent());
     } catch (\InvalidArgumentException $exception) {
         return new JsonResponse(['message' => 'Invalid JSON document.'], 400);
     }
@@ -162,7 +162,7 @@ public function __invoke(Request $request): JsonResponse
 
 ```php
 $response = file_get_contents('https://api.example.com/orders/42'); // or your HTTP client
-$order = StringObjects::consistent($response);
+$order = StringObjects::instance($response);
 
 $total = $order->get('data/totals/grand', 0.0);
 $skus = $order->get('data/lines/*/product/sku');
@@ -174,7 +174,7 @@ Treat third-party responses as untrusted input: validate them before use.
 
 ```php
 foreach ($queue->messages() as $message) {
-    $job = StringObjects::consistent($message->body());
+    $job = StringObjects::instance($message->body());
     // One instance per message; nothing is shared between iterations.
 }
 ```
@@ -196,7 +196,7 @@ return [
 
 ```php
 $options = require __DIR__ . '/../config/payloads/contact.php';
-$contact = StringObjects::consistent($body, $options);
+$contact = StringObjects::instance($body, $options);
 ```
 
 Never load options from user-controlled files or request data; see the

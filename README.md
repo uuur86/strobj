@@ -38,11 +38,18 @@ require('vendor/autoload.php');
 
 ### BASIC USAGE
 
-Existing applications keep their legacy behavior with `StringObjects::instance()`.
-New examples use `StringObjects::consistent()` for explicit defaults, detached
-values and strict configuration. See [Compatibility](docs/compatibility.md) for
-observable differences, preserved API signatures and the direct `offsetSet()`
-migration path.
+`StringObjects::instance()` returns stored values unchanged (including `false`
+and `null`), applies a default only to missing or rejected values, detaches values
+from the input and checks its configuration strictly. Applications written for
+2.x can keep the previous results with the legacy behavior:
+
+```php
+use StrObj\Behavior;
+
+$data = StringObjects::instance($json, ['behavior' => Behavior::LEGACY]);
+```
+
+See [Compatibility](docs/compatibility.md) for every observable difference.
 
 Here is an example of how to use PHP String Objects to access and manipulate data in a JSON string:
 
@@ -74,7 +81,7 @@ $persons = '{
     ]
 }';
 
-$test = StringObjects::consistent(
+$test = StringObjects::instance(
     $persons,
     [
         'validation' => [

@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use StrObj\Data\DataObject;
 use StrObj\Helpers\PathResolver;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Legacy;
 
 /** Keeps legacy results that v2.1.9 applications already rely on. */
 final class V219ParityTest extends TestCase
@@ -15,7 +16,7 @@ final class V219ParityTest extends TestCase
     /** @see https://github.com/uuur86/strobj/issues/24 */
     public function testNumericRootKeysResolveAfterTheLegacyObjectCast(): void
     {
-        $list = StringObjects::instance([['a' => 1], ['a' => 2]]);
+        $list = Legacy::of([['a' => 1], ['a' => 2]]);
         self::assertSame(1, $list->get('0/a'));
         self::assertSame(2, $list->get('1/a'));
         self::assertTrue($list->has('0'));
@@ -23,7 +24,7 @@ final class V219ParityTest extends TestCase
         self::assertFalse($list->has('2'));
         self::assertSame([1, 2], $list->get('*/a'));
 
-        $keyed = StringObjects::instance(['0' => ['x' => 1], '7' => 'seven']);
+        $keyed = Legacy::of(['0' => ['x' => 1], '7' => 'seven']);
         self::assertSame(1, $keyed->get('0/x'));
         self::assertSame('seven', $keyed->get('7'));
         $keyed->set('0/x', 2);
@@ -37,7 +38,7 @@ final class V219ParityTest extends TestCase
     {
         $json = '{"0":{"name":"Neo"},"10":true}';
 
-        foreach ([StringObjects::instance($json), StringObjects::consistent($json)] as $object) {
+        foreach ([Legacy::of($json), StringObjects::instance($json)] as $object) {
             self::assertSame('Neo', $object->get('0/name'));
             self::assertTrue($object->get('10'));
             self::assertTrue($object->isValid('0/name'));
@@ -51,21 +52,21 @@ final class V219ParityTest extends TestCase
     /** @see https://github.com/uuur86/strobj/issues/26 */
     public function testLegacyToArrayKeepsNestedValuesUnchanged(): void
     {
-        $legacy = StringObjects::instance('{"a":{"b":1},"list":[{"c":2}]}')->toArray();
+        $legacy = Legacy::of('{"a":{"b":1},"list":[{"c":2}]}')->toArray();
         self::assertInstanceOf(\stdClass::class, $legacy['a']);
         self::assertSame(1, $legacy['a']->b);
         self::assertSame(2, $legacy['list'][0]->c);
 
-        $consistent = StringObjects::consistent('{"a":{"b":1},"list":[{"c":2}]}')->toArray();
+        $consistent = StringObjects::instance('{"a":{"b":1},"list":[{"c":2}]}')->toArray();
         self::assertSame(['a' => ['b' => 1], 'list' => [['c' => 2]]], $consistent);
     }
 
     /** @see https://github.com/uuur86/strobj/issues/26 */
     public function testLegacyToArrayAcceptsAnyStringAndNormalizesRootKeys(): void
     {
-        self::assertSame(['a' => "\xB1"], StringObjects::instance(['a' => "\xB1"])->toArray());
+        self::assertSame(['a' => "\xB1"], Legacy::of(['a' => "\xB1"])->toArray());
 
-        $list = StringObjects::instance([['a' => 1], ['a' => 2]])->toArray();
+        $list = Legacy::of([['a' => 1], ['a' => 2]])->toArray();
         self::assertSame([0, 1], array_keys($list));
         self::assertSame(['a' => 2], $list[1]);
     }
@@ -79,7 +80,7 @@ final class V219ParityTest extends TestCase
         self::assertSame(json_encode((object) $entries), json_encode($object));
         self::assertTrue((new \ArrayObject($object))->offsetExists('5'));
 
-        $legacy = StringObjects::instance('{"0":{"a":1},"b":2}');
+        $legacy = Legacy::of('{"0":{"a":1},"b":2}');
         self::assertSame('{"0":{"a":1},"b":2}', $legacy->toJson());
         $legacy->set('0/a', 3);
         self::assertSame('{"0":{"a":3},"b":2}', $legacy->toJson());
@@ -92,7 +93,7 @@ final class V219ParityTest extends TestCase
         . '"groups":[{"p":[{"age":1}]},{"p":[]}],"s":5}';
 
         foreach ([$json, json_decode($json, true)] as $input) {
-            $legacy = StringObjects::instance($input);
+            $legacy = Legacy::of($input);
             self::assertSame([false, null, 3], $legacy->get('list/*/v'));
             self::assertSame([1, 2], $legacy->get('map/*/v'));
             self::assertSame([], $legacy->get('list/*/missing'));
@@ -103,7 +104,7 @@ final class V219ParityTest extends TestCase
             self::assertEquals([(object) ['x' => 1]], json_decode(json_encode($legacy->get('list/*/w/x'))));
             self::assertCount(2, $legacy->get('groups/*/p/*/age'));
 
-            $consistent = StringObjects::consistent($input);
+            $consistent = StringObjects::instance($input);
             self::assertSame([false, null, null, 3], $consistent->get('list/*/v'));
             self::assertSame([1, null, null, null], $consistent->get('list/*/w/x'));
             self::assertSame([[1], []], $consistent->get('groups/*/p/*/age'));
@@ -113,7 +114,7 @@ final class V219ParityTest extends TestCase
     /** @see https://github.com/uuur86/strobj/issues/35 */
     public function testLegacyColumnsUseConcretePathsForFiltersAndTransforms(): void
     {
-        $legacy = StringObjects::instance(['persons' => [['age' => '12'], [], ['age' => '30']]], [
+        $legacy = Legacy::of(['persons' => [['age' => '12'], [], ['age' => '30']]], [
             'filters' => ['persons/*/age' => ['type' => 'int']],
         ]);
         // v2.1 applies legacy leaf-name filters to arrays only, so column values keep their stored type.

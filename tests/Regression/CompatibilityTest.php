@@ -8,11 +8,13 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
 use RecursiveArrayIterator;
+use StrObj\Behavior;
 use StrObj\Data\DataFilters;
 use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
 use StrObj\Middleware;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Legacy;
 
 /** Preserves consumer contracts recorded from the v2.1 source before this change. */
 final class CompatibilityTest extends TestCase
@@ -158,8 +160,8 @@ final class CompatibilityTest extends TestCase
     public function testLegacyAndConsistentDefaultsAreExplicit(): void
     {
         $input = ['false' => false, 'nil' => null];
-        $legacy = StringObjects::instance($input);
-        $consistent = StringObjects::consistent($input);
+        $legacy = Legacy::of($input);
+        $consistent = StringObjects::instance($input);
         self::assertSame('fallback', $legacy->get('false', 'fallback'));
         self::assertNull($legacy->get('missing', 'fallback'));
         self::assertFalse($consistent->get('false', 'fallback'));
@@ -171,8 +173,8 @@ final class CompatibilityTest extends TestCase
             self::assertTrue($object->has('nil'));
         }
 
-        self::assertSame('[]', StringObjects::instance((object) [])->toJson());
-        self::assertSame('{}', StringObjects::consistent((object) [])->toJson());
+        self::assertSame('[]', Legacy::of((object) [])->toJson());
+        self::assertSame('{}', StringObjects::instance((object) [])->toJson());
         self::assertSame([], (new DataObject((object) []))->jsonSerialize());
         self::assertSame('12', $legacy->castType('12', 'integer'));
         self::assertNull($legacy->castType('{', 'json'));
@@ -187,15 +189,16 @@ final class CompatibilityTest extends TestCase
                 parent::__construct($obj, $options);
             }
         };
-        self::assertSame(StringObjects::class, get_class($consumer::instance(['age' => 12])));
-        self::assertInstanceOf(get_class($consumer), $consumer::consistent(['age' => 12]));
+        $legacy = ['behavior' => Behavior::LEGACY];
+        self::assertSame(StringObjects::class, get_class($consumer::instance(['age' => 12], $legacy)));
+        self::assertInstanceOf(get_class($consumer), $consumer::instance(['age' => 12]));
     }
 
     public function testLegacyObjectIdentityAndStrictSnapshotsAreSeparate(): void
     {
         $person = (object) ['age' => 12];
-        $legacy = StringObjects::instance(['person' => $person]);
-        $consistent = StringObjects::instance(['person' => $person], ['behavior' => 'consistent']);
+        $legacy = Legacy::of(['person' => $person]);
+        $consistent = StringObjects::instance(['person' => $person]);
         self::assertSame($person, $legacy->get('person'));
         $person->age = 21;
         self::assertSame(21, $legacy->get('person')->age);
@@ -229,7 +232,7 @@ final class CompatibilityTest extends TestCase
         ]);
         self::assertSame('12', $filters->filterAt('string', '12'));
         self::assertFalse($filters->filterAt('closure', '12'));
-        self::assertSame('12', StringObjects::instance(['string' => '12'], [
+        self::assertSame('12', Legacy::of(['string' => '12'], [
             'filters' => ['string' => ['type' => 'integer']],
         ])->get('string'));
 
@@ -243,7 +246,7 @@ final class CompatibilityTest extends TestCase
     public function testUnknownBehaviorProfileIsRejected(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        StringObjects::instance([], ['behavior' => 'unknown']);
+        Legacy::of([], ['behavior' => 'unknown']);
     }
 
     public function testInheritedUnserializeMutationRefreshesCacheAndValidation(): void
@@ -302,7 +305,7 @@ final class CompatibilityTest extends TestCase
 
     public function testLegacyObjectFiltersCastTheSelectedObjectDirectly(): void
     {
-        $object = StringObjects::instance(['record' => (object) ['age' => 12]], [
+        $object = Legacy::of(['record' => (object) ['age' => 12]], [
             'filters' => ['record' => ['type' => 'array']],
         ]);
         self::assertSame(['age' => 12], $object->get('record'));

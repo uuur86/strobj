@@ -7,6 +7,7 @@ namespace StrObj\Tests\Regression;
 use PHPUnit\Framework\TestCase;
 use StrObj\Data\DataObject;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Legacy;
 
 /** Guards against lost SPL child writes and the former root-key write-back error. */
 final class Gh10519RegressionTest extends TestCase
@@ -19,7 +20,7 @@ final class Gh10519RegressionTest extends TestCase
      */
     public function testDeepWriteNeverPromotesAChildKeyToTheRoot($input, string $path, array $expected): void
     {
-        $object = StringObjects::instance($input);
+        $object = Legacy::of($input);
         $object->get('');
         $object->get(explode('/', $path)[0]);
         $object->set($path, 5);

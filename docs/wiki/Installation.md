@@ -11,7 +11,8 @@
 composer require uuur86/strobj
 ```
 
-To use 2.2 features before the 2.2.0 release, require the development branch:
+Version 3.0 is in development. To use it before the 3.0.0 release, require the
+development branch:
 
 ```bash
 composer require uuur86/strobj:dev-v2.2-dev
@@ -32,7 +33,7 @@ use StrObj\StringObjects;
 ## Verifying the installation
 
 ```php
-$data = StringObjects::consistent(['status' => 'ok']);
+$data = StringObjects::instance(['status' => 'ok']);
 echo $data->get('status'); // ok
 ```
 

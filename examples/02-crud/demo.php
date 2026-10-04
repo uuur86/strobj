@@ -33,7 +33,7 @@ $id = $created['id'];
 
 // READ: access nested data without chains of if/isset checks.
 $read = $products->read($id);
-$view = StringObjects::consistent($read);
+$view = StringObjects::instance($read);
 $selected = [
     'name' => $view->get('product/name'),
     'city' => $view->get('product/inventory/warehouse/city'),

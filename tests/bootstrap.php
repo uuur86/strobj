@@ -20,3 +20,5 @@ if (is_file($autoload)) {
         }
     });
 }
+
+require_once __DIR__ . '/Fixtures/Legacy.php';

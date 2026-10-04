@@ -29,7 +29,7 @@ final class WebhookController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         try {
-            $payload = StringObjects::consistent($request->getContent(), [
+            $payload = StringObjects::instance($request->getContent(), [
                 'validation' => ['rules' => [
                     ['path' => 'event', 'pattern' => '/^(order\.paid|order\.refunded)$/', 'required' => true],
                     ['path' => 'data/order/id', 'pattern' => '/^\d+$/', 'required' => true],
@@ -61,7 +61,7 @@ final class WebhookController extends Controller
 - `$request->getContent()` passes the raw body, so StrObj decodes the JSON and
   reports invalid documents with exception code 22.
 - When the request was already parsed, pass the array instead:
-  `StringObjects::consistent($request->json()->all())`.
+  `StringObjects::instance($request->json()->all())`.
 - Laravel limits request sizes at the web server and PHP level (`post_max_size`).
   Keep those limits in place; StrObj does not limit document size.
 
@@ -105,7 +105,7 @@ final class OrderPayload
     public static function fromJson(string $json): self
     {
         try {
-            $data = StringObjects::consistent($json, self::OPTIONS);
+            $data = StringObjects::instance($json, self::OPTIONS);
         } catch (InvalidArgumentException $exception) {
             throw new InvalidPayload('The order document is not valid JSON.', 0, $exception);
         }
@@ -200,7 +200,7 @@ Configuration files are trusted code. Never merge request data into options.
 For a JSON column cast to `array`, wrap the attribute and write the result back:
 
 ```php
-$settings = StringObjects::consistent($user->settings ?? []);
+$settings = StringObjects::instance($user->settings ?? []);
 $settings->set('notifications/email', false);
 $user->settings = $settings->toArray();
 $user->save();

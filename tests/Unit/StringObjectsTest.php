@@ -16,7 +16,7 @@ final class StringObjectsTest extends TestCase
     /** @dataProvider inputs */
     public function testSupportedInputsAndRootShapes($input, string $json, array $expected): void
     {
-        $object = StringObjects::consistent($input);
+        $object = StringObjects::instance($input);
         self::assertSame($json, $object->toJson());
         self::assertSame($expected, $object->toArray());
         self::assertTrue($object->has(''));
@@ -36,7 +36,7 @@ final class StringObjectsTest extends TestCase
     {
         $this->expectException(Exception::class);
         $this->expectExceptionCode($code);
-        StringObjects::consistent($input);
+        StringObjects::instance($input);
     }
 
     public function unsupportedInputs(): array
@@ -48,7 +48,7 @@ final class StringObjectsTest extends TestCase
     public function testMalformedJsonDoesNotDiscloseItsContents(): void
     {
         try {
-            StringObjects::consistent('{"secret":"do-not-print"');
+            StringObjects::instance('{"secret":"do-not-print"');
             self::fail('Malformed JSON should be rejected.');
         } catch (Exception $exception) {
             self::assertStringNotContainsString('do-not-print', $exception->getMessage());
@@ -60,7 +60,7 @@ final class StringObjectsTest extends TestCase
     public function testMalformedTopLevelOptionsAreRejected(array $options): void
     {
         $this->expectException(InvalidArgumentException::class);
-        StringObjects::consistent([], $options);
+        StringObjects::instance([], $options);
     }
 
     public function malformedOptions(): array
@@ -72,21 +72,21 @@ final class StringObjectsTest extends TestCase
     {
         $subclass = new class ((object) []) extends StringObjects {
         };
-        $copy = $subclass::consistent(['age' => 12]);
+        $copy = $subclass::instance(['age' => 12]);
         self::assertInstanceOf(get_class($subclass), $copy);
         self::assertSame(12, $copy->get('age'));
     }
 
     public function testUnencodableDataReportsJsonException(): void
     {
-        $object = StringObjects::consistent(['bad' => "\xB1\x31"]);
+        $object = StringObjects::instance(['bad' => "\xB1\x31"]);
         $this->expectException(JsonException::class);
         $object->toJson();
     }
 
     public function testMemoryGuardCanBeChangedAfterConstruction(): void
     {
-        $object = StringObjects::consistent(['age' => 12]);
+        $object = StringObjects::instance(['age' => 12]);
         $object->setMemoryLimit(1);
         $this->expectException(OverflowException::class);
         $object->get('age');
@@ -95,6 +95,6 @@ final class StringObjectsTest extends TestCase
     public function testConstructorChecksMemoryGuardBeforeCopyingData(): void
     {
         $this->expectException(OverflowException::class);
-        StringObjects::consistent(['age' => 12], ['middleware' => ['memory_limit' => 1]]);
+        StringObjects::instance(['age' => 12], ['middleware' => ['memory_limit' => 1]]);
     }
 }

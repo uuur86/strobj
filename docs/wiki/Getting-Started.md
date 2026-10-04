@@ -6,11 +6,12 @@ Both factories accept an array, an object (including `Traversable`) or a JSON
 string whose root is an object or array.
 
 ```php
+use StrObj\Behavior;
 use StrObj\StringObjects;
 
-$data = StringObjects::consistent($json);          // recommended
-$data = StringObjects::consistent($array, $options);
-$data = StringObjects::instance($json);            // legacy v2.1 behavior
+$data = StringObjects::instance($json);
+$data = StringObjects::instance($array, $options);
+$data = StringObjects::instance($json, ['behavior' => Behavior::LEGACY]); // 2.x results
 ```
 
 Invalid input throws `InvalidArgumentException`; see [Error Handling](Error-Handling).
@@ -32,7 +33,7 @@ Leading, trailing and repeated slashes are ignored (`/order//id/` equals
 ## Reading
 
 ```php
-$order = StringObjects::consistent(
+$order = StringObjects::instance(
     '{"order":{"id":42,"paid":false,"coupon":null,"items":[{"sku":"A-1","qty":2},{"sku":"B-2"}]}}'
 );
 
@@ -53,7 +54,7 @@ The rules for `false`, `null` and defaults are described in
 $order->get('order/items/*/qty');      // [2, null] — one entry per item
 ```
 
-In the consistent profile, a wildcard read returns one entry per element and
+In the default behavior, a wildcard read returns one entry per element and
 lists missing fields as `null`. Nested wildcards (`groups/*/members/*/name`)
 return nested lists. `has('order/items/*/qty')` is `true` when at least one
 element has the field.
@@ -78,12 +79,12 @@ the way is replaced by a new branch.
 | Method | Result |
 | --- | --- |
 | `toJson()` | A JSON string. Object roots stay objects (`{}`), lists stay lists. |
-| `toArray()` | A PHP array. The consistent profile converts every nested object to an array. |
+| `toArray()` | A PHP array. The default behavior converts every nested object to an array. |
 
 ## Options
 
 ```php
-$data = StringObjects::consistent($input, [
+$data = StringObjects::instance($input, [
     'validation' => ['patterns' => [/* name => regex */], 'rules' => [/* ... */]],
     'filters'    => [/* path => ['type' => ..., 'callback' => ...] */],
     'middleware' => ['memory_limit' => 256 * 1024 * 1024], // optional, bytes

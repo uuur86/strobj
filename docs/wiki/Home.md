@@ -8,7 +8,7 @@ or plain PHP application.
 ```php
 use StrObj\StringObjects;
 
-$order = StringObjects::consistent($json);
+$order = StringObjects::instance($json);
 
 $order->get('order/items/0/sku');         // "A-1"
 $order->get('order/note', 'n/a');         // "n/a" — the field is missing
@@ -29,19 +29,19 @@ $order->isValid();                        // checks the configured rules
 | Laravel controllers, services and tests | [Laravel Integration](Laravel-Integration) |
 | Plain PHP, PSR-7 and other frameworks | [Custom PHP Integration](Custom-PHP-Integration) |
 | Secure use with untrusted input | [Security Guide](Security-Guide) |
-| Moving from 2.1 to the consistent profile | [Migration from 2.1](Migration-from-2.1) |
+| Upgrading from 2.x | [Migration from 2.1](Migration-from-2.1) |
 
-## Behavior profiles
+## Behaviors
 
-StrObj has two profiles:
+`StringObjects::instance()` has two behaviors, selected with the `behavior` option:
 
-- **`StringObjects::consistent()`** — recommended for new code. Stored values are
-  returned exactly as stored, defaults apply only to missing fields, values are
-  detached from the input, and configuration is checked strictly.
-- **`StringObjects::instance()`** — the legacy profile. It keeps the v2.1 behavior
-  that existing applications rely on.
+- **Consistent** (the default) — stored values are returned exactly as stored,
+  defaults apply only to missing or rejected values, values are detached from the
+  input, and configuration is checked strictly.
+- **Legacy** (`['behavior' => Behavior::LEGACY]`) — keeps the 2.x results that
+  existing applications rely on.
 
 See [Migration from 2.1](Migration-from-2.1) for the differences.
 
-> The consistent profile is introduced in version 2.2. Until 2.2.0 is tagged,
-> it is available from the `v2.2-dev` branch.
+> The consistent default ships in version 3.0. Until 3.0.0 is tagged, it is
+> available from the `v2.2-dev` branch.

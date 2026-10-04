@@ -59,7 +59,7 @@ function requireProductId($value): int
 /** Builds the nested request; an empty description explicitly clears its value. */
 function requestProductJson(StringObjects $request): string
 {
-    $payload = StringObjects::consistent(['product' => $request->get('product', [])]);
+    $payload = StringObjects::instance(['product' => $request->get('product', [])]);
 
     if ($payload->get('product/description') === '') {
         $payload->set('product/description', null);

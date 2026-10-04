@@ -4,10 +4,9 @@ Two interactive browser examples demonstrate the real library API. Path access,
 defaults, `has()`, filters and validation rules replace nested `if`/`isset`
 chains for data access. Ordinary PHP handles the forms, HTTP and persistence.
 
-Both examples explicitly use `StringObjects::consistent()` for missing-field
-defaults, preserved false/null values and strict filtering/validation options.
-Existing applications keep legacy behavior through `instance()`; see
-[Compatibility](../docs/compatibility.md) before changing profiles.
+Both examples use the default behavior of `StringObjects::instance()`: defaults
+for missing fields, preserved false/null values and strict filtering/validation
+options. See [Compatibility](../docs/compatibility.md) for the legacy behavior.
 
 ## Start here
 

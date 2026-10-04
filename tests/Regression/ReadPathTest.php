@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use StrObj\Data\DataCache;
 use StrObj\Data\DataObject;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Legacy;
 
 /**
  * Reads resolve current data in time proportional to the path depth.
@@ -19,7 +20,7 @@ final class ReadPathTest extends TestCase
     public function testLegacyReadsObserveExternalNestedMutations(): void
     {
         $input = json_decode('{"a":{"b":1}}');
-        $object = StringObjects::instance($input);
+        $object = Legacy::of($input);
         self::assertSame(1, $object->get('a/b'));
         $input->a->b = 2;
         self::assertSame(2, $object->get('a/b'));
@@ -44,7 +45,7 @@ final class ReadPathTest extends TestCase
 
     public function testRootReadsDoNotCopyLargeStorage(): void
     {
-        $object = StringObjects::instance(array_fill(0, 100000, 1));
+        $object = Legacy::of(array_fill(0, 100000, 1));
         $start = microtime(true);
 
         for ($index = 0; $index < 2000; $index++) {

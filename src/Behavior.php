@@ -12,16 +12,19 @@ namespace StrObj;
 
 use InvalidArgumentException;
 
-/** Selects a public behavior contract without changing existing applications' defaults. */
+/**
+ * Selects the behavior contract of a StringObjects instance.
+ * CONSISTENT is the default; LEGACY reproduces the v2.1 results for existing applications.
+ */
 final class Behavior
 {
     public const LEGACY = 'legacy';
     public const CONSISTENT = 'consistent';
 
-    /** Validates the shared profile option and reports whether strict behavior was requested. */
+    /** Validates the behavior option and reports whether the consistent contract applies. */
     public static function isConsistent(array $options): bool
     {
-        $profile = $options['behavior'] ?? self::LEGACY;
+        $profile = $options['behavior'] ?? self::CONSISTENT;
 
         if ($profile !== self::LEGACY && $profile !== self::CONSISTENT) {
             throw new InvalidArgumentException('behavior must be legacy or consistent.');

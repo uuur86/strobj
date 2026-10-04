@@ -14,7 +14,7 @@ require dirname(__DIR__) . '/bootstrap.php';
 require dirname(__DIR__) . '/layout.php';
 require __DIR__ . '/table.php';
 
-$source = StringObjects::consistent(file_get_contents(__DIR__ . '/customers.json'), [
+$source = StringObjects::instance(file_get_contents(__DIR__ . '/customers.json'), [
     'filters' => [
         'payload/customers/*/account/active' => ['type' => 'bool'],
         'payload/customers/*/commerce/summary/orderCount' => ['type' => 'int'],
@@ -56,7 +56,7 @@ $optionalColumns = [
 ];
 
 // Query parameters control the view, while the selected paths define its shape.
-$query = StringObjects::consistent($_GET);
+$query = StringObjects::instance($_GET);
 $defaultColumns = $query->has('configured') ? [] : ['Email', 'Lifetime spend', 'Latest product SKU', 'Active'];
 $chosenColumns = array_filter((array) $query->get('columns', $defaultColumns), 'is_string');
 $extendedColumns = $columns + array_intersect_key($optionalColumns, array_flip($chosenColumns));

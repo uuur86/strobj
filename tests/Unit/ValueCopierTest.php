@@ -13,6 +13,7 @@ use StrObj\Helpers\PathResolver;
 use StrObj\StringObjects;
 use StrObj\Tests\Fixtures\CopyableParent;
 use StrObj\Tests\Fixtures\MutableCollection;
+use StrObj\Tests\Fixtures\Legacy;
 
 final class ValueCopierTest extends TestCase
 {
@@ -50,7 +51,7 @@ final class ValueCopierTest extends TestCase
                 }
             }
         };
-        $object = StringObjects::consistent(['record' => $input]);
+        $object = StringObjects::instance(['record' => $input]);
         $input->change();
         $result = $object->get('record');
         self::assertInstanceOf(get_class($input), $result);
@@ -67,7 +68,7 @@ final class ValueCopierTest extends TestCase
     {
         $date = new DateTimeImmutable('2023-01-01T00:00:00+00:00');
 
-        $objects = [StringObjects::instance(['date' => $date]), StringObjects::consistent(['date' => $date])];
+        $objects = [Legacy::of(['date' => $date]), StringObjects::instance(['date' => $date])];
 
         foreach ($objects as $object) {
             self::assertInstanceOf(DateTimeImmutable::class, $object->get('date'));
@@ -153,7 +154,7 @@ final class ValueCopierTest extends TestCase
     {
         $entry = (object) ['age' => 12];
         $collection = new $class(['first' => $entry, 'nil' => null]);
-        $object = StringObjects::consistent(['records' => $collection]);
+        $object = StringObjects::instance(['records' => $collection]);
         self::assertSame($entry, $collection['first']);
         $entry->age = 21;
         self::assertInstanceOf($class, $object->get('records'));
@@ -230,7 +231,7 @@ final class ValueCopierTest extends TestCase
                 return $this->storage->value;
             }
         };
-        $object = StringObjects::consistent(['record' => $collection]);
+        $object = StringObjects::instance(['record' => $collection]);
 
         try {
             $object->set('record/value', 21);
@@ -250,7 +251,7 @@ final class ValueCopierTest extends TestCase
             {
             }
         };
-        $object = StringObjects::consistent(['record' => $container]);
+        $object = StringObjects::instance(['record' => $container]);
 
         try {
             $object->set('record/value', 21);
@@ -287,7 +288,7 @@ final class ValueCopierTest extends TestCase
                 return $this->entries;
             }
         };
-        $object = StringObjects::consistent(['records' => $collection]);
+        $object = StringObjects::instance(['records' => $collection]);
         self::assertSame(12, $object->get('records/first'));
         self::assertNull($object->get('records/nil', 'fallback'));
         self::assertSame('fallback', $object->get('records/missing', 'fallback'));

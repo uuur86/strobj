@@ -36,9 +36,9 @@ if (!class_exists(PDO::class) || !in_array('sqlite', PDO::getAvailableDrivers(),
 }
 
 $products = new ProductService(new ProductRepository(openDemoDatabase()));
-$request = StringObjects::consistent($_POST);
-$query = StringObjects::consistent($_GET);
-$form = StringObjects::consistent(['product' => ['pricing' => ['currency' => 'USD'],
+$request = StringObjects::instance($_POST);
+$query = StringObjects::instance($_GET);
+$form = StringObjects::instance(['product' => ['pricing' => ['currency' => 'USD'],
     'inventory' => ['stock' => 0], 'publication' => ['active' => false]]]);
 $editId = null;
 $errors = [];
@@ -49,7 +49,7 @@ unset($_SESSION['notice']);
 // The controller handles HTTP. ProductService handles paths, defaults and validation.
 try {
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-        $form = StringObjects::consistent(['product' => $request->get('product', [])]);
+        $form = StringObjects::instance(['product' => $request->get('product', [])]);
         requireFormToken($request);
 
         switch ($request->get('action')) {
@@ -78,11 +78,11 @@ try {
 
     if ($query->has('edit')) {
         $editId = requireProductId($query->get('edit'));
-        $form = StringObjects::consistent($products->read($editId));
+        $form = StringObjects::instance($products->read($editId));
     }
 
     if ($query->has('sample') && $editId === null) {
-        $form = StringObjects::consistent(['product' => [
+        $form = StringObjects::instance(['product' => [
             'name' => 'Wireless Headphones', 'sku' => 'HEADSET-01',
             'pricing' => ['amount' => '149.90', 'currency' => 'USD'],
             'inventory' => ['stock' => 0, 'warehouse' => ['city' => 'Chicago']],
@@ -223,7 +223,7 @@ renderHeader('Product CRUD', 'crud');
                         ?><tr><td class="empty" colspan="6">No products yet. Add one using the form.</td></tr><?php
                     endif; ?>
                     <?php foreach ($records as $record) :
-                        $item = StringObjects::consistent($record);
+                        $item = StringObjects::instance($record);
                         $warehouseCity = $item->get('product/inventory/warehouse/city'); ?>
                         <tr data-product-id="<?= $record['id'] ?>">
                             <td><strong><?= escapeHtml($item->get('product/name')) ?></strong>
@@ -274,7 +274,7 @@ renderHeader('Product CRUD', 'crud');
     <div class="explain-grid">
         <div><h3>Read nested values and apply defaults</h3>
             <p>Form inputs become a nested payload. One path lookup handles missing intermediate branches.</p>
-            <pre><code>$request = StringObjects::consistent($json);
+            <pre><code>$request = StringObjects::instance($json);
 $stock = $request->get('product/inventory/stock', 0);
 $city = $request->get('product/inventory/warehouse/city', '');</code></pre>
         </div>

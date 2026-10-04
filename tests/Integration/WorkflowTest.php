@@ -11,7 +11,7 @@ final class WorkflowTest extends TestCase
 {
     public function testFilteringValidationAndExportStayConsistentAfterWrites(): void
     {
-        $object = StringObjects::consistent('{"persons":[{"age":"12","name":"John"}]}', [
+        $object = StringObjects::instance('{"persons":[{"age":"12","name":"John"}]}', [
             'validation' => ['patterns' => ['digits' => '#^[0-9]+$#'], 'rules' => [
                 ['path' => 'persons/*/age', 'pattern' => 'digits', 'required' => true],
                 ['path' => 'persons/*/name', 'pattern' => '#^[a-z]+$#i', 'required' => true],
@@ -43,8 +43,8 @@ final class WorkflowTest extends TestCase
         $options = ['validation' => ['rules' => [
             ['path' => 'age', 'pattern' => '#^[0-9]+$#', 'required' => true],
         ]]];
-        $first = StringObjects::consistent($input, $options);
-        $second = StringObjects::consistent($input, $options);
+        $first = StringObjects::instance($input, $options);
+        $second = StringObjects::instance($input, $options);
         $first->get('age');
         $second->get('age');
         $first->set('age', 'bad');
@@ -59,7 +59,7 @@ final class WorkflowTest extends TestCase
     public function testRepeatedMutationsAgreeWithAnIndependentArrayModel(int $seed): void
     {
         $model = ['persons' => [], 'keep' => ['value' => 'unchanged']];
-        $object = StringObjects::consistent($model);
+        $object = StringObjects::instance($model);
         $state = $seed;
         $values = [null, false, 0, '0', '', 'Neo', ['nested' => 21]];
 

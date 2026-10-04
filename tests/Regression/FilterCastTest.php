@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use stdClass;
 use StrObj\Data\DataFilters;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Legacy;
 
 /**
  * Casts never raise PHP errors or warnings for values they cannot convert.
@@ -83,7 +84,7 @@ final class FilterCastTest extends TestCase
         $accept = static function (): bool {
             return true;
         };
-        $object = StringObjects::instance('{"a":{"b":1}}', ['filters' => ['a' => ['callback' => $accept]]]);
+        $object = Legacy::of('{"a":{"b":1}}', ['filters' => ['a' => ['callback' => $accept]]]);
         self::assertEquals((object) ['b' => 1], $object->get('a'));
     }
 }

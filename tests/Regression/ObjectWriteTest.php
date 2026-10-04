@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Legacy;
 
 /**
  * Object writes report rejected fields as invalid paths instead of PHP errors.
@@ -20,9 +21,7 @@ final class ObjectWriteTest extends TestCase
     /** @dataProvider rejectedWrites */
     public function testRejectedObjectWritesThrowInvalidArgumentException(callable $data, string $path, $value): void
     {
-        foreach (['instance', 'consistent'] as $factory) {
-            $object = StringObjects::$factory(['record' => $data()]);
-
+        foreach ([StringObjects::instance(['record' => $data()]), Legacy::of(['record' => $data()])] as $object) {
             try {
                 $object->set($path, $value);
                 self::fail('The write should be rejected.');
@@ -63,7 +62,7 @@ final class ObjectWriteTest extends TestCase
                 $this->received[$name] = $value;
             }
         };
-        $object = StringObjects::instance(['record' => $record]);
+        $object = Legacy::of(['record' => $record]);
         $object->set('record/name', 'new');
         $object->set('record/hidden', 1);
         self::assertSame('new', $object->get('record/name'));
@@ -81,6 +80,6 @@ final class ObjectWriteTest extends TestCase
         };
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Path writes require cloneable object containers.');
-        StringObjects::instance(['handle' => $handle])->set('handle/value', 2);
+        Legacy::of(['handle' => $handle])->set('handle/value', 2);
     }
 }

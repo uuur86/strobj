@@ -35,14 +35,14 @@ final class ProductService
     /** Creates a product from a JSON request, applying defaults for absent fields. */
     public function create(string $json): array
     {
-        $request = StringObjects::consistent($json);
-        $data = StringObjects::consistent(['product' => []]);
+        $request = StringObjects::instance($json);
+        $data = StringObjects::instance(['product' => []]);
 
         foreach (self::FIELDS as $path => $default) {
             $data->set($path, $request->get($path, $default));
         }
 
-        $candidate = StringObjects::consistent($data->toArray(), $this->options());
+        $candidate = StringObjects::instance($data->toArray(), $this->options());
         $document = $this->validatedDocument($candidate);
 
         return $this->read($this->repository->create($document));
@@ -51,7 +51,7 @@ final class ProductService
     /** Reads a product without inspecting its nested inventory or pricing shape. */
     public function read(int $id): array
     {
-        $data = StringObjects::consistent($this->repository->read($id));
+        $data = StringObjects::instance($this->repository->read($id));
 
         return ['id' => $id, 'product' => $data->get('product')];
     }
@@ -63,8 +63,8 @@ final class ProductService
      */
     public function update(int $id, string $json): array
     {
-        $candidate = StringObjects::consistent($this->repository->read($id), $this->options());
-        $patch = StringObjects::consistent($json);
+        $candidate = StringObjects::instance($this->repository->read($id), $this->options());
+        $patch = StringObjects::instance($json);
 
         foreach (array_keys(self::FIELDS) as $path) {
             if (!$patch->has($path)) {
@@ -91,7 +91,7 @@ final class ProductService
     public function all(): array
     {
         return array_map(static function (array $record): array {
-            $data = StringObjects::consistent($record['document']);
+            $data = StringObjects::instance($record['document']);
 
             return ['id' => (int) $record['id'], 'product' => $data->get('product')];
         }, $this->repository->all());
@@ -131,7 +131,7 @@ final class ProductService
 
         // toJson() exports stored values. Copy the cast get() values into a separate
         // document so the database also receives the intended types.
-        $normalized = StringObjects::consistent(['product' => []]);
+        $normalized = StringObjects::instance(['product' => []]);
 
         foreach (self::FIELDS as $path => $default) {
             $normalized->set($path, $candidate->get($path, $default));

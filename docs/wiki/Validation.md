@@ -6,7 +6,7 @@ values and never throws because of a value.
 ## Configuration
 
 ```php
-$user = StringObjects::consistent($input, [
+$user = StringObjects::instance($input, [
     'validation' => [
         'patterns' => [
             'email'  => '/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i',
@@ -27,7 +27,7 @@ $user->isValid('user');        // every rule below user/
 
 - `patterns` maps names to regular expressions. A rule's `pattern` is either a
   pattern name or a regular expression.
-- `required` defaults to `false`. In the consistent profile it must be a boolean.
+- `required` defaults to `false`. In the default behavior it must be a boolean.
 - Rule paths may contain wildcards: `items/*/qty` checks every item.
 
 ## How a value is checked
@@ -44,7 +44,7 @@ $user->isValid('user');        // every rule below user/
 Results refresh automatically after `set()` and other changes.
 
 ```php
-$order = StringObjects::consistent(['p' => [['age' => '1'], ['age' => 'x']]], ['validation' => [
+$order = StringObjects::instance(['p' => [['age' => '1'], ['age' => 'x']]], ['validation' => [
     'rules' => [['path' => 'p/*/age', 'pattern' => '/^\d+$/', 'required' => true]],
 ]]);
 

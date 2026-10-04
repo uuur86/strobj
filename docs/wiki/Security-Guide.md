@@ -12,16 +12,16 @@ library guarantees and what remains the application's responsibility.
 | Cyclic or very deep objects (CWE-674) | Consistent snapshots reject cycles and depths above 512 with `InvalidArgumentException`. |
 | Validation crashes caused by values (CWE-1333, CWE-248) | Malformed UTF-8 and values that exceed PCRE limits fail validation instead of throwing. |
 | Path writes rejected by objects (CWE-248) | NUL-prefixed names, inaccessible, readonly or incompatible typed properties throw `InvalidArgumentException`, never a PHP `Error`. |
-| Private state disclosure (CWE-200) | Path reads only see public properties; `toJson()` and the consistent `toArray()` follow PHP's JSON serialization rules. |
+| Private state disclosure (CWE-200) | Path reads only see public properties; `toJson()` and the default `toArray()` follow PHP's JSON serialization rules. |
 | Code execution | The library never evaluates, includes or unserializes data. |
-| Ambiguous values (CWE-843) | In the consistent profile, stored `false`/`null` are never replaced, and the default marks missing or rejected values. |
+| Ambiguous values (CWE-843) | In the default behavior, stored `false`/`null` are never replaced, and the default marks missing or rejected values. |
 
 ## Your responsibilities
 
 ### Treat options as code
 
 Validation patterns, filter types and callbacks are configuration. In the
-consistent profile, a callback may be any PHP callable, including a function name
+default behavior, a callback may be any PHP callable, including a function name
 string. **Never build options from request data, database rows editable by users,
 or uploaded files.** A user-controlled callback is remote code execution
 (CWE-94, CWE-470); a user-controlled pattern is a ReDoS vector (CWE-1333).

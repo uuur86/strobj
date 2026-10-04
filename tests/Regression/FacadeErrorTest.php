@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use JsonException;
 use PHPUnit\Framework\TestCase;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Legacy;
 
 /**
  * Facade failures are catchable exceptions with stable types and codes.
@@ -20,7 +21,7 @@ final class FacadeErrorTest extends TestCase
     /** @dataProvider unencodable */
     public function testToJsonThrowsJsonExceptionInBothProfiles($value): void
     {
-        foreach ([StringObjects::instance(['a' => $value]), StringObjects::consistent(['a' => $value])] as $object) {
+        foreach ([Legacy::of(['a' => $value]), StringObjects::instance(['a' => $value])] as $object) {
             try {
                 $object->toJson();
                 self::fail('Encoding should fail.');
@@ -40,7 +41,7 @@ final class FacadeErrorTest extends TestCase
     public function testInvalidInputThrowsInvalidArgumentExceptionWithItsCode($input, int $code): void
     {
         try {
-            StringObjects::instance($input);
+            Legacy::of($input);
             self::fail('Input should be rejected.');
         } catch (Exception $exception) {
             // Existing catch (Exception) blocks keep working.

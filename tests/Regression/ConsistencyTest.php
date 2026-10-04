@@ -61,7 +61,7 @@ final class ConsistencyTest extends TestCase
 
     public function testExistingAndNullFieldsAreFoundWithoutPriorQueries(): void
     {
-        $object = StringObjects::consistent(['age' => 12, 'nil' => null, 'flag' => false]);
+        $object = StringObjects::instance(['age' => 12, 'nil' => null, 'flag' => false]);
         self::assertTrue($object->has('age'));
         self::assertTrue($object->has('nil'));
         self::assertFalse($object->has('missing'));
@@ -72,7 +72,7 @@ final class ConsistencyTest extends TestCase
 
     public function testContainerReplacementAgreesWithExportAndRead(): void
     {
-        $object = StringObjects::consistent(['x' => ['a' => 1], 'keep' => 7]);
+        $object = StringObjects::instance(['x' => ['a' => 1], 'keep' => 7]);
         $object->get('x/a');
         $object->get('');
         $object->set('x', ['a' => 2]);
@@ -84,7 +84,7 @@ final class ConsistencyTest extends TestCase
 
     public function testNewNestedAndZeroIndexedPathsDoNotCreateExtraFields(): void
     {
-        $object = StringObjects::consistent([]);
+        $object = StringObjects::instance([]);
         $object->set('items/0/name', 'Neo');
         $object->set('items/0/age', 21);
         self::assertSame(['items' => [['name' => 'Neo', 'age' => 21]]], $object->toArray());
@@ -92,7 +92,7 @@ final class ConsistencyTest extends TestCase
 
     public function testEquivalentCachedPathsStayFreshAfterMutation(): void
     {
-        $object = StringObjects::consistent(['age' => 1]);
+        $object = StringObjects::instance(['age' => 1]);
         self::assertSame(1, $object->get('/age/'));
         $object->set('age', 2);
         self::assertSame(2, $object->get('/age/'));
@@ -100,7 +100,7 @@ final class ConsistencyTest extends TestCase
 
     public function testSparseWildcardValidationKeepsRealRecordPaths(): void
     {
-        $object = StringObjects::consistent([
+        $object = StringObjects::instance([
             'persons' => ['first' => ['age' => 12], 'missing' => [], 'invalid' => ['age' => 'bad']],
         ], ['validation' => ['rules' => [
             ['path' => 'persons/*/age', 'pattern' => '#^[0-9]+$#', 'required' => true],
@@ -113,7 +113,7 @@ final class ConsistencyTest extends TestCase
 
     public function testValidationReflectsMutationsAndCombinesAllRules(): void
     {
-        $object = StringObjects::consistent(['person' => ['age' => '12', 'name' => 'John']], [
+        $object = StringObjects::instance(['person' => ['age' => '12', 'name' => 'John']], [
             'validation' => ['rules' => [
                 ['path' => 'person/age', 'pattern' => '#^[0-9]+$#', 'required' => true],
                 ['path' => 'person/name', 'pattern' => '#^[a-z]+$#i', 'required' => true],
@@ -130,14 +130,14 @@ final class ConsistencyTest extends TestCase
 
     public function testIncrementalListWritesKeepJsonArrayShape(): void
     {
-        $object = StringObjects::consistent('{"persons":[{"name":"John"}]}');
+        $object = StringObjects::instance('{"persons":[{"name":"John"}]}');
         $object->set('persons/1/name', 'Neo');
         self::assertSame('{"persons":[{"name":"John"},{"name":"Neo"}]}', $object->toJson());
     }
 
     public function testNestedWildcardsAndOutputFiltersUseFullPaths(): void
     {
-        $object = StringObjects::consistent([
+        $object = StringObjects::instance([
             'groups' => [['persons' => [['age' => '12'], ['age' => '21']]]],
         ], ['filters' => ['groups/*/persons/*/age' => ['type' => 'int']]]);
         self::assertSame([[12, 21]], $object->get('groups/*/persons/*/age'));

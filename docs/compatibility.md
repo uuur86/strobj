@@ -1,23 +1,23 @@
 # Compatibility and behavior profiles
 
-Existing applications keep the legacy profile through `StringObjects::instance()`.
-The consistent profile is explicit, so correctness improvements with different
-return values do not silently change old reads:
+Since 3.0, `StringObjects::instance()` uses the **consistent** behavior by default.
+Applications written for 2.x select the **legacy** behavior explicitly to keep
+their previous results:
 
 ```php
+use StrObj\Behavior;
 use StrObj\StringObjects;
 
-$legacy = StringObjects::instance($data, $options);
-$consistent = StringObjects::consistent($data, $options);
-// Equivalent to instance($data, ['behavior' => 'consistent', ...other options]).
+$consistent = StringObjects::instance($data, $options);
+$legacy = StringObjects::instance($data, ['behavior' => Behavior::LEGACY] + $options);
 ```
 
-The examples use `consistent()` throughout. Migrate an application deliberately
-and test its own expectations before changing profiles.
+Migrate an application deliberately and test its own expectations before removing
+the legacy option.
 
 ## Observable differences
 
-| Contract | Legacy (default) | Consistent (explicit) |
+| Contract | Legacy (`Behavior::LEGACY`) | Consistent (default) |
 | --- | --- | --- |
 | Missing concrete field with a default | Returns `null` | Returns the supplied default |
 | Existing `false` with a default | Returns the supplied default | Returns `false` |

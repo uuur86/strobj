@@ -9,6 +9,7 @@ use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
 use StrObj\StringObjects;
 use UnexpectedValueException;
+use StrObj\Tests\Fixtures\Legacy;
 
 /**
  * Untrusted values can fail validation but never make it throw.
@@ -26,8 +27,8 @@ final class ValidationInputTest extends TestCase
         try {
             $options = ['validation' => ['rules' => [['path' => 'field', 'pattern' => $pattern, 'required' => true]]]];
             $objects = [
+                Legacy::of(['field' => $value], $options),
                 StringObjects::instance(['field' => $value], $options),
-                StringObjects::consistent(['field' => $value], $options),
             ];
 
             foreach ($objects as $object) {

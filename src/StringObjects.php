@@ -64,7 +64,7 @@ class StringObjects
      * @var bool
      */
     private bool $hasFilters;
-    /** @var bool Whether the explicit consistent behavior profile is enabled. */
+    /** @var bool Whether the consistent behavior (the default) is enabled. */
     private bool $consistent;
 
     /**
@@ -94,15 +94,17 @@ class StringObjects
     }
 
     /**
-     * You can provide an array or any traversable object
+     * Creates an instance from an array, any object (including Traversable) or a JSON document
+     * The consistent behavior is the default. Pass ['behavior' => Behavior::LEGACY]
+     * to reproduce the v2.1 results.
      *
      * @param mixed $data    The mixed type of object data to use
-     * @param array $options Options
+     * @param array $options Behavior, middleware, validation and filter options
      *
      * @throws InvalidArgumentException With code 22 for invalid JSON, 23 for a scalar
      *                                  JSON document and 24 for unsupported input.
      *
-     * @return self|static Legacy factories return self; consistent factories preserve subclasses.
+     * @return self|static The legacy behavior returns self; the consistent behavior preserves subclasses.
      */
     public static function instance($data, array $options = [])
     {
@@ -131,22 +133,6 @@ class StringObjects
 
         return $consistent ? new static($data, $options) : new self($data, $options);
     }
-    /**
-     * Creates an instance with explicit defaults, detached values and strict configuration.
-     *
-     * @param mixed $data Input array, object or JSON document.
-     * @param array $options Middleware, validation and filter options.
-     * @return static
-     */
-    public static function consistent($data, array $options = [])
-    {
-        $options['behavior'] = Behavior::CONSISTENT;
-        /** @var static $instance Consistent mode instantiates the called class. */
-        $instance = static::instance($data, $options);
-
-        return $instance;
-    }
-
     /**
      * Gets the value from the inside of the loaded object
      * Legacy behavior substitutes the default for false and returns null for missing fields.

@@ -101,9 +101,9 @@ composer test:regression -- --filter Gh10519RegressionTest
 
 ## Behavior contracts and compatibility changes
 
-The contracts below describe the explicit **consistent** profile used by the new
-examples and workflow tests. `StringObjects::instance()` retains legacy defaults;
-the full profile comparison and preserved signatures are in
+The contracts below describe the default **consistent** behavior used by the
+examples and workflow tests. `['behavior' => Behavior::LEGACY]` retains the 2.x
+results; the full profile comparison and preserved signatures are in
 [Compatibility](compatibility.md). `CompatibilityTest` also validates the v2.1
 API fixture and loads real subclasses using its original method declarations.
 
