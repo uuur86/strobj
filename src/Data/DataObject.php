@@ -474,13 +474,26 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     }
 
     /**
-     * Recursively converts the data to arrays
+     * Converts the data to an array
+     * Legacy containers return root fields with nested values unchanged, as in v2.1.
+     * Snapshot containers recursively convert every nested container to arrays.
      *
      * @return array
      */
     public function toArray(): array
     {
-        return PathResolver::copyValue($this->readStorage(), true);
+        if ($this->detached) {
+            return PathResolver::copyValue($this->readStorage(), true);
+        }
+
+        $result = [];
+
+        // Assignment normalizes numeric property names of object roots to integer keys.
+        foreach ($this->readStorage() as $key => $value) {
+            $result[$key] = $value;
+        }
+
+        return $result;
     }
 
     /**

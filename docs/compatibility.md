@@ -24,6 +24,7 @@ and test its own expectations before changing profiles.
 | Existing `null` | Returns `null` | Returns `null` |
 | Input/returned object references | Preserves existing live references | Copies writable object state |
 | Empty object root in facade JSON | `[]`, as before | `{}` |
+| `toArray()` | Root fields with nested values unchanged, as in v2.1 | Every nested container converted to arrays through its JSON representation |
 | Unknown filter cast | Leaves the value unchanged | Throws `InvalidArgumentException` |
 | Invalid JSON cast | Returns `null` | Throws `JsonException` |
 | Predicate callbacks | Closures, as before | All callable forms |

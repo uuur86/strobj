@@ -46,4 +46,26 @@ final class V219ParityTest extends TestCase
         self::assertSame(['0' => ['exists' => true, 'value' => ['a' => 1]]], $data->findMatches('0'));
         self::assertSame(['1/a' => ['exists' => false, 'value' => null]], $data->findMatches('1/a'));
     }
+
+    /** @see https://github.com/uuur86/strobj/issues/26 */
+    public function testLegacyToArrayKeepsNestedValuesUnchanged(): void
+    {
+        $legacy = StringObjects::instance('{"a":{"b":1},"list":[{"c":2}]}')->toArray();
+        self::assertInstanceOf(\stdClass::class, $legacy['a']);
+        self::assertSame(1, $legacy['a']->b);
+        self::assertSame(2, $legacy['list'][0]->c);
+
+        $consistent = StringObjects::consistent('{"a":{"b":1},"list":[{"c":2}]}')->toArray();
+        self::assertSame(['a' => ['b' => 1], 'list' => [['c' => 2]]], $consistent);
+    }
+
+    /** @see https://github.com/uuur86/strobj/issues/26 */
+    public function testLegacyToArrayAcceptsAnyStringAndNormalizesRootKeys(): void
+    {
+        self::assertSame(['a' => "\xB1"], StringObjects::instance(['a' => "\xB1"])->toArray());
+
+        $list = StringObjects::instance([['a' => 1], ['a' => 2]])->toArray();
+        self::assertSame([0, 1], array_keys($list));
+        self::assertSame(['a' => 2], $list[1]);
+    }
 }

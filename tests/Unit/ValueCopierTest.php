@@ -72,9 +72,12 @@ final class ValueCopierTest extends TestCase
         foreach ($objects as $object) {
             self::assertInstanceOf(DateTimeImmutable::class, $object->get('date'));
             self::assertSame('2023-01-01', $object->get('date')->format('Y-m-d'));
-            self::assertSame(json_decode(json_encode(['date' => $date]), true), $object->toArray());
             self::assertSame(json_encode(['date' => $date]), $object->toJson());
         }
+
+        // Legacy arrays keep nested objects; consistent arrays export their JSON representation.
+        self::assertSame(['date' => $date], $objects[0]->toArray());
+        self::assertSame(json_decode(json_encode(['date' => $date]), true), $objects[1]->toArray());
     }
 
     public function testUncloneableHandlesRetainIdentity(): void
