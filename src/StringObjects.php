@@ -3,7 +3,7 @@
 /**
  * This file is part of the StrObj package.
  *
- * (c) Uğur Biçer <contact@codeplus.dev>
+ * (c) Uğur Biçer <contact@fyndsoft.com>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -260,7 +260,8 @@ class StringObjects
     }
 
     /**
-     * Set a per-instance memory guard without changing php.ini
+     * Sets this instance's memory guard without changing php.ini
+     * The guard compares the whole PHP process's memory usage with the limit.
      *
      * @param int $memory memory limit in megabytes
      *

@@ -13,7 +13,7 @@ PHP String Objects is a library that provides an easy and intuitive interface fo
 
 * Allows accessing objects via strings
 * Allows checking if the values of objects are valid using pre-defined or custom validation rules
-* Provides middleware functionality to set memory limits or other configurations
+* Provides an optional, process-wide memory guard
 * Provides data filters to manipulate the values of objects
 * Can be used to set or get values of objects and arrays in a simplified manner
 
@@ -103,8 +103,9 @@ $test = StringObjects::consistent(
             ],
         ],
         'middleware' => [
-            // Sets memory limit to 3MB
-            'memory_limit' => 1024 * 1024 * 3,
+            // Optional guard in bytes; compares the whole PHP process's memory usage
+            // (memory_get_usage()), so choose a value above your application's normal peak
+            'memory_limit' => 256 * 1024 * 1024,
         ],
         // Output data filters
         'filters' => [
@@ -160,13 +161,13 @@ $test->get('persons/3/age');
 // Outputs "Neo Doe"
 $test->get('persons/4/name');
 
-// Outputs "199"
+// Outputs 199 (cast to int)
 $test->get('persons/4/age');
 
 // Updates value of persons/4/age to "200"
 $test->set('persons/4/age', 200);
 
-// Outputs "200"
+// Outputs 200
 $test->get('persons/4/age');
 ```
 
@@ -223,11 +224,11 @@ Uğur Biçer - @uuur86
 
 ## CONTRIBUTING
 
-If you want to contribute to this project, you can send pull requests. We expect all contributors to follow our [Code of Conduct](CONTRIBUTING.md).
+If you want to contribute to this project, you can send pull requests. See the [Contributing guide](CONTRIBUTING.md); all contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## CONTACT
 
-You can contact me via email: contact@codeplus.dev
+You can contact me via email: contact@fyndsoft.com
 
 ## BUGS
 
@@ -235,7 +236,8 @@ You can report bugs via github issues.
 
 ## SECURITY
 
-If you find a security issue, please report it via email: contact@codeplus.dev
+Please do not report security issues in public issues. Follow the private reporting
+process in [SECURITY.md](SECURITY.md).
 
 ## DONATE
 

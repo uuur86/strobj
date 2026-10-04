@@ -14,11 +14,21 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-### Rules for how to report
+Please do **not** report security vulnerabilities through public GitHub issues,
+discussions or pull requests.
 
-- If you know the condition that caused the error, summarize it briefly
-- Outputs and logs of the error
-- Screenshot if possible
-- Version and detailed information about other software running on the server where you are using the software (OS, PHP, Apache, nginx etc.)
+Report them privately instead:
 
-You can track the reported issues on this github repository's [issues](https://github.com/uuur86/strobj/issues) page.
+- Use GitHub's [private vulnerability reporting](https://github.com/uuur86/strobj/security/advisories/new), or
+- Email contact@fyndsoft.com with the subject "StrObj security report".
+
+### What to include
+
+- A short description of the issue and the conditions that trigger it
+- A minimal code sample or steps to reproduce it
+- Relevant outputs and logs, with secrets and personal data removed
+- The StrObj and PHP versions, and other relevant software (OS, web server)
+
+You will receive an acknowledgement as soon as possible. Once a fix is available,
+it is released and the advisory is published with credit to the reporter, unless
+you prefer to remain anonymous.

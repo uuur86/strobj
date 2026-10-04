@@ -36,9 +36,9 @@ and test its own expectations before changing profiles.
 | Byte limit configuration | Accepts finite numeric values and numeric strings | Requires an integer |
 | Factory called on a subclass | Returns `StringObjects`, as before | Preserves the called subclass |
 
-Stored-data bug fixes apply to both profiles: complete deep writes, fresh caches,
-reliable field existence, and validation refreshed after library mutations.
-Code relying on an incorrect cached result or a formerly skipped validation
+Stored-data bug fixes apply to both profiles: complete deep writes, reads that
+always reflect current data, reliable field existence, and validation refreshed
+after library mutations. Code relying on a stale read or a formerly skipped validation
 failure can observe a changed result. Invalid configurations, cycles in snapshots,
 empty/wildcard write paths, and out-of-range limits are rejected explicitly.
 These changes do not provide a guarantee for every application or unsupported input.
@@ -73,7 +73,7 @@ $data->setOffset('age', 21);            // Preferred direct call.
 $data['age'] = 21;                     // ArrayAccess remains supported.
 ```
 
-The compatibility wrapper delegates to the same write/cache-invalidation logic.
+The compatibility wrapper delegates to the same write and revision logic.
 It emits no runtime deprecation notice: SPL itself requires `offsetSet()`, and
 application error handlers may turn a notice into an exception. There is no
 planned removal of ArrayAccess support.
@@ -103,21 +103,23 @@ Cycles in copied writable state and depth above 512 are rejected before committi
 a write. Object roots expose public container fields; custom serializers are
 preserved for nested values.
 
-`toArray()` follows JSON export rules. Sparse numeric keys, invalid UTF-8,
-resources and custom serializers retain PHP's normal JSON constraints.
+In the consistent profile, `toArray()` follows JSON export rules. Sparse numeric
+keys, invalid UTF-8, resources and custom serializers retain PHP's normal JSON
+constraints. The legacy profile returns root fields with nested values unchanged.
 
 ## Inherited SPL operations
 
 Sorting and deserialization retain SPL's own parameter and return contracts,
-which vary across PHP versions. A shared storage comparison detects changes
-before cached reads and revision/validation checks, rather than maintaining six
-version-dependent sort wrappers. Snapshot child iterators keep the copy policy.
+which vary across PHP versions. Reads always resolve the current storage, so they
+need no change detection. Revision and validation checks compare the root storage
+with the previous check, rather than maintaining six version-dependent sort
+wrappers. Snapshot child iterators keep the copy policy.
 
-The comparison uses PHP array copy-on-write storage and has a worst-case linear
-cost per check. Snapshot copying also scales with the selected structure. Measure
-large documents in the consuming application's workload before adopting snapshots.
-Legacy live-reference mutations remain outside tracked writes; use library setters
-when validation/cache freshness matters.
+Reads cost time proportional to the path depth. Root wildcard reads, `toArray()`
+and revision checks are linear in the root size. Snapshot copying also scales with
+the selected structure. Measure large documents in the consuming application's
+workload before adopting snapshots. Legacy live-reference mutations below the root
+are not tracked as revisions; use library setters when validation freshness matters.
 
 ## Verification
 

@@ -2,7 +2,7 @@
 
 /**
  * This file is part of the StrObj package.
- * (c) Uğur Biçer <contact@codeplus.dev>
+ * (c) Uğur Biçer <contact@fyndsoft.com>
  * See LICENSE for copyright and license information.
  */
 

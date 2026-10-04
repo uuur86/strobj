@@ -57,7 +57,7 @@ supported conversion and the unsupported-type exception have separate tests.
 
 | Suite | Responsibility |
 | --- | --- |
-| Unit | Paths, cache, snapshots, direct SPL mutations, adapters, validation, filters, memory guards and input errors |
+| Unit | Paths, snapshots, direct SPL mutations, adapters, validation, filters, memory guards and input errors |
 | Regression | Reproduce observed failures: deep child writes (GH-10519), missing/existing fields, cached writes, wildcard validation, JSON list shape, path iterator mutation, clone isolation and six SPL sorting operations |
 | Integration | Public facade workflows, independent instances, 180 deterministic writes compared with an independent array model, and coverage-gate success/failure cases |
 
@@ -69,7 +69,7 @@ PHPStan checks production code at level 5 with PHP 7.4 as the target. PHPDoc
 types describe supported inputs, while runtime guards also reject invalid ones;
 `treatPhpDocTypesAsCertain: false` keeps these defensive checks meaningful to the
 analyzer. No static-analysis errors are suppressed. Inherited SPL sorting keeps
-its native signatures; shared storage observation maintains cache consistency.
+its native signatures; revision checks observe the storage to keep validation fresh.
 
 ## Deep-write compatibility: PHP GH-10519
 
