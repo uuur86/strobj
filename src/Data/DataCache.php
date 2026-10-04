@@ -45,7 +45,6 @@ class DataCache
      */
     public function clear(string $path): void
     {
-
         unset($this->paths[$path]);
     }
 
@@ -104,7 +103,6 @@ class DataCache
      */
     public function isCached(string $path)
     {
-
         return array_key_exists($path, $this->paths);
     }
 }

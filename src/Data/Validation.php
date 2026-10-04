@@ -41,8 +41,6 @@ class Validation
      *
      * @var array
      */
-
-
     private array $validationStatus = [];
     /**
      * Rules
@@ -78,7 +76,6 @@ class Validation
      */
     public function __construct(DataObject $obj, array $options, bool $consistent = false)
     {
-
         $this->obj = $obj;
         $this->consistent = $consistent;
         $this->setPatterns($options['patterns'] ?? []);
@@ -217,7 +214,7 @@ class Validation
                 'path' => $this->normalizePath((string) $rule['path']),
                 'pattern' => (string) $rule['pattern'],
                 'required' => (bool) ($rule['required'] ?? false),
-                ];
+            ];
         }
 
         $this->rules = array_merge($this->rules, $normalized);

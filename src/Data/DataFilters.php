@@ -38,8 +38,6 @@ class DataFilters
     /**
      * @var array
      */
-
-
     private array $options;
     /** @var bool Whether configuration and casts use strict behavior. */
     private bool $consistent;
@@ -52,7 +50,6 @@ class DataFilters
      */
     public function __construct(array $options, bool $consistent = false)
     {
-
         $this->consistent = $consistent;
 
         foreach ($options as $filters) {

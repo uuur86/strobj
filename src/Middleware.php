@@ -33,8 +33,6 @@ class Middleware
      *
      * @var array
      */
-
-
     private array $_options = [];
     /** @var bool Whether memory limits require exact integer values. */
     private bool $consistent;
@@ -47,7 +45,6 @@ class Middleware
      */
     public function __construct(array $options = [], bool $consistent = false)
     {
-
         $this->consistent = $consistent;
 
         foreach ($options as $name => $value) {

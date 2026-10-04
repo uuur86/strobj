@@ -30,8 +30,6 @@ class DataPath extends ArrayIterator
     /**
      * @var string
      */
-
-
     private string $path;
     /**
      * Parses a path while retaining the original string.
@@ -53,7 +51,6 @@ class DataPath extends ArrayIterator
      */
     public static function init(string $path)
     {
-
         return new self($path);
     }
 
@@ -84,7 +81,6 @@ class DataPath extends ArrayIterator
      */
     public function getBranches()
     {
-
         $branches = [];
         $prefix = '';
 

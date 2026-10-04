@@ -32,9 +32,7 @@ trait DataParsers
      */
     public function parsePath(string $path)
     {
-
         $segments = array_values(array_filter(explode('/', $path), static function (string $segment): bool {
-
             return $segment !== '';
         }));
 
@@ -156,7 +154,6 @@ trait DataParsers
             }
 
             $score = count(array_filter($this->parsePath($optionPath), static function (string $segment): bool {
-
                 return $segment !== '*';
             }));
 

@@ -38,8 +38,6 @@ class StringObjects
      *
      * @var DataObject
      */
-
-
     private DataObject $_obj;
     /**
      * Validation object
@@ -76,7 +74,6 @@ class StringObjects
      */
     public function __construct(object $obj, array $options = [])
     {
-
         $this->consistent = Behavior::isConsistent($options);
 
         foreach (['middleware', 'validation', 'filters'] as $option) {
