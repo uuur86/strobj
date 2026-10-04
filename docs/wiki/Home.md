@@ -44,4 +44,4 @@ $order->isValid();                        // checks the configured rules
 See [Migration from 2.1](Migration-from-2.1) for the differences.
 
 > The consistent default ships in version 3.0. Until 3.0.0 is tagged, it is
-> available from the `v2.2-dev` branch.
+> available from the `3.0.x-dev` branch.

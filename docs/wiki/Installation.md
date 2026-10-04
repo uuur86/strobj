@@ -15,7 +15,7 @@ Version 3.0 is in development. To use it before the 3.0.0 release, require the
 development branch:
 
 ```bash
-composer require uuur86/strobj:dev-v2.2-dev
+composer require "uuur86/strobj:^3.0@dev"
 ```
 
 Pin a tagged release in production as soon as one is available.

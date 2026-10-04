@@ -77,5 +77,5 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 - Added a function to find inclusive paths.
 
-[3.0.0]: https://github.com/uuur86/strobj/compare/v2.1.9...v2.2-dev
+[3.0.0]: https://github.com/uuur86/strobj/compare/v2.1.9...3.0.x-dev
 [2.1.9]: https://github.com/uuur86/strobj/releases/tag/v2.1.9

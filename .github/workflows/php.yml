@@ -2,9 +2,9 @@ name: PHP tests
 
 on:
   push:
-    branches: ["master", "v*-dev"]
+    branches: ["master", "*.x-dev"]
   pull_request:
-    branches: ["master", "v*-dev"]
+    branches: ["master", "*.x-dev"]
 
 permissions:
   contents: read

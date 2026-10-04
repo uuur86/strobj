@@ -53,7 +53,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-v2.2-dev": "3.0.x-dev"
+            "dev-3.0.x-dev": "3.0.x-dev"
         }
     },
     "scripts": {

@@ -29,7 +29,7 @@ composer install
 
 ## Making a change
 
-1. Create a branch from the current development branch (`v2.2-dev` for 3.0).
+1. Create a branch from the current development branch (`3.0.x-dev` for 3.0).
 2. Write the change and a test that fails without it. Regression tests go in
    `tests/Regression/` and reference the issue they cover.
 3. Keep public method signatures compatible unless the change targets a major
