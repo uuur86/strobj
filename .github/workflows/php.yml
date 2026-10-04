@@ -2,12 +2,16 @@ name: PHP tests
 
 on:
   push:
-    branches: ["master"]
+    branches: ["master", "v*-dev"]
   pull_request:
-    branches: ["master"]
+    branches: ["master", "v*-dev"]
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   tests:
