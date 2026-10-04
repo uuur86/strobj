@@ -10,7 +10,9 @@ declare(strict_types=1);
 
 namespace StrObj\Helpers;
 
+use Error;
 use InvalidArgumentException;
+use ReflectionObject;
 use ArrayAccess;
 use ArrayObject;
 use stdClass;
@@ -219,7 +221,7 @@ final class PathResolver
         }
 
         if (is_object($node)) {
-            $copy = $detached ? self::copyValue($node) : clone $node;
+            $copy = $detached ? self::copyValue($node) : self::cloneContainer($node);
 
             if ($copy === $node) {
                 throw new InvalidArgumentException('Path writes require cloneable object containers.');
@@ -228,18 +230,54 @@ final class PathResolver
             $node = $copy;
             $match = self::lookup($node, $key);
             $child = self::write($match['exists'] ? $match['value'] : [], $segments, $value, $detached);
-
-            if ($node instanceof ArrayAccess) {
-                $node[$key] = $child;
-            } else {
-                $node->{$key} = $child;
-            }
+            self::assign($node, $key, $child);
         } else {
             $child = array_key_exists($key, $node) ? $node[$key] : [];
             $node[$key] = self::write($child, $segments, $value, $detached);
         }
 
         return $node;
+    }
+
+    /**
+     * Clones a container; uncloneable objects are returned as is and rejected by the caller.
+     *
+     * @param object $node Container to clone.
+     *
+     * @return object
+     */
+    private static function cloneContainer(object $node): object
+    {
+        return (new ReflectionObject($node))->isCloneable() ? clone $node : $node;
+    }
+
+    /**
+     * Writes one field and reports PHP engine errors as invalid paths.
+     * NUL-prefixed names, inaccessible or readonly properties and incompatible
+     * typed properties would otherwise raise an uncatchable-by-Exception Error.
+     *
+     * @param object $node  Writable container.
+     * @param string $key   Field name.
+     * @param mixed  $value Value to store.
+     *
+     * @return void
+     * @throws InvalidArgumentException When the container rejects the field.
+     */
+    private static function assign(object $node, string $key, $value): void
+    {
+        try {
+            if ($node instanceof ArrayAccess) {
+                $node[$key] = $value;
+            } else {
+                $node->{$key} = $value;
+            }
+        } catch (Error $error) {
+            throw new InvalidArgumentException(
+                sprintf('Cannot write the "%s" field of %s.', addcslashes($key, "\0..\37"), get_class($node)),
+                0,
+                $error
+            );
+        }
     }
 
     /**
