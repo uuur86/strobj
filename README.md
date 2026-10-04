@@ -152,7 +152,9 @@ $test->set('persons/0/age', 12);
 $test->set('persons/4/name', 'Neo Doe');
 $test->set('persons/4/age', 199);
 
-// Returns false: the configured name predicate rejects the dot in "John D."
+// Returns the default (false here): the name predicate rejects the dot in "John D."
+// Stored false and null values are returned unchanged; the default is used only for
+// missing fields and rejected values. Use has() to tell those two cases apart.
 $test->get('persons/0/name');
 
 // Outputs 21 (the fourth person's age, cast to int)

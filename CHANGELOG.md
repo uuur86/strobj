@@ -25,6 +25,9 @@ The project follows [Semantic Versioning](https://semver.org/).
   for invalid input and keeps the error codes 22, 23 and 24.
 - `toJson()` throws `JsonException` when the data cannot be encoded, instead
   of failing with a `TypeError`.
+- Path writes that an object rejects (NUL-prefixed names, inaccessible, readonly
+  or incompatible typed properties) throw `InvalidArgumentException` instead of
+  a PHP `Error`.
 - Reads always resolve the current data. The read cache was removed, so reads
   no longer return stale values or retain memory for every queried path.
   `DataObject::cache()` and `DataCache` remain available.
@@ -37,6 +40,11 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Numeric root keys resolve after the legacy profile casts a root array to an object.
 - Reads take time proportional to the path depth instead of the root size.
 - Legacy `toArray()` keeps nested values unchanged, as in v2.1.
+- Legacy wildcard reads (`prefix/*/field`) follow the v2.1 `array_column()` contract.
+- In the consistent profile, a value rejected by a filter callback returns the
+  supplied default, so it can no longer be confused with a stored `false`.
+- PHP 7.4 and 8.0 are supported again: snapshots of objects with private state,
+  numeric root keys and padded numeric byte limits work on every runtime.
 - Filter casts never raise PHP errors or warnings for values they cannot convert.
 - Values that break a validation pattern at runtime (malformed UTF-8, PCRE
   limits) fail validation instead of throwing.

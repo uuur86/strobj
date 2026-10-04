@@ -38,9 +38,10 @@ $columns = [
 $optionalColumns = [
     'Email' => ['path' => 'profile/contact/email', 'default' => '—'],
     'Lifetime spend' => [
-        'path' => 'commerce/summary/lifetimeSpend', 'default' => 0,
-        'format' => static function ($value): string {
-            return $value === false ? 'Rejected' : number_format($value, 2, '.', ',') . ' USD';
+        // A value rejected by the spending filter returns the default instead of the value.
+        'path' => 'commerce/summary/lifetimeSpend', 'default' => null,
+        'format' => static function (?float $value): string {
+            return $value === null ? 'Rejected' : number_format($value, 2, '.', ',') . ' USD';
         },
     ],
     'Latest product SKU' => ['path' => 'orders/0/items/0/product/sku', 'default' => '—'],
@@ -65,15 +66,17 @@ $minimumInput = filter_var($query->get('minimumSpend', 2000), FILTER_VALIDATE_FL
 $minimumSpend = $minimumInput === false ? 2000 : max(0, $minimumInput);
 $activeOnly = $query->get('active', '1') === '1';
 
-// A value predicate rejects a value (false); array_filter excludes a whole row.
+// A value predicate rejects a value (get() returns the default); array_filter excludes a whole row.
 // get() handles missing intermediate branches without nested existence checks.
 $acceptCustomer = static function ($index) use ($source, $selectedCity, $minimumSpend, $activeOnly): bool {
     $path = 'payload/customers/' . $index;
-    $spend = $source->get($path . '/commerce/summary/lifetimeSpend', 0);
+    $spendPath = $path . '/commerce/summary/lifetimeSpend';
+    // A missing value counts as zero; has() tells it apart from a rejected value.
+    $spend = $source->has($spendPath) ? $source->get($spendPath, null) : 0.0;
 
     return (!$activeOnly || $source->get($path . '/account/active', false) === true)
     && ($selectedCity === '' || $source->get($path . '/profile/addresses/billing/city', '') === $selectedCity)
-    && $spend !== false
+    && $spend !== null
     && $spend >= $minimumSpend;
 };
 

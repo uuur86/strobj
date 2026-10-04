@@ -72,12 +72,13 @@ class DataFilters
     /**
      * Filters one selected value using its complete concrete path.
      *
-     * @param string $path  Concrete data path.
-     * @param mixed  $value Selected value.
+     * @param string $path     Concrete data path.
+     * @param mixed  $value    Selected value.
+     * @param mixed  $rejected Returned when the callback rejects the value.
      *
-     * @return mixed Filtered value, false when rejected, or unchanged when unmatched.
+     * @return mixed Filtered value, $rejected when rejected, or unchanged when unmatched.
      */
-    public function filterAt(string $path, $value)
+    public function filterAt(string $path, $value, $rejected = false)
     {
         $optionPath = $this->findFilterPath($path);
 
@@ -85,7 +86,7 @@ class DataFilters
             return $value;
         }
 
-        return $this->filterValue($value, $this->options[$optionPath]);
+        return $this->filterValue($value, $this->options[$optionPath], $rejected);
     }
 
     /**
@@ -166,10 +167,11 @@ class DataFilters
      *
      * @param mixed $value
      * @param array $filters
+     * @param mixed $rejected Returned when the callback rejects the value.
      *
      * @return mixed
      */
-    private function filterValue($value, array $filters)
+    private function filterValue($value, array $filters, $rejected = false)
     {
         $type = $filters['type'] ?? 'string';
         $type = $this->consistent ? $type : (string) $type;
@@ -184,6 +186,6 @@ class DataFilters
         $arguments = is_array($arguments)
         ? ($this->consistent ? array_values($arguments) : $arguments) : [$arguments];
 
-        return call_user_func_array($callback, array_merge([$value], $arguments)) ? $value : false;
+        return call_user_func_array($callback, array_merge([$value], $arguments)) ? $value : $rejected;
     }
 }

@@ -22,6 +22,7 @@ and test its own expectations before changing profiles.
 | Missing concrete field with a default | Returns `null` | Returns the supplied default |
 | Existing `false` with a default | Returns the supplied default | Returns `false` |
 | Existing `null` | Returns `null` | Returns `null` |
+| Value rejected by a filter callback | Returns `false` | Returns the supplied default |
 | Input/returned object references | Preserves existing live references | Copies writable object state |
 | Empty object root in facade JSON | `[]`, as before | `{}` |
 | Wildcard read `prefix/*/field` | `array_column()` contract from v2.1: rows without the field are skipped and later segments are ignored | One entry per row (`null` for a missing field); every segment and nested wildcard is resolved |

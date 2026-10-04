@@ -69,7 +69,9 @@ $source->get('payload/customers/*/profile/fullName'); // Every customer's name.
 ```
 
 Wildcard **value filters** cast order counts, spending and account status. The
-spending predicate returns `false` for negative values, displayed as “Rejected”.
+spending predicate rejects negative values, so `get()` returns the column's
+default (`null`), displayed as “Rejected”. Stored `false` and `null` values are
+always returned unchanged; use `has()` to tell a missing field from a rejected one.
 The separate **row predicate** uses `get()` values with `array_filter()` to
 exclude complete records. A value filter does not remove a row by itself.
 Selected values are escaped before rendering HTML.

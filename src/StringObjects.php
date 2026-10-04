@@ -150,11 +150,13 @@ class StringObjects
     /**
      * Gets the value from the inside of the loaded object
      * Legacy behavior substitutes the default for false and returns null for missing fields.
-     * Consistent behavior preserves false/null and substitutes only for missing fields.
+     * Consistent behavior returns stored values unchanged, including false and null.
+     * It substitutes the default only for a missing concrete field or a value
+     * rejected by a filter callback. Wildcard reads list missing fields as null.
      *
      * @param string|null $path    requested object path like
      *                        data/child_data instead of data->child_data
-     * @param mixed  $default default value will return if value not exists
+     * @param mixed  $default value returned for missing (consistent: or rejected) values
      *
      * @return mixed          returns the value or default value (false)
      */
@@ -177,8 +179,14 @@ class StringObjects
             return $default;
         }
 
-        return $this->hasFilters
-        ? $this->_obj->queryWithTransform($path, [$this->_filters, 'filterAt']) : $this->_obj->get($path);
+        if (!$this->hasFilters) {
+            return $this->_obj->get($path);
+        }
+
+        // A value rejected by a filter callback is replaced by the default, never by false.
+        return $this->_obj->queryWithTransform($path, function (string $concrete, $value) use ($default) {
+            return $this->_filters->filterAt($concrete, $value, $default);
+        });
     }
 
     /**
