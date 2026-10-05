@@ -80,13 +80,7 @@ final class PathResolver
     private static function lookup($node, string $key): array
     {
         if ($node instanceof Traversable) {
-            foreach ($node as $index => $value) {
-                if ((string) $index === $key) {
-                    return ['exists' => true, 'value' => $value];
-                }
-            }
-
-            return ['exists' => false, 'value' => null];
+            return self::lookupTraversable($node, $key);
         }
 
         if ($node instanceof ArrayAccess) {
@@ -95,10 +89,74 @@ final class PathResolver
             return ['exists' => $exists, 'value' => $exists ? $node[$key] : null];
         }
 
-        $entries = is_array($node) ? $node : (is_object($node) ? get_object_vars($node) : []);
+        $entries = self::entries($node);
         $exists = array_key_exists($key, $entries);
 
         return ['exists' => $exists, 'value' => $exists ? $entries[$key] : null];
+    }
+
+    /**
+     * Finds a key by iterating a collection, so keys of any iterator are found.
+     *
+     * @param Traversable $node Collection to search.
+     * @param string      $key  Key to find.
+     *
+     * @return array{exists: bool, value: mixed}
+     */
+    private static function lookupTraversable(Traversable $node, string $key): array
+    {
+        foreach ($node as $index => $value) {
+            if ((string) $index === $key) {
+                return ['exists' => true, 'value' => $value];
+            }
+        }
+
+        return ['exists' => false, 'value' => null];
+    }
+
+    /**
+     * Returns array entries or the public properties of an object; other values have no entries.
+     * Properties are read outside the object's class scope, so non-public state stays hidden.
+     *
+     * @param mixed $node Value to inspect.
+     *
+     * @return array
+     */
+    public static function entries($node): array
+    {
+        if (is_object($node)) {
+            return get_object_vars($node);
+        }
+
+        return is_array($node) ? $node : [];
+    }
+
+    /**
+     * Reads one column of rows with the array_column() contract.
+     * Rows without the column are skipped and the result is a list.
+     * A scalar rows value produces an empty list.
+     *
+     * @param mixed         $rows      Rows container.
+     * @param string[]      $prefix    Path segments of the rows container.
+     * @param string        $column    Column name.
+     * @param callable|null $transform Receives the concrete path and value.
+     *
+     * @return array
+     */
+    public static function column($rows, array $prefix, string $column, ?callable $transform = null): array
+    {
+        $values = [];
+
+        foreach (is_array($rows) || is_object($rows) ? $rows : [] as $index => $row) {
+            $fields = self::entries($row);
+
+            if (array_key_exists($column, $fields)) {
+                $path = implode('/', array_merge($prefix, [(string) $index, $column]));
+                $values[] = $transform === null ? $fields[$column] : $transform($path, $fields[$column]);
+            }
+        }
+
+        return $values;
     }
 
     /**
@@ -147,13 +205,9 @@ final class PathResolver
 
         $match = self::lookup($node, $key);
 
-        if (!$match['exists']) {
-            return null;
-        }
-
-        $child = $match['value'];
-
-        return self::read($child, $segments, $transform, self::join($prefix, $key), $detached);
+        return $match['exists']
+        ? self::read($match['value'], $segments, $transform, self::join($prefix, $key), $detached)
+        : null;
     }
 
     /**
@@ -193,15 +247,10 @@ final class PathResolver
 
         $match = self::lookup($node, $key);
 
-        if (!$match['exists']) {
-            $missing = self::join($prefix, implode('/', array_merge([$key], $segments)));
-
-            return [$missing => ['exists' => false, 'value' => null]];
-        }
-
-        $child = $match['value'];
-
-        return self::select($child, $segments, self::join($prefix, $key), $detached);
+        // A missing field reports the complete requested path below it.
+        return $match['exists']
+        ? self::select($match['value'], $segments, self::join($prefix, $key), $detached)
+        : [self::join($prefix, implode('/', array_merge([$key], $segments))) => ['exists' => false, 'value' => null]];
     }
 
     /**

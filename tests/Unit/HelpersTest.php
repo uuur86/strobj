@@ -134,7 +134,7 @@ final class HelpersTest extends TestCase
     public function testOverlongPathIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new DataPath(implode('/', array_fill(0, 513, 'a')));
+        DataPath::init(implode('/', array_fill(0, 513, 'a')));
     }
 
     /** @dataProvider pathMatches */
@@ -171,14 +171,14 @@ final class HelpersTest extends TestCase
             $parser->findPaths('persons/*/age', ['u1' => 12, 5 => 21])
         );
         self::assertSame(['x' => [12]], $parser->findPaths('x', [12]));
-        self::assertSame(['x' => 1], $parser->findPaths('x', [12], static function ($path, $data) {
-            return count($data);
+        self::assertSame(['x' => 'x:1'], $parser->findPaths('x', [12], static function ($path, $data) {
+            return $path . ':' . count($data);
         }));
-        self::assertSame(['g/u/age' => 13], $parser->findPaths(
+        self::assertSame(['g/u/age' => 'g/u/age:13'], $parser->findPaths(
             '*/*/age',
             ['g' => ['u' => 12]],
             static function ($path, $value) {
-                return $value + 1;
+                return $path . ':' . ($value + 1);
             }
         ));
         self::assertSame([], $parser->findPaths('*/*/age', ['g' => 12]));

@@ -16,6 +16,11 @@ function escapeHtml(string $value): string
 /** Opens the shared layout and navigation; paths also work in a subdirectory. */
 function renderHeader(string $title, string $active, string $base = '../'): void
 {
+    $pages = [
+        'home' => ['', 'Overview'],
+        'table' => ['01-json-table/', 'JSON table'],
+        'crud' => ['02-crud/', 'Product CRUD'],
+    ];
     ?>
     <!doctype html>
     <html lang="en">
@@ -31,11 +36,10 @@ function renderHeader(string $title, string $active, string $base = '../'): void
             <span class="brand-mark">S/</span> StrObj <span>examples</span>
         </a>
         <nav aria-label="Examples">
-            <a href="<?= escapeHtml($base) ?>" <?= $active === 'home' ? 'aria-current="page"' : '' ?>>Overview</a>
-            <a href="<?= escapeHtml($base) ?>01-json-table/"
-    <?= $active === 'table' ? 'aria-current="page"' : '' ?>>JSON table</a>
-            <a href="<?= escapeHtml($base) ?>02-crud/"
-    <?= $active === 'crud' ? 'aria-current="page"' : '' ?>>Product CRUD</a>
+            <?php foreach ($pages as $page => [$path, $label]) : ?>
+                <a href="<?= escapeHtml($base . $path) ?>"<?= $page === $active ? ' aria-current="page"' : '' ?>><?=
+                    escapeHtml($label) ?></a>
+            <?php endforeach; ?>
         </nav>
     </header>
     <main>

@@ -12,3 +12,12 @@ implementation being tested to make a failing compatibility check pass.
 `CopyableParent` and `MutableCollection` model consumer-defined inherited state
 and collection protocols. Their tests check preservation of classes, values,
 serialization, public interfaces and isolation from input mutations.
+
+`Consumers/` holds one subclass per recorded class. Each overrides every recorded
+public or protected method with its v2.1 signature, records the call and delegates
+to the library. PHP checks the signatures when a test loads these classes.
+
+`ReadonlyState` (PHP 8.1) and `HookedState` (PHP 8.4) use syntax that older
+runtimes cannot parse; tests load them only on supported versions.
+PHP_CodeSniffer cannot tokenize property hooks yet, so `phpcs.xml` excludes
+`HookedState.php`.

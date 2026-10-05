@@ -76,6 +76,7 @@ final class ObjectWriteTest extends TestCase
 
             private function __clone()
             {
+                // A private __clone() makes this object uncloneable on purpose.
             }
         };
         $this->expectException(InvalidArgumentException::class);

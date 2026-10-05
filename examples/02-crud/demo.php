@@ -6,9 +6,9 @@ use StrObj\Examples\Crud\ProductRepository;
 use StrObj\Examples\Crud\ProductService;
 use StrObj\StringObjects;
 
-require dirname(__DIR__) . '/bootstrap.php';
-require __DIR__ . '/ProductRepository.php';
-require __DIR__ . '/ProductService.php';
+require_once dirname(__DIR__) . '/bootstrap.php';
+require_once __DIR__ . '/ProductRepository.php';
+require_once __DIR__ . '/ProductService.php';
 
 // Real SQL operations in a fresh in-memory database; no files are written.
 $products = new ProductService(new ProductRepository(new PDO('sqlite::memory:')));

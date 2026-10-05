@@ -51,7 +51,7 @@ input:focus, select:focus, textarea:focus, a:focus-visible, button:focus-visible
 .hint { display: block; font-size: 12px; line-height: 1.5; color: #6a7a8e; margin-top: 5px; font-weight: 400; }
 .field-error { display: block; color: #a62c32; font-size: 12px; line-height: 1.5; margin-top: 5px; font-weight: 500; }
 .field-error:empty { display: none; }
-.alert { padding: 13px 17px; border-radius: 8px; margin-bottom: 22px; font-size: 14px; line-height: 1.6; }
+.alert { display: block; padding: 13px 17px; border-radius: 8px; margin-bottom: 22px; font-size: 14px; line-height: 1.6; }
 .success { background: #eaf7ee; color: #23603c; border: 1px solid #bedfc9; }
 .error { background: #fff1f1; color: #9b3035; border: 1px solid #efc9cc; }
 .table-scroll { overflow-x: auto; }

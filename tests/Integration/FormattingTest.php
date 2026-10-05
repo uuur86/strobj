@@ -17,8 +17,7 @@ final class FormattingTest extends TestCase
         mkdir($directory, 0770, true);
         $file = $directory . '/example.php';
         file_put_contents($file, $input);
-        $php = PHP_SAPI === 'phpdbg'
-        ? dirname(PHP_BINARY) . '/php' . (PHP_OS_FAMILY === 'Windows' ? '.exe' : '') : PHP_BINARY;
+        $php = PhpBinary::cli();
         $command = [$php, $root . '/tools/format.php', $file];
         $result = $this->runCommand($command, $root);
         self::assertSame(0, $result['status'], $result['output']);

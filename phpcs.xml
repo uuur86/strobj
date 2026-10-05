@@ -6,6 +6,8 @@
     <file>tests</file>
     <file>tools</file>
     <file>examples</file>
+    <!-- PHP_CodeSniffer cannot tokenize PHP 8.4 property hooks yet. -->
+    <exclude-pattern>tests/Fixtures/HookedState\.php$</exclude-pattern>
     <arg name="extensions" value="php" />
     <arg name="tab-width" value="4" />
     <arg name="encoding" value="utf-8" />
