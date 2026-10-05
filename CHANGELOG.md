@@ -15,6 +15,9 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Appending to a snapshot whose object root has numeric property names no longer
   replaces an existing entry on PHP 8.1 and later.
 - The CRUD example sets the `Secure` flag on its session cookie for HTTPS requests.
+- The Codacy workflow uploads its SARIF results again. Code scanning rejects
+  several runs of one tool in the same category, so each run gets its own
+  category.
 
 ### Changed
 
