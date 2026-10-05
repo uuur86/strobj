@@ -21,7 +21,7 @@ discussions or pull requests.
 Report them privately instead:
 
 - Use GitHub's [private vulnerability reporting](https://github.com/uuur86/strobj/security/advisories/new), or
-- Email contact@fyndsoft.com with the subject "StrObj security report".
+- Email <contact@fyndsoft.com> with the subject "StrObj security report".
 
 ### What to include
 
