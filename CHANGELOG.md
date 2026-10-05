@@ -3,7 +3,7 @@
 All notable changes to this project are documented in this file.
 The project follows [Semantic Versioning](https://semver.org/).
 
-## [3.0.0] - Unreleased
+## [3.0.0] - 2026-10-05
 
 ### Breaking changes
 
@@ -77,5 +77,5 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 - Added a function to find inclusive paths.
 
-[3.0.0]: https://github.com/uuur86/strobj/compare/v2.1.9...3.0.x-dev
+[3.0.0]: https://github.com/uuur86/strobj/compare/v2.1.9...v3.0.0
 [2.1.9]: https://github.com/uuur86/strobj/releases/tag/v2.1.9

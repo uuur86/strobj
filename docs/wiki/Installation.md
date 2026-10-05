@@ -8,17 +8,11 @@
 ## Composer
 
 ```bash
-composer require uuur86/strobj
+composer require uuur86/strobj:^3.0
 ```
 
-Version 3.0 is in development. To use it before the 3.0.0 release, require the
-development branch:
-
-```bash
-composer require "uuur86/strobj:^3.0@dev"
-```
-
-Pin a tagged release in production as soon as one is available.
+Applications that still need the 2.x line can require `uuur86/strobj:^2.1`; see
+[Migration from 2.1](Migration-from-2.1) before upgrading.
 
 ## Autoloading
 

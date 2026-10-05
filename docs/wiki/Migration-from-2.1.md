@@ -38,7 +38,7 @@ The legacy behavior keeps the 2.1 results; only the bug fixes listed below apply
 | Factory called on a subclass | Returns `StringObjects` | Returns the subclass |
 
 The complete table is in
-[docs/compatibility.md](https://github.com/uuur86/strobj/blob/3.0.x-dev/docs/compatibility.md).
+[docs/compatibility.md](https://github.com/uuur86/strobj/blob/master/docs/compatibility.md).
 
 ## Fixes that apply to both behaviors
 
