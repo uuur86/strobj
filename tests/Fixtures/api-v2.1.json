@@ -1,0 +1,1062 @@
+{
+    "StrObj\\StringObjects": {
+        "__construct": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "obj",
+                    "type": "object",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "options",
+                    "type": "array",
+                    "optional": true,
+                    "reference": false,
+                    "default": []
+                }
+            ]
+        },
+        "instance": {
+            "static": true,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "data",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "options",
+                    "type": "array",
+                    "optional": true,
+                    "reference": false,
+                    "default": []
+                }
+            ]
+        },
+        "get": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "?string",
+                    "optional": true,
+                    "reference": false,
+                    "default": ""
+                },
+                {
+                    "name": "default",
+                    "type": "",
+                    "optional": true,
+                    "reference": false,
+                    "default": false
+                }
+            ]
+        },
+        "set": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "has": {
+            "static": false,
+            "public": true,
+            "return": "bool",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "toJson": {
+            "static": false,
+            "public": true,
+            "return": "string",
+            "parameters": []
+        },
+        "toArray": {
+            "static": false,
+            "public": true,
+            "return": "array",
+            "parameters": []
+        },
+        "isValid": {
+            "static": false,
+            "public": true,
+            "return": "bool",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": true,
+                    "reference": false,
+                    "default": ""
+                }
+            ]
+        },
+        "setMemoryLimit": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "memory",
+                    "type": "int",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "convertToByte": {
+            "static": false,
+            "public": true,
+            "return": "int",
+            "parameters": [
+                {
+                    "name": "amount",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "convertToString": {
+            "static": false,
+            "public": true,
+            "return": "string",
+            "parameters": [
+                {
+                    "name": "bytes",
+                    "type": "int",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "castType": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        }
+    },
+    "StrObj\\Middleware": {
+        "__construct": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "options",
+                    "type": "array",
+                    "optional": true,
+                    "reference": false,
+                    "default": []
+                }
+            ]
+        },
+        "set": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "get": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "setMemoryLimit": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "memory",
+                    "type": "int",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "memoryLeakProtection": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": []
+        },
+        "convertToByte": {
+            "static": false,
+            "public": true,
+            "return": "int",
+            "parameters": [
+                {
+                    "name": "amount",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "convertToString": {
+            "static": false,
+            "public": true,
+            "return": "string",
+            "parameters": [
+                {
+                    "name": "bytes",
+                    "type": "int",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "castType": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        }
+    },
+    "StrObj\\Data\\DataObject": {
+        "__construct": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "data",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "pathInit": {
+            "static": false,
+            "public": true,
+            "return": "StrObj\\Data\\DataPath",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "getCurrentPath": {
+            "static": false,
+            "public": true,
+            "return": "string",
+            "parameters": []
+        },
+        "cache": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "get": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "query": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "?string",
+                    "optional": true,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "set": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "offsetSet": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "index",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "val",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "getCols": {
+            "static": false,
+            "public": true,
+            "return": "array",
+            "parameters": [
+                {
+                    "name": "colname",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "jsonSerialize": {
+            "static": false,
+            "public": true,
+            "return": "array",
+            "parameters": []
+        },
+        "toArray": {
+            "static": false,
+            "public": true,
+            "return": "array",
+            "parameters": []
+        },
+        "findKey": {
+            "static": false,
+            "public": true,
+            "return": "bool",
+            "parameters": [
+                {
+                    "name": "key",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "key": {
+            "static": false,
+            "public": true,
+            "return": "string",
+            "parameters": []
+        },
+        "has": {
+            "static": false,
+            "public": true,
+            "return": "bool",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        }
+    },
+    "StrObj\\Data\\DataFilters": {
+        "__construct": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "options",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "filter": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "data",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "convertToByte": {
+            "static": false,
+            "public": true,
+            "return": "int",
+            "parameters": [
+                {
+                    "name": "amount",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "convertToString": {
+            "static": false,
+            "public": true,
+            "return": "string",
+            "parameters": [
+                {
+                    "name": "bytes",
+                    "type": "int",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "castType": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "parsePath": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "findPaths": {
+            "static": false,
+            "public": true,
+            "return": "array",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "data",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "closure",
+                    "type": "?Closure",
+                    "optional": true,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "findInclusivePaths": {
+            "static": false,
+            "public": false,
+            "return": "string",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "options",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        }
+    },
+    "StrObj\\Data\\DataPath": {
+        "__construct": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "init": {
+            "static": true,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "getRaw": {
+            "static": false,
+            "public": true,
+            "return": "string",
+            "parameters": []
+        },
+        "getArray": {
+            "static": false,
+            "public": true,
+            "return": "array",
+            "parameters": []
+        },
+        "getBranches": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": []
+        },
+        "exists": {
+            "static": false,
+            "public": true,
+            "return": "bool",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "parsePath": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "findPaths": {
+            "static": false,
+            "public": true,
+            "return": "array",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "data",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "closure",
+                    "type": "?Closure",
+                    "optional": true,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "findInclusivePaths": {
+            "static": false,
+            "public": false,
+            "return": "string",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "options",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        }
+    },
+    "StrObj\\Data\\DataCache": {
+        "save": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "data",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "clear": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "get": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "setPath": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "data",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "addPaths": {
+            "static": false,
+            "public": false,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "paths",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "isCached": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        }
+    },
+    "StrObj\\Data\\Validation": {
+        "__construct": {
+            "static": false,
+            "public": true,
+            "return": "",
+            "parameters": [
+                {
+                    "name": "obj",
+                    "type": "StrObj\\Data\\DataObject",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "options",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "validate": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": []
+        },
+        "checkErrorStatus": {
+            "static": false,
+            "public": true,
+            "return": "bool",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "pattern",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "required",
+                    "type": "bool",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "getPattern": {
+            "static": false,
+            "public": true,
+            "return": "string",
+            "parameters": [
+                {
+                    "name": "pattern",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "setPatterns": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "patterns",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "setRules": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "rules",
+                    "type": "array",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "isValid": {
+            "static": false,
+            "public": true,
+            "return": "bool",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": true,
+                    "reference": false,
+                    "default": ""
+                }
+            ]
+        },
+        "setValidationStatus": {
+            "static": false,
+            "public": true,
+            "return": "bool",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "pattern",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "required",
+                    "type": "bool",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        },
+        "addValidationStatus": {
+            "static": false,
+            "public": true,
+            "return": "void",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "value",
+                    "type": "",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "pattern",
+                    "type": "string",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                },
+                {
+                    "name": "required",
+                    "type": "bool",
+                    "optional": false,
+                    "reference": false,
+                    "default": null
+                }
+            ]
+        }
+    }
+}

@@ -1,33 +1,31 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: "[BUG]"
+about: Report incorrect results, errors or crashes
+title: ''
 labels: bug
-assignees: uuur86
-
+assignees: ''
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**Description**
+What happens, in one or two sentences.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-**Input Data:** '....'
-**Code:** '....'
-**Output:** '....'
-**Expected:** '....'
+**Minimal reproduction**
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+```php
+use StrObj\StringObjects;
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+$data = StringObjects::instance(/* input */, [/* options, including 'behavior' if set */]);
+var_dump($data->get('path'));
+```
 
-**Desktop (please complete the following information):**
- - OS: [e.g. Ubuntu]
- - HTTP Server [e.g. apache]
- - Version [e.g. 1.1.1]
+**Expected result**
 
+**Actual result**
+Include the full exception message and stack trace, with secrets and personal data removed.
+
+**Environment**
+- StrObj version:
+- PHP version:
+- Framework (if any):
 
 **Additional context**
-Add any other context about the problem here.

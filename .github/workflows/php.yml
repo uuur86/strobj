@@ -1,39 +1,65 @@
-name: PHP Composer
+name: PHP tests
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master", "*.x-dev"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master", "*.x-dev"]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-
+  tests:
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["7.4", "8.0", "8.1", "8.2", "8.3", "8.4", "8.5"]
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, xml, xmlwriter, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+      - name: Validate Composer configuration
+        run: composer validate --strict
+      - name: Install development dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --no-plugins --no-scripts
+      - name: Run unit, regression and integration tests
+        run: composer test
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
-
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v3
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
-
-    - name: Install dependencies
-      run: composer install --dev --prefer-dist --no-progress
-
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
-
-    - name: Run test suite
-      run: composer test
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up PHP with line coverage
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, xml, xmlwriter, pdo_sqlite
+          coverage: pcov
+          tools: composer:v2
+      - name: Install development dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --no-plugins --no-scripts
+      - name: Require 100 percent production line coverage
+        run: composer test:coverage
+      - name: Analyze production code for PHP 7.4 compatibility
+        run: composer phpstan
+      - name: Check the shared PHP coding standard
+        run: composer format:check
+      - name: Save coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: build/coverage
+          if-no-files-found: warn
+          retention-days: 14

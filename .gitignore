@@ -1,5 +1,33 @@
-vendor/*
-composer.lock
-.vscode/*
-docs/report
-.phpdoc
+# Dependencies and generated outputs
+/vendor/
+/composer.lock
+/build/
+/.phpunit.result.cache
+/.phpunit.cache/
+/.php-cs-fixer.cache
+/.phpdoc/
+/docs/report/
+/docs/reports/
+
+# Local credentials and environment configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+/auth.json
+
+# Local editor settings; keep portable project defaults
+/.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+/.idea/
+*.code-workspace
+
+# Logs, editor backups and operating-system metadata
+*.log
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini

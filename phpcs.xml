@@ -1,32 +1,21 @@
-<?xml version="1.0"?>
-<ruleset name="CodePlusDev">
-    <description>PHP_CodeSniffer configuration for Project</description>
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="StrObj">
+    <description>PSR-12 with the statement spacing used in examples/02-crud/web.php.</description>
 
-    <arg name="tab-width" value="false" />
+    <file>src</file>
+    <file>tests</file>
+    <file>tools</file>
+    <file>examples</file>
+    <arg name="extensions" value="php" />
+    <arg name="tab-width" value="4" />
+    <arg name="encoding" value="utf-8" />
 
-    <!-- Run against the PSR12 standard -->
     <rule ref="PSR12">
-        <!-- Don't require tabs for indentation -->
-        <exclude name="Generic.WhiteSpace.DisallowSpaceIndent" />
-        <exclude name="Squiz.Strings.DoubleQuoteUsage.NotRequired" />
+        <!-- Existing property names are retained for compatibility and continuity. -->
         <exclude name="PSR2.Classes.PropertyDeclaration.Underscore" />
-
-        <properties>
-            <property name="minimumWarningSeverity" value="0" />
-            <property name="indent" value="4" />
-            <property name="tabIndent" value="false" />
-        </properties>
+        <exclude name="Generic.WhiteSpace.ScopeIndent" />
     </rule>
-
-    <!-- Require spaces for indentation -->
-    <rule ref="Generic.WhiteSpace.ScopeIndent">
-        <properties>
-            <property name="indent" value="4" />
-            <property name="tabIndent" value="false" />
-        </properties>
-    </rule>
-
-    <rule ref="Generic.WhiteSpace.DisallowTabIndent">
-        <severity>0</severity>
-    </rule>
+    <rule ref="Squiz.Commenting.DocCommentAlignment" />
+    <rule ref="./tools/Standards/StrObj/Sniffs/WhiteSpace/ScopeIndentSniff.php" />
+    <rule ref="./tools/Standards/StrObj/Sniffs/WhiteSpace/StatementSpacingSniff.php" />
 </ruleset>

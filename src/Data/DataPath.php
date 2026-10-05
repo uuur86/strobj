@@ -3,24 +3,23 @@
 /**
  * This file is part of the StrObj package.
  *
- * (c) Uğur Biçer <contact@codeplus.dev>
+ * (c) Uğur Biçer <contact@fyndsoft.com>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  *
- * @package  StrObj
- * @version  GIT: <git_id>
- * @link     https://github.com/uuur86/strobj
+ * @package StrObj
+ * @link    https://github.com/uuur86/strobj
  */
+
+declare(strict_types=1);
 
 namespace StrObj\Data;
 
 use ArrayIterator;
-use Iterator;
 use StrObj\Helpers\DataParsers;
-use StrObj\Interfaces\DataStructures\DataInterface;
 
-class DataPath extends ArrayIterator implements Iterator
+class DataPath extends ArrayIterator
 {
     /**
      * Data Parser trait
@@ -30,29 +29,22 @@ class DataPath extends ArrayIterator implements Iterator
     /**
      * @var string
      */
-    private string $path = '';
-
+    private string $path;
     /**
-     * @var array
+     * Parses a path while retaining the original string.
+     *
+     * @param string $path The slash-separated path.
      */
-    private array $map = [];
-
-
-
     public function __construct(string $path)
     {
         $this->path = $path;
-
-        $path_arr = $this->parsePath($path);
-
-        parent::__construct($path_arr);
+        parent::__construct($this->parsePath($path));
     }
 
     /**
-     * Inıt path
+     * Initialize a path
      *
      * @param string        $path
-     * @param DataInterface $data
      *
      * @return DataPath
      */
@@ -83,19 +75,17 @@ class DataPath extends ArrayIterator implements Iterator
 
     /**
      * Find all sub branches
+     *
+     * @return array
      */
     public function getBranches()
     {
-        $path        = $this->getArrayCopy();
-        $branches    = &$this->map;
-        $branch_path = array_shift($path);
-        $branches[]  = $branch_path;
+        $branches = [];
+        $prefix = '';
 
-        while (false !== ($key = current($path))) {
-            $branch_path .= '/' . (string) $key;
-            $branches[] = $branch_path;
-
-            next($path);
+        foreach ($this->getArray() as $segment) {
+            $prefix = $prefix === '' ? $segment : $prefix . '/' . $segment;
+            $branches[] = $prefix;
         }
 
         return $branches;
@@ -108,6 +98,6 @@ class DataPath extends ArrayIterator implements Iterator
      */
     public function exists(string $path): bool
     {
-        return in_array($path, $this->map);
+        return in_array($this->normalizePath($path), $this->getBranches(), true);
     }
 }

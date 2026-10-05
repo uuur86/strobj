@@ -1,0 +1,8 @@
+parameters:
+    level: 5
+    phpVersion: 70400
+    paths:
+        - src
+    tmpDir: build/phpstan
+    # Public APIs validate unsupported inputs as well as their documented types.
+    treatPhpDocTypesAsCertain: false

@@ -1,0 +1,17 @@
+{
+    "files.eol": "\n",
+    "[php]": {
+        "editor.defaultFormatter": "valeryanm.vscode-phpsab",
+        "editor.formatOnSave": false,
+        "editor.formatOnPaste": false,
+        "editor.wordBasedSuggestions": "off",
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
+    },
+    "phpsab.standard": "./phpcs.xml",
+    "phpsab.autoRulesetSearch": false,
+    "phpsab.executablePathCS": "./vendor/bin/phpcs",
+    "phpsab.executablePathCBF": "./vendor/bin/phpcbf",
+    "phpsab.fixerEnable": true
+}

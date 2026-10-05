@@ -3,66 +3,175 @@
 /**
  * This file is part of the StrObj package.
  *
- * (c) Uğur Biçer <contact@codeplus.dev>
+ * (c) Uğur Biçer <contact@fyndsoft.com>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  *
- * @package  StrObj
- * @version  GIT: <git_id>
- * @link     https://github.com/uuur86/strobj
+ * @package StrObj
+ * @link    https://github.com/uuur86/strobj
  */
+
+declare(strict_types=1);
 
 namespace StrObj\Data;
 
+use InvalidArgumentException;
 use RecursiveArrayIterator;
+use StrObj\Helpers\PathResolver;
 use StrObj\Interfaces\DataStructures\DataInterface;
+use Traversable;
 
+/**
+ * A path-aware data container that retains the inherited SPL operation contracts.
+ *
+ * Inherited asort/ksort sort values/keys and forward PHP's native comparison flags.
+ * Inherited natsort/natcasesort sort values in natural/case-insensitive natural order.
+ * Inherited uasort/uksort accept native comparators and preserve keys.
+ * Reads always resolve the current storage. Revision checks observe the storage,
+ * so validation also refreshes after these operations, including partial
+ * mutations before a comparator throws.
+ *
+ * @see RecursiveArrayIterator::asort()
+ * @see RecursiveArrayIterator::ksort()
+ * @see RecursiveArrayIterator::natsort()
+ * @see RecursiveArrayIterator::natcasesort()
+ * @see RecursiveArrayIterator::uasort()
+ * @see RecursiveArrayIterator::uksort()
+ */
 class DataObject extends RecursiveArrayIterator implements DataInterface
 {
-    /**
-     * @var DataPath[]
-     */
-    private array $paths = [];
-
     /**
      * Latest query path
      *
      * @var string
      */
-    private ?string $currentPath = null;
-
+    private string $currentPath = '';
     /**
-     * Cache object
+     * Auxiliary cache populated only by cache(); reads never consult it.
      *
      * @var DataCache
      */
     private DataCache $cache;
+    /**
+     * Preserves an object root when encoding JSON.
+     *
+     * @var bool
+     */
+    private bool $objectRoot;
+
+    /** @var bool Whether reads and writes detach mutable object state. */
+    private bool $detached = false;
+
+    /**
+     * Storage observed by the latest revision check, used to detect inherited
+     * SPL mutations. Null after a library write, which already bumps the revision.
+     *
+     * @var array|null
+     */
+    private ?array $observedData = null;
+
+    /**
+     * Mutation counter used to invalidate validation results.
+     *
+     * @var int
+     */
+    private int $revision = 0;
 
     /**
      * Constructor
      *
-     * @param array|object $obj The object to use
+     * @param array|object $data The object or array to use.
      */
     public function __construct($data)
     {
-        parent::__construct($data);
+        if (!is_array($data) && !is_object($data)) {
+            throw new InvalidArgumentException('Data must be an array or object.');
+        }
 
         $this->cache = new DataCache();
+        $this->objectRoot = is_object($data) && !$data instanceof Traversable;
+        parent::__construct($data instanceof Traversable ? iterator_to_array($data) : $data);
+        $this->observedData = parent::getArrayCopy();
     }
 
     /**
-     * Init data object
+     * Creates a data container with detached reads and writes.
+     *
+     * @param array|object $data The input data.
+     * @return self
+     */
+    public static function snapshot($data): self
+    {
+        $object = new self($data);
+        $object->detached = true;
+        $object->resetStorage();
+
+        return $object;
+    }
+
+    /**
+     * Reinitializes SPL storage and cache when cloning the data object.
+     * Nested values follow the existing legacy or snapshot copy policy.
+     * The clone starts at the first iterator entry with the same data revision.
+     *
+     * @return void
+     */
+    public function __clone()
+    {
+        $this->resetStorage();
+    }
+
+    /** Reinitializes iterator storage and cache according to the copy policy. */
+    private function resetStorage(): void
+    {
+        $data = $this->copyStoredValue(parent::getArrayCopy());
+        $this->cache = new DataCache();
+        parent::__construct($this->objectRoot ? PathResolver::objectFromEntries($data) : $data, $this->getFlags());
+        $this->observedData = parent::getArrayCopy();
+    }
+
+    /** @return mixed A value copied according to the container's policy. */
+    private function copyStoredValue($value)
+    {
+        return $this->detached ? PathResolver::copyValue($value) : $value;
+    }
+
+    /**
+     * Initializes the current path and returns an independent path iterator.
+     * Parsed paths are not retained, so distinct queries do not accumulate memory.
+     *
+     * @param string $path The slash-separated query path.
+     *
+     * @return DataPath
      */
     public function pathInit(string $path): DataPath
     {
-        $this->currentPath = $path;
+        $parsed = new DataPath($path);
+        $canonical = $parsed->normalizePath($path);
+        $this->currentPath = $canonical;
 
-        if (!isset($this->paths[$path])) {
-            $this->paths[$path] = new DataPath($path);
+        return new DataPath($canonical);
+    }
+
+    /**
+     * Returns the revision of the current data.
+     * Inherited SPL mutations made since the previous check also advance it.
+     *
+     * @return int
+     */
+    public function getRevision(): int
+    {
+        $data = parent::getArrayCopy();
+
+        if ($this->observedData !== null && $data !== $this->observedData) {
+            $this->revision++;
+            $this->cache->clearAll();
         }
 
-        return $this->paths[$path];
+        $this->observedData = $data;
+
+        return $this->revision;
     }
 
     /**
@@ -76,14 +185,18 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     }
 
     /**
-     * Save data to cache
+     * Save data to the auxiliary cache
+     * Retained for API compatibility; get() always resolves the current data.
+     *
+     * @deprecated 3.0 The cache is no longer read; this method will be removed in the next major version.
      *
      * @param string $path
      * @param mixed  $value
      */
     public function cache(string $path, $value): void
     {
-        $this->cache->save($path, $value);
+        $canonical = $this->pathInit($path)->normalizePath($path);
+        $this->cache->save($canonical, $this->copyStoredValue($value));
     }
 
     /**
@@ -95,15 +208,7 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function get(string $path)
     {
-        if ($this->cache->isCached($path)) {
-            return $this->cache->get($path);
-        }
-
-        $value = $this->query($path);
-
-        $this->cache($path, $value);
-
-        return $value;
+        return $this->query($path);
     }
 
     /**
@@ -114,143 +219,283 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function query(?string $path = null)
     {
-        if (strlen($path) === 0 || $path === '*') {
-            return $this->getArrayCopy();
-        }
-
-        $this->rewind();
-
-        $path_arr = $this->pathInit($path)->getArray();
-
-        $data = $this;
-
-        // Advances in the data structure based on the given key and next key.
-        while (false !== ($key = current($path_arr))) {
-            $next_key = next($path_arr);
-            $next_key = $next_key !== false ? (string) $next_key : false;
-
-            // Retrieves sub-datasets based on the '*' wildcard key.
-            if ($key === '*') {
-                return $data->getCols($next_key);
-            }
-
-            // return null If the requested key doesn't exists
-            if (! $data->findKey((string) $key)) {
-                return null;
-            }
-
-            if ($next_key === false) {
-                break;
-            }
-
-            if ($data->hasChildren()) {
-                $data = $data->getChildren();
-                continue;
-            }
-
-            break;
-        }
-
-        return $data->current();
+        return $this->queryWithTransform($path);
     }
 
     /**
-     * Set a value to the given path
+     * Queries data and optionally transforms each selected concrete value.
+     *
+     * @param string|null $path The requested path.
+     * @param callable|null $transform Receives the concrete path and value.
+     * @return mixed
+     */
+    public function queryWithTransform(?string $path = null, ?callable $transform = null)
+    {
+        $parsed = $this->pathInit($path ?? '');
+        $segments = $parsed->getArray();
+
+        if ($segments === [] || $parsed->getRaw() === '*') {
+            return PathResolver::read($this->readStorage(), [], $transform, '', $this->detached);
+        }
+
+        $wildcard = array_search('*', $segments, true);
+
+        if (!$this->detached && $wildcard !== false && isset($segments[$wildcard + 1])) {
+            return $this->readColumn(array_slice($segments, 0, $wildcard), $segments[$wildcard + 1], $transform);
+        }
+
+        if ($segments[0] === '*') {
+            return PathResolver::read($this->readStorage(), $segments, $transform, '', $this->detached);
+        }
+
+        $key = array_shift($segments);
+        $root = $this->lookupRoot($key);
+
+        if (!$root['exists']) {
+            return null;
+        }
+
+        return PathResolver::read($root['value'], $segments, $transform, $key, $this->detached);
+    }
+
+    /**
+     * Reads a legacy wildcard column with the v2.1 array_column() contract.
+     * Rows without the column are skipped, the result is a list, and segments
+     * after the column are ignored. A missing prefix returns null; a scalar
+     * prefix returns an empty list.
+     *
+     * @param string[]      $prefix    Segments before the wildcard.
+     * @param string        $column    Segment after the wildcard.
+     * @param callable|null $transform Receives the concrete path and value.
+     *
+     * @return array|null
+     */
+    private function readColumn(array $prefix, string $column, ?callable $transform): ?array
+    {
+        $rows = $this->readStorage();
+
+        if ($prefix !== []) {
+            $match = current($this->findMatches(implode('/', $prefix)));
+
+            if (!$match['exists']) {
+                return null;
+            }
+
+            $rows = $match['value'];
+        }
+
+        $values = [];
+
+        foreach (is_array($rows) || is_object($rows) ? $rows : [] as $index => $row) {
+            $fields = is_array($row) ? $row : (is_object($row) ? get_object_vars($row) : []);
+
+            if (array_key_exists($column, $fields)) {
+                $path = implode('/', array_merge($prefix, [(string) $index, $column]));
+                $values[] = $transform === null ? $fields[$column] : $transform($path, $fields[$column]);
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * Finds concrete matches, retaining original keys and missing fields.
+     *
+     * @param string $path The path or wildcard pattern.
+     *
+     * @return array<string, array{exists: bool, value: mixed}>
+     */
+    public function findMatches(string $path): array
+    {
+        $segments = $this->pathInit($path)->getArray();
+
+        if ($segments === [] || $segments[0] === '*') {
+            return PathResolver::select($this->readStorage(), $segments, '', $this->detached);
+        }
+
+        $key = array_shift($segments);
+        $root = $this->lookupRoot($key);
+
+        if (!$root['exists']) {
+            return [implode('/', array_merge([$key], $segments)) => ['exists' => false, 'value' => null]];
+        }
+
+        return PathResolver::select($root['value'], $segments, $key, $this->detached);
+    }
+
+    /**
+     * Reads one root field through the SPL storage in constant time.
+     * Numeric property names of object roots are also found this way.
+     *
+     * @param string $key The root field.
+     *
+     * @return array{exists: bool, value: mixed}
+     */
+    private function lookupRoot(string $key): array
+    {
+        if (parent::offsetExists($key)) {
+            return ['exists' => true, 'value' => parent::offsetGet($key)];
+        }
+
+        // SPL before PHP 8.1 misses numeric property names of objects supplied by the caller.
+        $fields = PHP_VERSION_ID < 80100 && $this->objectRoot ? (array) (object) parent::getArrayCopy() : [];
+        $exists = array_key_exists($key, $fields);
+
+        return ['exists' => $exists, 'value' => $exists ? $fields[$key] : null];
+    }
+
+    /**
+     * Set a value to the given concrete path, preserving unrelated fields.
+     * New branches are created and scalar intermediates become arrays.
+     * The changed branch is built before committing the write.
+     *
+     * @throws \InvalidArgumentException For an empty or wildcard write path.
+     * @see https://github.com/php/php-src/issues/10519
      *
      * @param string $path
      * @param mixed  $value
      */
     public function set(string $path, $value): void
     {
-        // Current data object reference
-        $data = &$this;
+        $segments = $this->pathInit($path)->getArray();
 
-        // The name of the parent key index
-        $set_key = null;
-
-        // The key name to create when needed
-        $create_key = null;
-
-        // Returned DataPath object
-        $path_ = $this->pathInit($path);
-
-        if (!$path_) {
-            return;
+        if ($segments === [] || in_array('*', $segments, true)) {
+            throw new InvalidArgumentException('Writes require a non-empty concrete path.');
         }
 
-        // Add given value to the cache
-        $this->cache($path, $value);
-
-        // Get path as an array
-        $path_arr = $path_->getArray();
-
-        // Roam the path
-        foreach ($path_arr as $key) {
-            // Break the loop when the key doesn't exists
-            if (!$data->findKey($key)) {
-                $create_key = $key;
-                break;
-            }
-
-            // We assign the current key index sequence each time
-            // to find the last index that is hasn't a child object.
-            $set_key = $key;
-
-            // If object hasn't children, it means we found the last key
-            if (!$data->hasChildren()) {
-                break;
-            }
-
-            // Continue if it has a children
-            $data = $data->getChildren();
-        }
-
-        // Warning! DO NOT REMOVE! This solution contains a bug fix for php
-        // due to the fact that the php reference bug appears when new keys are created
-        // https://github.com/php/php-src/issues/10519
-        //
-        // Problem solved in php 8.3.1
-        // https://github.com/php/php-src/commit/49b2ff5dbb94b76b265fd5909881997e1d95c6b3
-        if (! empty($create_key)) {
-            // Reverse the array starting from the child to the parent.
-            $path_arr_r = array_reverse($path_arr);
-
-            // If last key equals to the key that will create, then set and finish the process
-            if ($path_arr_r[0] === $create_key) {
-                $data->offsetSet($create_key, $value);
-                return;
-            }
-
-            // Prepare $value when searching for array index that does not exist
-            foreach ($path_arr_r as $key) {
-                if ($key === $create_key) {
-                    break;
-                }
-
-                $value = [$key => $value];
-            }
-
-            if (is_array($value)) {
-                $data->offsetSet($create_key, $value);
-                $this->offsetSet($set_key, $data->getArrayCopy());
-
-                return;
-            }
-        }
-
-        $data->offsetSet($set_key, $value);
+        $value = $this->copyStoredValue($value);
+        $key = array_shift($segments);
+        $root = $this->lookupRoot($key);
+        $updated = PathResolver::write($root['exists'] ? $root['value'] : [], $segments, $value, $this->detached);
+        $this->offsetSet($key, $updated);
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @param mixed $index The original ArrayAccess index parameter.
+     * @param mixed $val The original value parameter (including named calls).
+     * @deprecated For direct calls, use setOffset(). ArrayAccess syntax remains supported.
      */
     public function offsetSet($index, $val): void
     {
-        if (is_array($val)) {
-            $val = (object) $val;
+        $this->setOffset($index, $val);
+    }
+
+    /**
+     * Writes an iterator field and invalidates cached reads.
+     *
+     * @param mixed $index The field index; null appends.
+     * @param mixed $value The value to store.
+     * @return void
+     */
+    public function setOffset($index, $value): void
+    {
+        parent::offsetSet($index, $this->copyStoredValue($value));
+        $this->invalidate();
+    }
+
+    /**
+     * Removes an iterator field and invalidates cached reads.
+     *
+     * @param string|int $key The field to remove.
+     *
+     * @return void
+     */
+    #[\ReturnTypeWillChange]
+    public function offsetUnset($key)
+    {
+        parent::offsetUnset($key);
+        $this->invalidate();
+    }
+
+    /**
+     * Appends a value and invalidates cached reads.
+     *
+     * @param mixed $value The value to append.
+     *
+     * @return void
+     */
+    #[\ReturnTypeWillChange]
+    public function append($value)
+    {
+        $this->offsetSet(null, $value);
+    }
+
+    /**
+     * Discards cached reads and marks validation results as outdated.
+     *
+     * @return void
+     */
+    private function invalidate(): void
+    {
+        $this->cache->clearAll();
+        $this->revision++;
+        $this->observedData = null;
+    }
+
+    /**
+     * Returns the complete iterator storage for whole-tree and root wildcard reads.
+     *
+     * @return array The current iterator storage.
+     */
+    private function readStorage(): array
+    {
+        return parent::getArrayCopy();
+    }
+
+    /**
+     * Returns an iterator value according to the container's copy policy.
+     *
+     * @param string|int $key The requested field.
+     *
+     * @return mixed
+     */
+    #[\ReturnTypeWillChange]
+    public function offsetGet($key)
+    {
+        return $this->copyStoredValue(parent::offsetGet($key));
+    }
+
+    /**
+     * Returns the current iterator value according to the container's copy policy.
+     *
+     * @return mixed
+     */
+    #[\ReturnTypeWillChange]
+    public function current()
+    {
+        return $this->copyStoredValue(parent::current());
+    }
+
+    /**
+     * Preserves the copy policy when recursive iteration creates a child iterator.
+     *
+     * @return RecursiveArrayIterator|null
+     */
+    #[\ReturnTypeWillChange]
+    public function getChildren()
+    {
+        $child = parent::getChildren();
+
+        if ($this->detached && $child instanceof self) {
+            $child->detached = true;
+            $child->resetStorage();
         }
 
-        parent::offsetSet($index, $val);
+        return $child;
+    }
+
+    /**
+     * Returns an array copy without changing nested classes or list/object shapes.
+     * Nested values follow the legacy or snapshot copy policy.
+     *
+     * @return array
+     */
+    #[\ReturnTypeWillChange]
+    public function getArrayCopy()
+    {
+        return $this->copyStoredValue($this->readStorage());
     }
 
     /**
@@ -258,41 +503,74 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function getCols(string $colname): array
     {
-        return array_column($this->getArrayCopy(), $colname);
+        return $this->query('*/' . $colname);
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @return array The original serialization contract, including object roots.
      */
     public function jsonSerialize(): array
     {
         return $this->getArrayCopy();
     }
 
+    /** @return array|object A JSON value preserving the original root container shape. */
+    public function toJsonValue()
+    {
+        $data = $this->getArrayCopy();
+
+        return $this->objectRoot ? (object) $data : $data;
+    }
+
     /**
-     * To array function
+     * Converts the data to an array
+     * Legacy containers return root fields with nested values unchanged, as in v2.1.
+     * Snapshot containers recursively convert every nested container to arrays.
      *
      * @return array
      */
     public function toArray(): array
     {
-        return $this->getArrayCopy();
+        if ($this->detached) {
+            return PathResolver::copyValue($this->readStorage(), true);
+        }
+
+        $result = [];
+
+        // Assignment normalizes numeric property names of object roots to integer keys.
+        foreach ($this->readStorage() as $key => $value) {
+            $result[$key] = $value;
+        }
+
+        return $result;
     }
 
     /**
-     * Find path
+     * Moves the iterator to a root field
+     * After a successful call, key() and current() return that field, so callers
+     * can continue iterating from it. When the key is missing, the method returns
+     * false and leaves the iterator past the last entry. Use has() for a lookup
+     * that does not move the iterator.
      *
-     * @param string $key
+     * @param string $key Root field name.
      *
-     * @return bool
+     * @return bool Whether the field exists.
      */
     public function findKey(string $key): bool
     {
-        while ($this->key() !== $key && $this->valid()) {
+        $this->rewind();
+
+        while ($this->valid()) {
+            if ($this->key() === $key) {
+                return true;
+            }
+
             $this->next();
         }
 
-        return $this->key() === $key;
+        return false;
     }
 
     /**
@@ -304,7 +582,8 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     }
 
     /**
-     * Data is exists or not
+     * Checks field existence independently of its value or query history.
+     * Wildcards require at least one existing concrete match.
      *
      * @param string $path
      *
@@ -312,6 +591,12 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public function has(string $path): bool
     {
-        return in_array($path, $this->paths, true);
+        foreach ($this->findMatches($path) as $match) {
+            if ($match['exists']) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -1,0 +1,80 @@
+{
+  "meta": {
+    "source": "crm-api",
+    "generatedAt": "2026-10-03T10:00:00+03:00",
+    "pagination": {"page": 1, "total": 5},
+    "currency": "USD"
+  },
+  "payload": {
+    "customers": [
+      {
+        "id": "CUS-001",
+        "profile": {
+          "fullName": "Alice Morgan",
+          "contact": {"email": "alice@example.test", "phone": "+1 555 010 0001"},
+          "company": {"name": "Blue Design", "department": "Purchasing"},
+          "addresses": {
+            "billing": {"city": "Chicago", "district": "Loop", "country": "US"},
+            "shipping": {"city": "Chicago", "district": "Hyde Park", "country": "US"}
+          }
+        },
+        "account": {"active": true, "tier": "gold", "permissions": ["orders", "invoices"]},
+        "commerce": {"summary": {"orderCount": "7", "lifetimeSpend": "12450.90"}},
+        "orders": [
+          {
+            "id": "ORD-301",
+            "totals": {"grandTotal": "2450.90", "tax": "408.48"},
+            "items": [{"product": {"sku": "KB-101", "name": "Mechanical keyboard"}, "quantity": 1}],
+            "fulfillment": {"shipment": {"tracking": {"status": "Delivered", "provider": "Demo Shipping"}}}
+          },
+          {"id": "ORD-299", "items": [{"product": {"sku": "MS-202"}, "quantity": 2}]}
+        ],
+        "preferences": {"language": "en", "notifications": {"email": true, "sms": false}},
+        "audit": {"createdBy": "import-job", "events": [{"type": "verified"}]}
+      },
+      {
+        "id": "CUS-002",
+        "profile": {
+          "fullName": "Ben Reed",
+          "contact": {"email": "ben@example.test"},
+          "addresses": {"billing": {"city": "Denver", "district": "Capitol Hill"}}
+        },
+        "account": {"active": false, "tier": "silver"},
+        "commerce": {"summary": {"orderCount": "3", "lifetimeSpend": "4700"}},
+        "orders": [{"items": [{"product": {"sku": "MN-303"}, "quantity": 1}]}],
+        "preferences": {"language": "en", "notifications": {"email": false}}
+      },
+      {
+        "id": "CUS-003",
+        "profile": {
+          "fullName": "Charlie Lee",
+          "contact": {"phone": "+1 555 010 0003"},
+          "addresses": {"billing": {"city": "Chicago"}}
+        },
+        "account": {"active": "1", "tier": "standard"},
+        "commerce": {"summary": {"orderCount": "5", "lifetimeSpend": "2150"}},
+        "orders": [{"items": [{"product": {"sku": "HD-404"}, "quantity": 1}]}]
+      },
+      {
+        "id": "CUS-004",
+        "profile": {"fullName": "Dana Brooks", "contact": {}, "addresses": null},
+        "account": {"active": false},
+        "commerce": {"summary": {"orderCount": 0, "lifetimeSpend": 0}},
+        "orders": []
+      },
+      {
+        "id": "CUS-005",
+        "profile": {
+          "fullName": "Ethan Price",
+          "contact": {"email": "ethan@example.test"},
+          "addresses": {"billing": {"city": "Chicago"}}
+        },
+        "account": {"active": true},
+        "commerce": {"summary": {"orderCount": "2", "lifetimeSpend": "-75"}},
+        "orders": [],
+        "audit": {"notes": ["Demo: negative spending is rejected by the value filter."]}
+      }
+    ],
+    "lookups": {"tiers": {"gold": {"discount": 0.15}, "silver": {"discount": 0.05}}}
+  }
+}

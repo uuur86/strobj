@@ -1,0 +1,48 @@
+# Publishes docs/wiki to the repository's GitHub wiki.
+# docs/wiki is the source of truth: pages edited only on the wiki are replaced
+# or removed by the next publish.
+name: Publish wiki
+
+on:
+  push:
+    branches: ["master", "*.x-dev"]
+    paths:
+      - "docs/wiki/**"
+      - ".github/workflows/wiki.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Publish one revision at a time, in push order.
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Sync docs/wiki to the wiki repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          wiki="$RUNNER_TEMP/wiki"
+          git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" "$wiki"
+          # README.md documents this directory and is not a wiki page.
+          rsync --archive --delete --exclude ".git/" --exclude "README.md" docs/wiki/ "$wiki/"
+          cd "$wiki"
+          git add --all
+
+          if git diff --cached --quiet; then
+            echo "The wiki is already up to date."
+            exit 0
+          fi
+
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet --message "Sync wiki from ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}"
+          git push --quiet origin HEAD

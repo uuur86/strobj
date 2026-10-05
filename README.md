@@ -1,5 +1,7 @@
 
 # PHP String Objects
+[![PHP tests](https://github.com/uuur86/strobj/actions/workflows/php.yml/badge.svg)](https://github.com/uuur86/strobj/actions/workflows/php.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
@@ -13,11 +15,13 @@ PHP String Objects is a library that provides an easy and intuitive interface fo
 
 * Allows accessing objects via strings
 * Allows checking if the values of objects are valid using pre-defined or custom validation rules
-* Provides middleware functionality to set memory limits or other configurations
+* Provides an optional, process-wide memory guard
 * Provides data filters to manipulate the values of objects
 * Can be used to set or get values of objects and arrays in a simplified manner
 
 ## Installation
+
+Requires PHP 7.4 or newer with the JSON extension.
 
 To install the library, run the following Composer command:
 
@@ -25,7 +29,7 @@ To install the library, run the following Composer command:
 composer require uuur86/strobj
 ```
 
-## USAGE
+## Usage
 
 To get started with PHP String Objects, include the following code at the top of your PHP file:
 
@@ -34,7 +38,20 @@ use StrObj\StringObjects;
 require('vendor/autoload.php');
 ```
 
-### BASIC USAGE
+### Basic usage
+
+`StringObjects::instance()` returns stored values unchanged (including `false`
+and `null`), applies a default only to missing or rejected values, detaches values
+from the input and checks its configuration strictly. Applications written for
+2.x can keep the previous results with the legacy behavior:
+
+```php
+use StrObj\Behavior;
+
+$data = StringObjects::instance($json, ['behavior' => Behavior::LEGACY]);
+```
+
+See [Compatibility](docs/compatibility.md) for every observable difference.
 
 Here is an example of how to use PHP String Objects to access and manipulate data in a JSON string:
 
@@ -95,8 +112,9 @@ $test = StringObjects::instance(
             ],
         ],
         'middleware' => [
-            // Sets memory limit to 3MB
-            'memory_limit' => 1024 * 1024 * 3,
+            // Optional guard in bytes; compares the whole PHP process's memory usage
+            // (memory_get_usage()), so choose a value above your application's normal peak
+            'memory_limit' => 256 * 1024 * 1024,
         ],
         // Output data filters
         'filters' => [
@@ -143,68 +161,101 @@ $test->set('persons/0/age', 12);
 $test->set('persons/4/name', 'Neo Doe');
 $test->set('persons/4/age', 199);
 
-// Outputs "John D."
+// Returns the default (false here): the name predicate rejects the dot in "John D."
+// Stored false and null values are returned unchanged; the default is used only for
+// missing fields and rejected values. Use has() to tell those two cases apart.
 $test->get('persons/0/name');
 
-// Outputs "12"
+// Outputs 21 (the fourth person's age, cast to int)
 $test->get('persons/3/age');
 
 // Outputs "Neo Doe"
 $test->get('persons/4/name');
 
-// Outputs "199"
+// Outputs 199 (cast to int)
 $test->get('persons/4/age');
 
 // Updates value of persons/4/age to "200"
 $test->set('persons/4/age', 200);
 
-// Outputs "200"
+// Outputs 200
 $test->get('persons/4/age');
 ```
 
-## DEVELOPMENT
+## Documentation
 
-### TESTS
+The [wiki](https://github.com/uuur86/strobj/wiki) covers values and defaults,
+validation, filters, error handling, Laravel and custom PHP integration, security
+and migration from 2.1. Its source is in [docs/wiki](docs/wiki).
+
+## Examples
+
+Start the examples server and open `http://localhost:8000/` for a landing page
+with links to both interactive demos. Select table columns and change filters
+over complex JSON, or add, list, edit and delete products through a form with
+validation and persistent SQLite storage. See [examples/README.md](examples/README.md)
+for setup, a walkthrough and extension points.
+
+## Development
+
+### Tests
 
 ```bash
+composer install
 composer test
+composer test:unit
+composer test:regression
+composer test:integration
 ```
 
-or
+With Xdebug coverage mode or PCOV enabled:
 
 ```bash
-php vendor/bin/phpunit tests/TestScenarios
+composer test:coverage
 ```
 
-## LICENSE
+Alternatively, with phpdbg available: `composer test:coverage:phpdbg`.
 
-GPL-2.0-or-later
+The coverage command requires 100% executable-line coverage for every PHP file
+in `src/`. Missing reports, omitted source files, uncovered lines, test warnings,
+risky tests and unexpected test output fail the checks. See [Testing](docs/testing.md)
+for phpdbg commands, behavior contracts and verification details.
 
-## AUTHOR
+Run production static analysis with `composer phpstan`.
 
-Uğur Biçer - @uuur86
+### Formatting
 
-## CONTRIBUTING
+VS Code and Cursor use `valeryanm.vscode-phpsab` with the shared `phpcs.xml`
+rules. Press **Shift+Alt+F** to format a PHP document. Formatting on save and
+paste stays disabled. Use `composer format -- <changed paths>` to format from
+the terminal and `composer format:check -- <changed paths>` to verify the result.
+See [Formatting](docs/formatting.md) for setup and spacing conventions.
 
-If you want to contribute to this project, you can send pull requests. We expect all contributors to follow our [Code of Conduct](CONTRIBUTING.md).
+## License
 
-## CONTACT
+MIT. See [LICENSE](LICENSE). Releases up to 2.1.9 were published under GPL-2.0-or-later.
 
-You can contact me via email: contact@codeplus.dev
+## Author
 
-## BUGS
+Uğur Biçer ([@uuur86](https://github.com/uuur86))
 
-You can report bugs via github issues.
+## Contributing
 
-## SECURITY
+Contributions are welcome. Read the [contributing guide](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md), and report bugs through
+[GitHub issues](https://github.com/uuur86/strobj/issues). For other questions,
+email contact@fyndsoft.com.
 
-If you find a security issue, please report it via email: contact@codeplus.dev
+## Security
 
-## DONATE
+Please do not report security issues in public issues. Follow the private reporting
+process in [SECURITY.md](SECURITY.md).
 
-If you want to support me, you can donate via github sponsors: <https://github.com/sponsors/uuur86>
+## Sponsoring
 
-## SEE ALSO
+You can support the project through [GitHub Sponsors](https://github.com/sponsors/uuur86).
 
-- [uuur86/wpoauth]( https://github.com/uuur86/wpoauth ) - Wordpress OAuth2 Client
-- [@codeplusdev]( https://github.com/codeplusdev ) - Codeplus Development
+## See also
+
+- [uuur86/dalue](https://github.com/uuur86/dalue) — a data mapper built on StrObj
+- [uuur86/wpoauth](https://github.com/uuur86/wpoauth) — WordPress OAuth2 client
