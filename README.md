@@ -1,5 +1,5 @@
-
 # PHP String Objects
+
 [![PHP tests](https://github.com/uuur86/strobj/actions/workflows/php.yml/badge.svg)](https://github.com/uuur86/strobj/actions/workflows/php.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=uuur86_strobj&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=uuur86_strobj)
@@ -13,11 +13,11 @@
 
 PHP String Objects is a library that provides an easy and intuitive interface for working with PHP arrays and objects. With built-in validation and filtering, it makes it easier to access, manipulate and validate data, saving you time and frustration.
 
-* Allows accessing objects via strings
-* Allows checking if the values of objects are valid using pre-defined or custom validation rules
-* Provides an optional, process-wide memory guard
-* Provides data filters to manipulate the values of objects
-* Can be used to set or get values of objects and arrays in a simplified manner
+- Allows accessing objects via strings
+- Allows checking if the values of objects are valid using pre-defined or custom validation rules
+- Provides an optional, process-wide memory guard
+- Provides data filters to manipulate the values of objects
+- Can be used to set or get values of objects and arrays in a simplified manner
 
 ## Installation
 
@@ -244,7 +244,7 @@ Uğur Biçer ([@uuur86](https://github.com/uuur86))
 Contributions are welcome. Read the [contributing guide](CONTRIBUTING.md) and the
 [code of conduct](CODE_OF_CONDUCT.md), and report bugs through
 [GitHub issues](https://github.com/uuur86/strobj/issues). For other questions,
-email contact@fyndsoft.com.
+email <contact@fyndsoft.com>.
 
 ## Security
 

@@ -24,6 +24,7 @@ var_dump($data->get('path'));
 Include the full exception message and stack trace, with secrets and personal data removed.
 
 **Environment**
+
 - StrObj version:
 - PHP version:
 - Framework (if any):
