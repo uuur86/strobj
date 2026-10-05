@@ -105,6 +105,20 @@ Cycles in copied writable state and depth above 512 are rejected before committi
 a write. Object roots expose public container fields; custom serializers are
 preserved for nested values.
 
+### Object roots and PHP 8.5
+
+Snapshots, including every consistent `StringObjects` instance, store the public
+entries of an object root in an array and remember that the root was an object
+for JSON output. Non-public properties of a class-instance root are not exposed,
+and appended values never replace existing numeric entries. PHP 8.5 deprecates
+objects as `ArrayObject` and `ArrayIterator` storage; snapshots do not use it.
+
+The legacy profile and `new DataObject($object)` keep the caller's object as SPL
+storage, so writes still reach that object as in v2.1. On PHP 8.5 this emits an
+`E_DEPRECATED` notice for each object root. Use the consistent profile, or pass
+arrays to `DataObject`, to avoid it. A future PHP version that removes object
+storage will require a change to this legacy contract.
+
 In the consistent profile, `toArray()` follows JSON export rules. Sparse numeric
 keys, invalid UTF-8, resources and custom serializers retain PHP's normal JSON
 constraints. The legacy profile returns root fields with nested values unchanged.
@@ -126,8 +140,12 @@ are not tracked as revisions; use library setters when validation freshness matt
 ## Verification
 
 `CompatibilityTest` compares all recorded v2.1 public/protected signatures and
-loads consumer subclasses with those signatures. It also checks native SPL
-contracts, named arguments, old defaults, coercions and object identity.
+loads consumer subclasses that override every recorded method with its original
+signature (`tests/Fixtures/Consumers`). The overrides delegate to the library,
+so a smoke test also runs them. It also checks native SPL contracts, named
+arguments, old defaults, coercions and object identity. `ObjectRootStorageTest`
+fails when the consistent profile raises a deprecation, whatever the
+`error_reporting` setting is.
 `ValueCopierTest` covers custom/inherited state, serializers, clone hooks, native
 objects, readonly state, handles and rejected cycles. Existing deep-write and
 workflow regressions run alongside these tests.

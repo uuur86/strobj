@@ -170,6 +170,50 @@ $skus = $order->get('data/lines/*/product/sku');
 
 Treat third-party responses as untrusted input: validate them before use.
 
+## Caching documents (Memcached, Redis, PSR-16)
+
+StrObj does not cache documents or reads itself: reads already take time
+proportional to the path depth, and they always reflect the current data.
+To avoid fetching or building the same document repeatedly, cache the **JSON
+document** in your application's cache and create a new instance from it:
+
+```php
+$memcached = new Memcached();
+$memcached->addServer('127.0.0.1', 11211);
+
+$json = $memcached->get('orders:42');
+
+if (!is_string($json)) {
+    // Use your HTTP client here.
+    $json = file_get_contents('https://api.example.com/orders/42');
+    $memcached->set('orders:42', $json, 300);
+}
+
+$order = StringObjects::instance($json, $options);
+```
+
+The same pattern works with any [PSR-16](https://www.php-fig.org/psr/psr-16/)
+cache (Redis, APCu, files) and with Laravel's `Cache::remember()`:
+
+```php
+$json = $cache->get('orders:42'); // Psr\SimpleCache\CacheInterface
+
+if (!is_string($json)) {
+    $json = $client->fetchOrder(42);
+    $cache->set('orders:42', $json, 300);
+}
+
+$order = StringObjects::instance($json, $options);
+```
+
+- Cache the document, not the `StringObjects` instance. An instance is cheap to
+  rebuild, holds per-request configuration and can contain closures, which PHP
+  cannot serialize.
+- Validation runs when the instance is created, so cached data is checked again
+  with the current rules.
+- Do not build cache keys from unchecked request input, and do not share cached
+  documents between users unless they are public.
+
 ## Command-line scripts and workers
 
 ```php
