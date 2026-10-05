@@ -21,6 +21,7 @@ use ArrayAccess;
 use ArrayIterator;
 use ArrayObject;
 use Closure;
+use ReflectionClass;
 use ReflectionObject;
 use ReflectionProperty;
 use ReflectionMethod;
@@ -59,19 +60,37 @@ final class ValueCopier
         }
 
         if (is_array($value)) {
-            $result = [];
-
-            foreach ($value as $key => $item) {
-                $result[$key] = self::copyNode($item, $depth + 1, $active);
-            }
-
-            return $result;
+            return self::copyArray($value, $depth, $active);
         }
 
-        if (!is_object($value)) {
-            return $value;
+        return is_object($value) ? self::copyObject($value, $depth, $active) : $value;
+    }
+
+    /**
+     * Copies every array entry, preserving keys.
+     *
+     * @return array
+     */
+    private static function copyArray(array $value, int $depth, SplObjectStorage $active): array
+    {
+        $result = [];
+
+        foreach ($value as $key => $item) {
+            $result[$key] = self::copyNode($item, $depth + 1, $active);
         }
 
+        return $result;
+    }
+
+    /**
+     * Clones an object and copies its writable state declared at every class level.
+     * Uncloneable objects retain their identity.
+     *
+     * @return object
+     * @throws InvalidArgumentException For cyclic object graphs.
+     */
+    private static function copyObject(object $value, int $depth, SplObjectStorage $active): object
+    {
         if (isset($active[$value])) {
             throw new InvalidArgumentException('Data is cyclic or exceeds the maximum depth of 512.');
         }
@@ -87,44 +106,77 @@ final class ValueCopier
         try {
             $result = clone $value;
 
-            do {
-                foreach ($reflection->getProperties() as $property) {
-                    if (
-                        $property->isStatic()
-                        || $property->getDeclaringClass()->getName() !== $reflection->getName()
-                    ) {
-                        continue;
-                    }
-
-                    if (
-                        !self::isInitialized($property, $result)
-                        || (method_exists($property, 'isReadOnly') && $property->isReadOnly())
-                        || (method_exists($property, 'isVirtual') && $property->isVirtual())
-                    ) {
-                        continue;
-                    }
-
-                    $access = self::propertyAccessor($property);
-                    $name = $property->getName();
-                    $copy = self::copyNode($access($result, $name, false), $depth + 1, $active);
-                    $access($result, $name, true, $copy);
-                }
-
-                $reflection = $reflection->getParentClass();
-            } while ($reflection !== false);
+            // ReflectionObject also lists dynamic properties; each parent level adds its private state.
+            for ($class = $reflection; $class !== false; $class = $class->getParentClass()) {
+                self::copyDeclaredState($result, $class, $depth, $active);
+            }
 
             // Copy writable collection entries through their public container protocol.
-            if (!self::copySplStorage($result, $depth, $active)) {
-                if ($result instanceof Traversable && $result instanceof ArrayAccess) {
-                    foreach ($result as $key => $item) {
-                        $result[$key] = self::copyNode($item, $depth + 1, $active);
-                    }
-                }
+            if (
+                !self::copySplStorage($result, $depth, $active)
+                && $result instanceof Traversable
+                && $result instanceof ArrayAccess
+            ) {
+                self::copyEntries($result, $depth, $active);
             }
 
             return $result;
         } finally {
             unset($active[$value]);
+        }
+    }
+
+    /**
+     * Copies the initialized, writable properties that one class level declares.
+     *
+     * @return void
+     */
+    private static function copyDeclaredState(
+        object $object,
+        ReflectionClass $class,
+        int $depth,
+        SplObjectStorage $active
+    ): void {
+        foreach ($class->getProperties() as $property) {
+            if (!self::isCopyable($property, $class, $object)) {
+                continue;
+            }
+
+            $access = self::propertyAccessor($property);
+            $name = $property->getName();
+            $copy = self::copyNode($access($object, $name, false), $depth + 1, $active);
+            $access($object, $name, true, $copy);
+        }
+    }
+
+    /**
+     * Reports whether a property is declared by this class level, initialized and writable.
+     * Readonly and virtual properties follow the native clone contract.
+     *
+     * @return bool
+     */
+    private static function isCopyable(ReflectionProperty $property, ReflectionClass $class, object $object): bool
+    {
+        if ($property->isStatic() || $property->getDeclaringClass()->getName() !== $class->getName()) {
+            return false;
+        }
+
+        return self::isInitialized($property, $object)
+        && !(method_exists($property, 'isReadOnly') && $property->isReadOnly())
+        && !(method_exists($property, 'isVirtual') && $property->isVirtual());
+    }
+
+    /**
+     * Copies the entries of a writable collection that has no native SPL storage.
+     *
+     * @param ArrayAccess&Traversable $collection Collection to update.
+     *
+     * @return void
+     */
+    private static function copyEntries(ArrayAccess $collection, int $depth, SplObjectStorage $active): void
+    {
+        foreach ($collection as $key => $item) {
+            $collection[$key] = self::copyNode($item, $depth + 1, $active);
         }
     }
 

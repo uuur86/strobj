@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 # Publish one revision at a time, in push order.
 concurrency:
@@ -22,19 +22,26 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # pushes to the wiki repository
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The checkout action keeps the token out of the clone URL and the process list.
+      - name: Check out the wiki repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: .wiki
 
       - name: Sync docs/wiki to the wiki repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          wiki="$RUNNER_TEMP/wiki"
-          git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" "$wiki"
           # README.md documents this directory and is not a wiki page.
-          rsync --archive --delete --exclude ".git/" --exclude "README.md" docs/wiki/ "$wiki/"
-          cd "$wiki"
+          rsync --archive --delete --exclude ".git/" --exclude "README.md" docs/wiki/ .wiki/
+          cd .wiki
           git add --all
 
           if git diff --cached --quiet; then

@@ -39,7 +39,7 @@ final class SampleDocumentTest extends TestCase
             'persons/*/name' => [
                 'type' => 'string',
                 'callback' => static function ($value): bool {
-                    return preg_match('#^[a-zA-Z ]+$#siu', $value) === 1;
+                    return preg_match('#^[a-z ]+$#iu', $value) === 1;
                 },
             ],
         ]);

@@ -5,7 +5,7 @@ declare(strict_types=1);
 $autoload = dirname(__DIR__) . '/vendor/autoload.php';
 
 if (is_file($autoload)) {
-    require $autoload;
+    require_once $autoload;
 } else {
     // Allows the official standalone PHPUnit PHAR to run without Composer.
     spl_autoload_register(static function (string $class): void {
@@ -16,7 +16,7 @@ if (is_file($autoload)) {
                 $file = dirname(__DIR__) . $directory . $relative . '.php';
 
                 if (is_file($file)) {
-                    require $file;
+                    require_once $file;
                 }
 
                 return;

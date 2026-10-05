@@ -3,7 +3,46 @@
 All notable changes to this project are documented in this file.
 The project follows [Semantic Versioning](https://semver.org/).
 
-## [3.0.0] - 2026-10-05
+## [Unreleased][]
+
+### Fixed
+
+- Consistent instances no longer raise PHP 8.5 deprecation notices. Snapshots
+  store the public entries of an object root in an array instead of using the
+  object as `ArrayIterator` storage, which PHP 8.5 deprecates.
+- Snapshots of class instances no longer expose protected and private properties
+  under NUL-prefixed keys in `toArray()` and root reads.
+- Appending to a snapshot whose object root has numeric property names no longer
+  replaces an existing entry on PHP 8.1 and later.
+- The CRUD example sets the `Secure` flag on its session cookie for HTTPS requests.
+- The Codacy workflow uploads its SARIF results again. Code scanning rejects
+  several runs of one tool in the same category, so each run gets its own
+  category.
+
+### Changed
+
+- Internal refactoring for SonarQube Cloud maintainability rules: lower cognitive
+  complexity, no nested ternary operators and fewer exit points. Private properties
+  of `StringObjects` and `Middleware` lost their underscore prefix; serialized
+  instances from earlier versions must be recreated.
+- GitHub Actions are pinned to commit SHAs, checkouts no longer persist
+  credentials, and the wiki workflow requests write access only for its job.
+- Tests no longer use `eval()`: contract and PHP 8.1/8.4 syntax fixtures are
+  regular classes in `tests/Fixtures`.
+
+### Added
+
+- `.sonarcloud.properties` separates tests from sources in automatic analysis.
+- Documentation on caching documents with Memcached, Redis or PSR-16 caches
+  ([#6][]).
+
+### Known issues
+
+- The legacy behavior and `new DataObject($object)` keep the caller's object as
+  SPL storage, as in v2.1, and raise `E_DEPRECATED` on PHP 8.5. See
+  [docs/compatibility.md](docs/compatibility.md#object-roots-and-php-85).
+
+## [3.0.0][] - 2026-10-05
 
 ### Breaking changes
 
@@ -73,9 +112,11 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Untrusted values can no longer make validation throw.
 - Vulnerabilities are reported privately; see [SECURITY.md](SECURITY.md).
 
-## [2.1.9] - 2024-08-26
+## [2.1.9][] - 2024-08-26
 
 - Added a function to find inclusive paths.
 
+[Unreleased]: https://github.com/uuur86/strobj/compare/v3.0.0...HEAD
 [3.0.0]: https://github.com/uuur86/strobj/compare/v2.1.9...v3.0.0
 [2.1.9]: https://github.com/uuur86/strobj/releases/tag/v2.1.9
+[#6]: https://github.com/uuur86/strobj/issues/6

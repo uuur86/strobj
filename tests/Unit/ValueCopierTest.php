@@ -12,8 +12,10 @@ use StrObj\Helpers\ValueCopier;
 use StrObj\Helpers\PathResolver;
 use StrObj\StringObjects;
 use StrObj\Tests\Fixtures\CopyableParent;
+use StrObj\Tests\Fixtures\HookedState;
 use StrObj\Tests\Fixtures\MutableCollection;
 use StrObj\Tests\Fixtures\Legacy;
+use StrObj\Tests\Fixtures\ReadonlyState;
 
 final class ValueCopierTest extends TestCase
 {
@@ -40,9 +42,9 @@ final class ValueCopierTest extends TestCase
                 $this->state->value = 30;
                 $this->publicState->value = 40;
 
-                foreach ($this->states() as $state) {
-                    $state->value = 10;
-                }
+                [$parentState, $protectedState] = $this->states();
+                $parentState->value = 10;
+                $protectedState->value = 10;
             }
         };
         $object = StringObjects::instance(['record' => $input]);
@@ -80,6 +82,7 @@ final class ValueCopierTest extends TestCase
         $handle = new class {
             private function __clone()
             {
+                // A private __clone() makes this object uncloneable on purpose.
             }
         };
         self::assertSame($handle, ValueCopier::copy($handle));
@@ -105,8 +108,7 @@ final class ValueCopierTest extends TestCase
         self::assertSame(0, $value->clones);
 
         if (PHP_VERSION_ID >= 80100) {
-            $readonly = eval('return new class { public readonly object $state;'
-                . 'public function __construct() { $this->state = (object) ["value" => 1]; } };');
+            $readonly = new ReadonlyState();
             self::assertSame($readonly->state, ValueCopier::copy($readonly)->state);
         }
     }
@@ -192,9 +194,7 @@ final class ValueCopierTest extends TestCase
             self::markTestSkipped('Asymmetric visibility and property hooks require PHP 8.4.');
         }
 
-        $input = eval('return new class { public private(set) object $state;'
-            . 'public int $age { get => $this->state->age; }'
-            . 'public function __construct() { $this->state = (object) ["age" => 12]; } };');
+        $input = new HookedState();
         $copy = ValueCopier::copy($input);
         $input->state->age = 21;
         self::assertSame(12, $copy->state->age);
@@ -215,7 +215,7 @@ final class ValueCopierTest extends TestCase
                 $this->storage->value = $value;
 
                 if ($value === 21) {
-                    throw new \RuntimeException('Reject the candidate after invoking the setter.');
+                    throw new \UnexpectedValueException('Reject the candidate after invoking the setter.');
                 }
 
                 parent::offsetSet($key, $value);
@@ -230,7 +230,7 @@ final class ValueCopierTest extends TestCase
         try {
             $object->set('record/value', 21);
             self::fail('The setter must reject this write.');
-        } catch (\RuntimeException $exception) {
+        } catch (\UnexpectedValueException $exception) {
             self::assertSame(12, $object->get('record')->state());
             self::assertSame(12, $object->get('record/value'));
             self::assertSame(12, $collection->state());
@@ -243,6 +243,7 @@ final class ValueCopierTest extends TestCase
             public int $value = 12;
             private function __clone()
             {
+                // A private __clone() makes this object uncloneable on purpose.
             }
         };
         $object = StringObjects::instance(['record' => $container]);

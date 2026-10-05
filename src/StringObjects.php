@@ -45,25 +45,25 @@ class StringObjects
      *
      * @var DataObject
      */
-    private DataObject $_obj;
+    private DataObject $data;
     /**
      * Validation object
      *
      * @var Validation
      */
-    private Validation $_validation;
+    private Validation $validation;
     /**
      * Middleware object
      *
      * @var Middleware
      */
-    private Middleware $_middleware;
+    private Middleware $middleware;
     /**
      * Filters object
      *
      * @var DataFilters
      */
-    private DataFilters $_filters;
+    private DataFilters $filters;
     /**
      * Whether output filters are configured.
      *
@@ -89,14 +89,14 @@ class StringObjects
             }
         }
 
-        $this->_middleware = new Middleware($options['middleware'] ?? [], $this->consistent);
-        $this->_middleware->memoryLeakProtection();
-        $this->_obj = $this->consistent ? DataObject::snapshot($obj) : new DataObject($obj);
-        $this->_validation = new Validation($this->_obj, $options['validation'] ?? [], $this->consistent);
-        $this->_validation->validate();
-        $this->_filters = new DataFilters($options['filters'] ?? [], $this->consistent);
+        $this->middleware = new Middleware($options['middleware'] ?? [], $this->consistent);
+        $this->middleware->memoryLeakProtection();
+        $this->data = $this->consistent ? DataObject::snapshot($obj) : new DataObject($obj);
+        $this->validation = new Validation($this->data, $options['validation'] ?? [], $this->consistent);
+        $this->validation->validate();
+        $this->filters = new DataFilters($options['filters'] ?? [], $this->consistent);
         $this->hasFilters = !empty($options['filters']);
-        $this->_middleware->memoryLeakProtection();
+        $this->middleware->memoryLeakProtection();
     }
 
     /**
@@ -114,25 +114,10 @@ class StringObjects
      */
     public static function instance($data, array $options = [])
     {
-        if (is_string($data)) {
-            $decoded = json_decode($data);
+        $decoded = is_string($data);
 
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new InvalidArgumentException(
-                    'JSON decoding error: ' . json_last_error_msg(),
-                    self::ERROR_INVALID_JSON
-                );
-            }
-
-            if (!is_array($decoded) && !is_object($decoded)) {
-                throw new InvalidArgumentException(
-                    'JSON input must contain an object or array.',
-                    self::ERROR_SCALAR_JSON
-                );
-            }
-
-            // A decoded root has no outside references, so it can be rebuilt with consistent keys.
-            $data = is_object($decoded) ? PathResolver::objectFromEntries((array) $decoded) : $decoded;
+        if ($decoded) {
+            $data = self::decodeJson($data);
         } elseif (!is_array($data) && !is_object($data)) {
             throw new InvalidArgumentException(
                 'Input data is neither an object nor an array.',
@@ -140,14 +125,49 @@ class StringObjects
             );
         }
 
-        $consistent = Behavior::isConsistent($options);
-
-        if (is_array($data)) {
-            $data = $consistent ? new ArrayIterator($data) : PathResolver::objectFromEntries($data);
+        if (Behavior::isConsistent($options)) {
+            // Snapshots copy the entries of object roots, so only arrays need an iterator.
+            return new static(is_array($data) ? new ArrayIterator($data) : $data, $options);
         }
 
-        return $consistent ? new static($data, $options) : new self($data, $options);
+        // Arrays and decoded roots have no outside references, so they can be rebuilt with consistent keys.
+        if ($decoded || is_array($data)) {
+            $data = PathResolver::objectFromEntries((array) $data);
+        }
+
+        return new self($data, $options);
     }
+
+    /**
+     * Decodes a JSON document whose root is an object or an array.
+     *
+     * @param string $json The JSON document.
+     *
+     * @throws InvalidArgumentException With code ERROR_INVALID_JSON (22) or ERROR_SCALAR_JSON (23).
+     *
+     * @return array|object
+     */
+    private static function decodeJson(string $json)
+    {
+        $decoded = json_decode($json);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new InvalidArgumentException(
+                'JSON decoding error: ' . json_last_error_msg(),
+                self::ERROR_INVALID_JSON
+            );
+        }
+
+        if (!is_array($decoded) && !is_object($decoded)) {
+            throw new InvalidArgumentException(
+                'JSON input must contain an object or array.',
+                self::ERROR_SCALAR_JSON
+            );
+        }
+
+        return $decoded;
+    }
+
     /**
      * Gets the value from the inside of the loaded object
      * Legacy behavior substitutes the default for false and returns null for missing fields.
@@ -163,30 +183,52 @@ class StringObjects
      */
     public function get(?string $path = '', $default = false)
     {
-        $this->_middleware->memoryLeakProtection();
+        $this->middleware->memoryLeakProtection();
         $path = $path ?? '';
 
-        if (!$this->consistent) {
-            $result = $this->_obj->get($path);
+        return $this->consistent ? $this->readConsistent($path, $default) : $this->readLegacy($path, $default);
+    }
 
-            if ($result === false) {
-                return $default;
-            }
+    /**
+     * Reads a value with the v2.1 contract: false and missing fields both yield the default.
+     *
+     * @param string $path    Requested path.
+     * @param mixed  $default Value returned for false or missing values.
+     *
+     * @return mixed
+     */
+    private function readLegacy(string $path, $default)
+    {
+        $result = $this->data->get($path);
 
-            return $this->hasFilters ? $this->_filters->filter($path, $result) : $result;
+        if ($result === false) {
+            return $default;
         }
 
-        if (strpos($path, '*') === false && !$this->_obj->has($path)) {
+        return $this->hasFilters ? $this->filters->filter($path, $result) : $result;
+    }
+
+    /**
+     * Reads a value unchanged; the default replaces only missing or rejected values.
+     *
+     * @param string $path    Requested path.
+     * @param mixed  $default Value returned for a missing concrete field or a rejected value.
+     *
+     * @return mixed
+     */
+    private function readConsistent(string $path, $default)
+    {
+        if (strpos($path, '*') === false && !$this->data->has($path)) {
             return $default;
         }
 
         if (!$this->hasFilters) {
-            return $this->_obj->get($path);
+            return $this->data->get($path);
         }
 
         // A value rejected by a filter callback is replaced by the default, never by false.
-        return $this->_obj->queryWithTransform($path, function (string $concrete, $value) use ($default) {
-            return $this->_filters->filterAt($concrete, $value, $default);
+        return $this->data->queryWithTransform($path, function (string $concrete, $value) use ($default) {
+            return $this->filters->filterAt($concrete, $value, $default);
         });
     }
 
@@ -201,8 +243,8 @@ class StringObjects
      */
     public function set(string $path, $value): void
     {
-        $this->_middleware->memoryLeakProtection();
-        $this->_obj->set($path, $value);
+        $this->middleware->memoryLeakProtection();
+        $this->data->set($path, $value);
     }
 
     /**
@@ -215,9 +257,9 @@ class StringObjects
      */
     public function has(string $path): bool
     {
-        $this->_middleware->memoryLeakProtection();
+        $this->middleware->memoryLeakProtection();
 
-        return $this->_obj->has($path);
+        return $this->data->has($path);
     }
 
     /**
@@ -229,13 +271,13 @@ class StringObjects
      */
     public function toJson(): string
     {
-        $this->_middleware->memoryLeakProtection();
+        $this->middleware->memoryLeakProtection();
 
         if ($this->consistent) {
-            return json_encode($this->_obj->toJsonValue(), JSON_THROW_ON_ERROR);
+            return json_encode($this->data->toJsonValue(), JSON_THROW_ON_ERROR);
         }
 
-        $json = json_encode($this->_obj);
+        $json = json_encode($this->data);
 
         if ($json === false) {
             throw new JsonException(json_last_error_msg(), json_last_error());
@@ -251,9 +293,9 @@ class StringObjects
      */
     public function toArray(): array
     {
-        $this->_middleware->memoryLeakProtection();
+        $this->middleware->memoryLeakProtection();
 
-        return $this->_obj->toArray();
+        return $this->data->toArray();
     }
 
     /**
@@ -265,9 +307,9 @@ class StringObjects
      */
     public function isValid(string $path = ''): bool
     {
-        $this->_middleware->memoryLeakProtection();
+        $this->middleware->memoryLeakProtection();
 
-        return $this->_validation->isValid($path);
+        return $this->validation->isValid($path);
     }
 
     /**
@@ -280,6 +322,6 @@ class StringObjects
      */
     public function setMemoryLimit(int $memory): void
     {
-        $this->_middleware->setMemoryLimit($memory);
+        $this->middleware->setMemoryLimit($memory);
     }
 }

@@ -28,66 +28,99 @@ final class StatementSpacingSniff implements Sniff
      */
     public function process(File $phpcsFile, $stackPtr): void
     {
+        $continuation = $this->separateFromPrevious($phpcsFile, $stackPtr);
+        $closer = $this->findStatementEnd($phpcsFile, $stackPtr, $continuation);
+
+        if ($closer !== null) {
+            $this->separateFromNext($phpcsFile, $stackPtr, $closer);
+        }
+    }
+
+    /**
+     * Separates a statement from the preceding statement or block.
+     *
+     * @param File $phpcsFile Current tokenized PHP file.
+     * @param int  $stackPtr  Current statement's position in the token stack.
+     *
+     * @return bool Whether the statement is the while condition of a do/while loop.
+     */
+    private function separateFromPrevious(File $phpcsFile, int $stackPtr): bool
+    {
         $tokens = $phpcsFile->getTokens();
         $previous = $phpcsFile->findPrevious(Tokens::$emptyTokens, $stackPtr - 1, null, true);
         $branch = in_array($tokens[$stackPtr]['code'], [T_ELSEIF, T_ELSE, T_CATCH, T_FINALLY], true);
-        $continuation = false;
 
         if (
-            !$branch && $previous !== false
-            && in_array($tokens[$previous]['code'], [T_SEMICOLON, T_CLOSE_CURLY_BRACKET], true)
+            $branch || $previous === false
+            || !in_array($tokens[$previous]['code'], [T_SEMICOLON, T_CLOSE_CURLY_BRACKET], true)
         ) {
-            // A do/while continuation belongs to the preceding block, not a new section.
-            $owner = $tokens[$previous]['scope_condition'] ?? null;
-            $continuation = $tokens[$stackPtr]['code'] === T_WHILE
-            && $owner !== null && $tokens[$owner]['code'] === T_DO;
+            return false;
+        }
 
-            if (!$continuation) {
-                // Insert before attached comments rather than between a comment and its code.
-                $anchor = $phpcsFile->findNext(T_WHITESPACE, $previous + 1, $stackPtr + 1, true);
+        // A do/while continuation belongs to the preceding block, not a new section.
+        $owner = $tokens[$previous]['scope_condition'] ?? null;
 
-                // Preserve a trailing comment on the preceding statement's line.
-                if (
-                    $anchor !== false && $tokens[$anchor]['code'] === T_COMMENT
-                    && $tokens[$anchor]['line'] === $tokens[$previous]['line']
-                ) {
-                    $previous = $anchor;
-                    $anchor = $phpcsFile->findNext(T_WHITESPACE, $previous + 1, $stackPtr + 1, true);
-                }
+        if ($tokens[$stackPtr]['code'] === T_WHILE && $owner !== null && $tokens[$owner]['code'] === T_DO) {
+            return true;
+        }
 
-                if ($anchor !== false) {
-                    $this->ensureBlankLine($phpcsFile, $previous, $anchor);
-                }
-            }
+        // Insert before attached comments rather than between a comment and its code.
+        $anchor = $phpcsFile->findNext(T_WHITESPACE, $previous + 1, $stackPtr + 1, true);
+
+        // Preserve a trailing comment on the preceding statement's line.
+        if (
+            $anchor !== false && $tokens[$anchor]['code'] === T_COMMENT
+            && $tokens[$anchor]['line'] === $tokens[$previous]['line']
+        ) {
+            $previous = $anchor;
+            $anchor = $phpcsFile->findNext(T_WHITESPACE, $previous + 1, $stackPtr + 1, true);
+        }
+
+        if ($anchor !== false) {
+            $this->ensureBlankLine($phpcsFile, $previous, $anchor);
+        }
+
+        return false;
+    }
+
+    /**
+     * Finds the closing brace of a block statement or the semicolon after a do/while condition.
+     *
+     * @param File $phpcsFile    Current tokenized PHP file.
+     * @param int  $stackPtr     Current statement's position in the token stack.
+     * @param bool $continuation Whether the statement is a do/while condition.
+     *
+     * @return int|null Null for statements without a block, such as return.
+     */
+    private function findStatementEnd(File $phpcsFile, int $stackPtr, bool $continuation): ?int
+    {
+        $tokens = $phpcsFile->getTokens();
+
+        if ($continuation) {
+            $semicolon = $phpcsFile->findNext(T_SEMICOLON, $tokens[$stackPtr]['parenthesis_closer'] + 1);
+
+            return $semicolon === false ? null : $semicolon;
         }
 
         $closer = $tokens[$stackPtr]['scope_closer'] ?? null;
 
-        if ($continuation) {
-            $closer = $phpcsFile->findNext(T_SEMICOLON, $tokens[$stackPtr]['parenthesis_closer'] + 1);
-        }
+        return $closer !== null && $tokens[$closer]['code'] === T_CLOSE_CURLY_BRACKET ? $closer : null;
+    }
 
-        if (
-            $closer === null || $closer === false
-            || (!$continuation && $tokens[$closer]['code'] !== T_CLOSE_CURLY_BRACKET)
-        ) {
-            return;
-        }
-
+    /**
+     * Separates the code that follows a statement's end from that statement.
+     *
+     * @param File $phpcsFile Current tokenized PHP file.
+     * @param int  $stackPtr  Current statement's position in the token stack.
+     * @param int  $closer    The statement's closing brace or semicolon.
+     */
+    private function separateFromNext(File $phpcsFile, int $stackPtr, int $closer): void
+    {
+        $tokens = $phpcsFile->getTokens();
         $next = $phpcsFile->findNext(T_WHITESPACE, $closer + 1, null, true);
         $nextCode = $phpcsFile->findNext(Tokens::$emptyTokens, $closer + 1, null, true);
 
-        if ($next === false || $nextCode === false) {
-            return;
-        }
-
-        // Keep related branches together and avoid blank lines inside closing scopes.
-        $related = in_array($tokens[$nextCode]['code'], [
-            T_ELSE, T_ELSEIF, T_CATCH, T_FINALLY, T_CLOSE_TAG, T_CLOSE_CURLY_BRACKET, T_SEMICOLON,
-        ], true);
-        $doWhile = $tokens[$stackPtr]['code'] === T_DO && $tokens[$nextCode]['code'] === T_WHILE;
-
-        if ($related || $doWhile) {
+        if ($next === false || $nextCode === false || $this->continuesStatement($tokens, $stackPtr, $nextCode)) {
             return;
         }
 
@@ -95,13 +128,29 @@ final class StatementSpacingSniff implements Sniff
         if ($tokens[$next]['code'] === T_COMMENT && $tokens[$next]['line'] === $tokens[$closer]['line']) {
             $closer = $next;
             $next = $phpcsFile->findNext(T_WHITESPACE, $closer + 1, null, true);
-
-            if ($next === false) {
-                return;
-            }
         }
 
-        $this->ensureBlankLine($phpcsFile, $closer, $next);
+        if ($next !== false) {
+            $this->ensureBlankLine($phpcsFile, $closer, $next);
+        }
+    }
+
+    /**
+     * Keeps related branches together and avoids blank lines inside closing scopes.
+     *
+     * @param array $tokens   Token stack of the current file.
+     * @param int   $stackPtr Current statement's position in the token stack.
+     * @param int   $nextCode Position of the next code token after the statement.
+     *
+     * @return bool
+     */
+    private function continuesStatement(array $tokens, int $stackPtr, int $nextCode): bool
+    {
+        $related = in_array($tokens[$nextCode]['code'], [
+            T_ELSE, T_ELSEIF, T_CATCH, T_FINALLY, T_CLOSE_TAG, T_CLOSE_CURLY_BRACKET, T_SEMICOLON,
+        ], true);
+
+        return $related || ($tokens[$stackPtr]['code'] === T_DO && $tokens[$nextCode]['code'] === T_WHILE);
     }
 
     /** Adds only missing line breaks, including fixes made earlier in the same pass. */

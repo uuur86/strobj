@@ -10,9 +10,9 @@ use function StrObj\Examples\escapeHtml;
 use function StrObj\Examples\JsonTable\buildRows;
 use function StrObj\Examples\JsonTable\renderTable;
 
-require dirname(__DIR__) . '/bootstrap.php';
-require dirname(__DIR__) . '/layout.php';
-require __DIR__ . '/table.php';
+require_once dirname(__DIR__) . '/bootstrap.php';
+require_once dirname(__DIR__) . '/layout.php';
+require_once __DIR__ . '/table.php';
 
 $source = StringObjects::instance(file_get_contents(__DIR__ . '/customers.json'), [
     'filters' => [

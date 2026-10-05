@@ -80,10 +80,10 @@ final class DataObjectTest extends TestCase
 
         try {
             $object->uasort(static function (): int {
-                throw new \RuntimeException('comparator failed');
+                throw new \UnexpectedValueException('comparator failed');
             });
             self::fail('Comparator exception should propagate.');
-        } catch (\RuntimeException $exception) {
+        } catch (\UnexpectedValueException $exception) {
             self::assertSame('comparator failed', $exception->getMessage());
             self::assertSame($object->toArray(), $object->get(''));
             self::assertSame(0, $object->getRevision());

@@ -38,6 +38,8 @@ use Traversable;
  * @see RecursiveArrayIterator::natcasesort()
  * @see RecursiveArrayIterator::uasort()
  * @see RecursiveArrayIterator::uksort()
+ *
+ * @phpstan-consistent-constructor Child iterators are created with the constructor, as SPL does.
  */
 class DataObject extends RecursiveArrayIterator implements DataInterface
 {
@@ -103,7 +105,10 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     public static function snapshot($data): self
     {
-        $object = new self($data);
+        // Snapshots store the public entries of a plain object root instead of the object itself.
+        $plainObject = is_object($data) && !$data instanceof Traversable;
+        $object = new self($plainObject ? PathResolver::entries($data) : $data);
+        $object->objectRoot = $plainObject;
         $object->detached = true;
         $object->resetStorage();
 
@@ -122,12 +127,20 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
         $this->resetStorage();
     }
 
-    /** Reinitializes iterator storage and cache according to the copy policy. */
-    private function resetStorage(): void
+    /**
+     * Reinitializes iterator storage and cache according to the copy policy.
+     * Snapshots always store arrays: PHP 8.5 deprecates objects as SPL iterator storage.
+     * Legacy object roots keep object storage, so writes reach the root object.
+     *
+     * @param int|null $flags SPL flags for the new storage; null keeps the current flags.
+     */
+    private function resetStorage(?int $flags = null): void
     {
         $data = $this->copyStoredValue(parent::getArrayCopy());
         $this->cache = new DataCache();
-        parent::__construct($this->objectRoot ? PathResolver::objectFromEntries($data) : $data, $this->getFlags());
+        $objectStorage = $this->objectRoot && !$this->detached;
+        $storage = $objectStorage ? PathResolver::objectFromEntries($data) : $data;
+        parent::__construct($storage, $flags ?? $this->getFlags());
         $this->observedData = parent::getArrayCopy();
     }
 
@@ -232,30 +245,19 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     public function queryWithTransform(?string $path = null, ?callable $transform = null)
     {
         $parsed = $this->pathInit($path ?? '');
-        $segments = $parsed->getArray();
-
-        if ($segments === [] || $parsed->getRaw() === '*') {
-            return PathResolver::read($this->readStorage(), [], $transform, '', $this->detached);
-        }
-
+        // A bare "*" reads the whole tree, like an empty path.
+        $segments = $parsed->getRaw() === '*' ? [] : $parsed->getArray();
         $wildcard = array_search('*', $segments, true);
 
         if (!$this->detached && $wildcard !== false && isset($segments[$wildcard + 1])) {
             return $this->readColumn(array_slice($segments, 0, $wildcard), $segments[$wildcard + 1], $transform);
         }
 
-        if ($segments[0] === '*') {
-            return PathResolver::read($this->readStorage(), $segments, $transform, '', $this->detached);
-        }
+        $start = $this->locate($segments);
 
-        $key = array_shift($segments);
-        $root = $this->lookupRoot($key);
-
-        if (!$root['exists']) {
-            return null;
-        }
-
-        return PathResolver::read($root['value'], $segments, $transform, $key, $this->detached);
+        return $start['exists']
+        ? PathResolver::read($start['value'], $start['segments'], $transform, $start['prefix'], $this->detached)
+        : null;
     }
 
     /**
@@ -272,30 +274,11 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
      */
     private function readColumn(array $prefix, string $column, ?callable $transform): ?array
     {
-        $rows = $this->readStorage();
+        $rows = $prefix === []
+        ? ['exists' => true, 'value' => $this->readStorage()]
+        : current($this->findMatches(implode('/', $prefix)));
 
-        if ($prefix !== []) {
-            $match = current($this->findMatches(implode('/', $prefix)));
-
-            if (!$match['exists']) {
-                return null;
-            }
-
-            $rows = $match['value'];
-        }
-
-        $values = [];
-
-        foreach (is_array($rows) || is_object($rows) ? $rows : [] as $index => $row) {
-            $fields = is_array($row) ? $row : (is_object($row) ? get_object_vars($row) : []);
-
-            if (array_key_exists($column, $fields)) {
-                $path = implode('/', array_merge($prefix, [(string) $index, $column]));
-                $values[] = $transform === null ? $fields[$column] : $transform($path, $fields[$column]);
-            }
-        }
-
-        return $values;
+        return $rows['exists'] ? PathResolver::column($rows['value'], $prefix, $column, $transform) : null;
     }
 
     /**
@@ -308,19 +291,31 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     public function findMatches(string $path): array
     {
         $segments = $this->pathInit($path)->getArray();
+        $start = $this->locate($segments);
 
+        if (!$start['exists']) {
+            return [implode('/', $segments) => ['exists' => false, 'value' => null]];
+        }
+
+        return PathResolver::select($start['value'], $start['segments'], $start['prefix'], $this->detached);
+    }
+
+    /**
+     * Finds where a path starts: the whole storage for root wildcards, otherwise one root field.
+     *
+     * @param string[] $segments The parsed path.
+     *
+     * @return array{exists: bool, value: mixed, segments: string[], prefix: string}
+     */
+    private function locate(array $segments): array
+    {
         if ($segments === [] || $segments[0] === '*') {
-            return PathResolver::select($this->readStorage(), $segments, '', $this->detached);
+            return ['exists' => true, 'value' => $this->readStorage(), 'segments' => $segments, 'prefix' => ''];
         }
 
         $key = array_shift($segments);
-        $root = $this->lookupRoot($key);
 
-        if (!$root['exists']) {
-            return [implode('/', array_merge([$key], $segments)) => ['exists' => false, 'value' => null]];
-        }
-
-        return PathResolver::select($root['value'], $segments, $key, $this->detached);
+        return $this->lookupRoot($key) + ['segments' => $segments, 'prefix' => $key];
     }
 
     /**
@@ -476,11 +471,23 @@ class DataObject extends RecursiveArrayIterator implements DataInterface
     #[\ReturnTypeWillChange]
     public function getChildren()
     {
-        $child = parent::getChildren();
+        if (!$this->detached) {
+            return parent::getChildren();
+        }
 
-        if ($this->detached && $child instanceof self) {
+        // Like snapshot(), a snapshot child stores the public entries of a plain object.
+        // SPL returns null for objects when only arrays have children.
+        $current = parent::current();
+        $arraysOnly = ($this->getFlags() & self::CHILD_ARRAYS_ONLY) !== 0;
+        $plainObject = !$arraysOnly && is_object($current) && !$current instanceof Traversable
+        && !$current instanceof static;
+        $child = $plainObject ? new static(PathResolver::entries($current)) : parent::getChildren();
+
+        if ($child instanceof self) {
+            $child->objectRoot = $child->objectRoot || $plainObject;
             $child->detached = true;
-            $child->resetStorage();
+            // Children inherit the parent's SPL flags, as RecursiveArrayIterator does.
+            $child->resetStorage($this->getFlags());
         }
 
         return $child;

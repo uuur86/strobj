@@ -42,12 +42,11 @@ final class ExampleWebTest extends TestCase
         $storage = $root . '/build/examples/http-test-' . bin2hex(random_bytes(6));
         mkdir($storage, 0770, true);
         self::$serverLog = $storage . '/server.log';
-        self::$baseUrl = 'http://' . $address;
-        $httpBinary = PHP_SAPI === 'phpdbg'
-        ? dirname(PHP_BINARY) . '/php' . (PHP_OS_FAMILY === 'Windows' ? '.exe' : '') : PHP_BINARY;
+        // PHP's built-in server only speaks plain HTTP; it listens on the loopback interface.
+        self::$baseUrl = 'http://127.0.0.1:' . substr((string) strrchr($address, ':'), 1);
         self::$server = proc_open(
             [
-            $httpBinary, '-d', 'session.sid_length=32', '-d', 'session.sid_bits_per_character=4',
+            PhpBinary::cli(), '-d', 'session.sid_length=32', '-d', 'session.sid_bits_per_character=4',
             '-S', $address, '-t', $root . '/examples',
             ],
             [0 => ['pipe', 'r'], 1 => ['file', self::$serverLog, 'a'], 2 => ['file', self::$serverLog, 'a']],
@@ -259,11 +258,15 @@ final class ExampleWebTest extends TestCase
             'content' => $method === 'POST' ? http_build_query($data) : '',
             'ignore_errors' => true, 'follow_location' => 0, 'timeout' => 5,
         ]]);
-        $body = file_get_contents(self::$baseUrl . $path, false, $context);
-        self::assertNotFalse($body, 'HTTP request failed. See ' . self::$serverLog);
-        preg_match('/\s(\d{3})\s/', $http_response_header[0], $status);
+        $stream = fopen(self::$baseUrl . $path, 'r', false, $context);
+        self::assertIsResource($stream, 'HTTP request failed. See ' . self::$serverLog);
+        // The stream metadata holds the response headers; PHP 8.5 deprecates $http_response_header.
+        $headers = stream_get_meta_data($stream)['wrapper_data'];
+        $body = stream_get_contents($stream);
+        fclose($stream);
+        preg_match('/\s(\d{3})\s/', $headers[0], $status);
 
-        foreach ($http_response_header as $header) {
+        foreach ($headers as $header) {
             if (preg_match('/^Set-Cookie: ([^;]+)/i', $header, $cookie)) {
                 $this->cookie = $cookie[1];
             }

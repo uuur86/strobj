@@ -141,7 +141,7 @@ trait DataParsers
         $best = '';
         $specificity = -1;
 
-        foreach ($options as $optionPath => $value) {
+        foreach (array_keys($options) as $optionPath) {
             $optionPath = (string) $optionPath;
 
             if (!$this->matchesPath($optionPath, $path)) {

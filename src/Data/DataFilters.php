@@ -138,25 +138,62 @@ class DataFilters
      */
     private function filterTree($node, string $path, string $pattern, array $filters, $key = null)
     {
-        $matches = $this->consistent ? $this->matchesPath($pattern, $path)
-        : (!is_array($node) && substr($pattern, (int) strrpos($pattern, '/') + 1) === $key);
-
-        if ($matches) {
+        if ($this->treeMatches($node, $path, $pattern, $key)) {
             return $this->filterValue($node, $filters);
         }
 
-        if (is_array($node) || ($this->consistent && is_object($node))) {
-            foreach ($node as $index => $value) {
-                $concrete = $path === '' ? (string) $index : $path . '/' . $index;
-                $value = $this->filterTree($value, $concrete, $pattern, $filters, $index);
-
-                if (is_array($node) || $node instanceof ArrayAccess) {
-                    $node[$index] = $value;
-                } else {
-                    $node->{(string) $index} = $value;
-                }
-            }
+        if (!is_array($node) && (!$this->consistent || !is_object($node))) {
+            return $node;
         }
+
+        foreach ($node as $index => $value) {
+            $concrete = $path === '' ? (string) $index : $path . '/' . $index;
+            $filtered = $this->filterTree($value, $concrete, $pattern, $filters, $index);
+            $node = self::replaceChild($node, $index, $filtered);
+        }
+
+        return $node;
+    }
+
+    /**
+     * Reports whether a tree node is a filter target.
+     * Consistent mode matches full paths; legacy mode matches leaf names with the
+     * last pattern segment.
+     *
+     * @param mixed  $node    Current subtree.
+     * @param string $path    Current concrete path.
+     * @param string $pattern Full filter pattern.
+     * @param mixed  $key     Original entry key.
+     *
+     * @return bool
+     */
+    private function treeMatches($node, string $path, string $pattern, $key): bool
+    {
+        if ($this->consistent) {
+            return $this->matchesPath($pattern, $path);
+        }
+
+        return !is_array($node) && substr($pattern, (int) strrpos($pattern, '/') + 1) === $key;
+    }
+
+    /**
+     * Stores a filtered child in an array, an ArrayAccess container or an object property.
+     *
+     * @param array|object $node  Container to update.
+     * @param mixed        $index Child key.
+     * @param mixed        $value Filtered child.
+     *
+     * @return array|object The updated container.
+     */
+    private static function replaceChild($node, $index, $value)
+    {
+        if (is_array($node) || $node instanceof ArrayAccess) {
+            $node[$index] = $value;
+
+            return $node;
+        }
+
+        $node->{(string) $index} = $value;
 
         return $node;
     }
@@ -182,8 +219,12 @@ class DataFilters
         }
 
         $arguments = $filters['args'] ?? [];
-        $arguments = is_array($arguments)
-        ? ($this->consistent ? array_values($arguments) : $arguments) : [$arguments];
+
+        if (!is_array($arguments)) {
+            $arguments = [$arguments];
+        } elseif ($this->consistent) {
+            $arguments = array_values($arguments);
+        }
 
         return call_user_func_array($callback, array_merge([$value], $arguments)) ? $value : $rejected;
     }

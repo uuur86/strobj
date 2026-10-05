@@ -14,6 +14,8 @@ use StrObj\Data\DataObject;
 use StrObj\Data\Validation;
 use StrObj\Middleware;
 use StrObj\StringObjects;
+use StrObj\Tests\Fixtures\Consumers\DataObjectConsumer;
+use StrObj\Tests\Fixtures\Consumers\StringObjectsConsumer;
 use StrObj\Tests\Fixtures\Legacy;
 
 /** Preserves consumer contracts recorded from the v2.1 source before this change. */
@@ -23,6 +25,9 @@ final class CompatibilityTest extends TestCase
     private const REMOVED_IN_3_0 = [
         StringObjects::class => ['convertToByte', 'convertToString', 'castType'],
     ];
+
+    /** Namespace of the classes that override every recorded method with its v2.1 signature. */
+    private const CONSUMER_NAMESPACE = 'StrObj\\Tests\\Fixtures\\Consumers\\';
 
     public function testInternalHelpersAreNoLongerPartOfTheFacade(): void
     {
@@ -43,55 +48,66 @@ final class CompatibilityTest extends TestCase
         );
 
         foreach ($contract as $class => $methods) {
-            $overrides = '';
+            // Loading the fixture makes PHP check every recorded override against the current class.
+            $consumer = self::CONSUMER_NAMESPACE . (new ReflectionClass($class))->getShortName() . 'Consumer';
+            self::assertTrue(is_subclass_of($consumer, $class), $consumer);
 
             foreach (array_diff_key($methods, array_flip(self::REMOVED_IN_3_0[$class] ?? [])) as $name => $expected) {
                 $method = new ReflectionMethod($class, $name);
                 $label = $class . '::' . $name;
                 self::assertNotFalse($method->getDocComment(), $label . ' documentation must be retained.');
-                self::assertSame($expected['static'], $method->isStatic(), $label);
-                self::assertSame($expected['public'], $method->isPublic(), $label);
-                self::assertSame($expected['return'], $this->typeName($method->getReturnType()), $label);
-                $parameters = $method->getParameters();
-                self::assertGreaterThanOrEqual(count($expected['parameters']), count($parameters), $label);
-                $signature = [];
-
-                foreach ($expected['parameters'] as $index => $parameter) {
-                    $actual = $parameters[$index];
-                    self::assertSame($parameter['name'], $actual->getName(), $label);
-                    self::assertSame($parameter['type'], $this->typeName($actual->getType()), $label);
-                    self::assertSame($parameter['reference'], $actual->isPassedByReference(), $label);
-                    self::assertSame($parameter['optional'], $actual->isOptional(), $label);
-
-                    if ($parameter['optional']) {
-                        self::assertSame($parameter['default'], $actual->getDefaultValue(), $label);
-                    }
-
-                    $signature[] = ($parameter['type'] === '' ? '' : $this->signatureType($actual->getType()) . ' ')
-                    . ($parameter['reference'] ? '&' : '') . '$' . $parameter['name']
-                    . ($parameter['optional'] ? ' = ' . var_export($parameter['default'], true) : '');
-                }
-
-                foreach (array_slice($parameters, count($expected['parameters'])) as $parameter) {
-                    self::assertTrue($parameter->isOptional(), $label);
-                }
-
-                $overrides .= ($expected['public'] ? 'public ' : 'protected ')
-                . ($expected['static'] ? 'static ' : '') . 'function ' . $name
-                . '(' . implode(', ', $signature) . ')'
-                . ($expected['return'] === '' ? '' : ': ' . $this->signatureType($method->getReturnType()))
-                . ' { throw new \\LogicException("Consumer override fixture"); }';
+                $this->assertMatchesContract($method, $expected, $label);
+                $override = new ReflectionMethod($consumer, $name);
+                self::assertSame($consumer, $override->getDeclaringClass()->getName(), $label);
+                $this->assertMatchesContract($override, $expected, $consumer . '::' . $name);
             }
+        }
+    }
 
-            // PHP must load real subclasses using the recorded contracts without a fatal error.
-            $consumerName = __NAMESPACE__ . '\\ConsumerContract' . str_replace('\\', '', $class);
+    public function testConsumerOverridesDelegateToTheLibrary(): void
+    {
+        StringObjectsConsumer::$calls = [];
+        $object = StringObjectsConsumer::instance(['user' => ['age' => 12]]);
+        $object->set('user/name', 'Ada');
+        self::assertInstanceOf(StringObjectsConsumer::class, $object);
+        self::assertSame(['user' => ['age' => 12, 'name' => 'Ada']], $object->toArray());
+        self::assertSame(12, $object->get('user/age'));
+        self::assertSame(['instance', '__construct', 'set', 'toArray', 'get'], StringObjectsConsumer::$calls);
 
-            if (!class_exists($consumerName, false)) {
-                eval('namespace ' . __NAMESPACE__ . '; class ConsumerContract' . str_replace('\\', '', $class)
-                    . ' extends \\' . $class . ' { ' . $overrides . ' }');
+        DataObjectConsumer::$calls = [];
+        $data = new DataObjectConsumer(['user' => ['age' => 12]]);
+        $data->set('user/age', 21);
+        self::assertSame(21, $data->get('user/age'));
+        self::assertTrue($data->has('user/age'));
+
+        foreach (['__construct', 'set', 'offsetSet', 'get', 'query', 'has', 'pathInit'] as $method) {
+            self::assertContains($method, DataObjectConsumer::$calls);
+        }
+    }
+
+    /** Compares dispatch, visibility, return type and the recorded parameters of a method. */
+    private function assertMatchesContract(ReflectionMethod $method, array $expected, string $label): void
+    {
+        self::assertSame($expected['static'], $method->isStatic(), $label);
+        self::assertSame($expected['public'], $method->isPublic(), $label);
+        self::assertSame($expected['return'], $this->typeName($method->getReturnType()), $label);
+        $parameters = $method->getParameters();
+        self::assertGreaterThanOrEqual(count($expected['parameters']), count($parameters), $label);
+
+        foreach ($expected['parameters'] as $index => $parameter) {
+            $actual = $parameters[$index];
+            self::assertSame($parameter['name'], $actual->getName(), $label);
+            self::assertSame($parameter['type'], $this->typeName($actual->getType()), $label);
+            self::assertSame($parameter['reference'], $actual->isPassedByReference(), $label);
+            self::assertSame($parameter['optional'], $actual->isOptional(), $label);
+
+            if ($parameter['optional']) {
+                self::assertSame($parameter['default'], $actual->getDefaultValue(), $label);
             }
+        }
 
-            self::assertInstanceOf(ReflectionClass::class, new ReflectionClass($consumerName));
+        foreach (array_slice($parameters, count($expected['parameters'])) as $parameter) {
+            self::assertTrue($parameter->isOptional(), $label);
         }
     }
 
@@ -105,15 +121,6 @@ final class CompatibilityTest extends TestCase
         $nullable = $type->allowsNull() && !in_array($type->getName(), ['mixed', 'null'], true);
 
         return ($nullable ? '?' : '') . $type->getName();
-    }
-
-    private function signatureType(?\ReflectionNamedType $type): string
-    {
-        if ($type === null || $type->isBuiltin()) {
-            return $this->typeName($type);
-        }
-
-        return ($type->allowsNull() ? '?' : '') . '\\' . $type->getName();
     }
 
     public function testInheritedSplOverridesKeepNativeParameterAndReturnContracts(): void
@@ -152,11 +159,8 @@ final class CompatibilityTest extends TestCase
             }
         };
 
-        if (PHP_VERSION_ID >= 80000) {
-            eval('$object->offsetSet(index: "a", val: 2);');
-        } else {
-            $object->offsetSet('a', 2);
-        }
+        // PHP 8 passes string keys as named arguments; PHP 7.4 passes them in order.
+        call_user_func_array([$object, 'offsetSet'], ['index' => 'a', 'val' => 2]);
 
         $object->set('nested/value', 3);
         $object->append(4);
@@ -309,8 +313,9 @@ final class CompatibilityTest extends TestCase
     /** @dataProvider invalidLegacyLimits */
     public function testLegacyNumericLimitsStillRejectInvalidAndNonFiniteValues($value): void
     {
+        $middleware = new Middleware();
         $this->expectException(\InvalidArgumentException::class);
-        new Middleware(['memory_limit' => $value]);
+        $middleware->set('memory_limit', $value);
     }
 
     public function invalidLegacyLimits(): array

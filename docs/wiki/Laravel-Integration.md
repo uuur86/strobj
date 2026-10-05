@@ -213,6 +213,9 @@ Writes from requests should go through a whitelist of allowed paths (see
 
 - Create a new instance per job or request; do not store instances in static
   properties or singletons that outlive a request.
+- To reuse a fetched document, cache its JSON with `Cache::remember()` and create
+  a new instance from it; see
+  [Caching documents](Custom-PHP-Integration#caching-documents-memcached-redis-psr-16).
 - The optional `middleware.memory_limit` guard measures the **whole worker
   process**. Leave it unset in long-running workers, or set it above the worker's
   normal peak.

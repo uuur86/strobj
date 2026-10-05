@@ -120,51 +120,41 @@ trait Adapters
      */
     private function castValue($value, string $type, bool $strict)
     {
-        if (!$this->isCastable($value, $type, $strict)) {
-            if ($strict) {
-                throw new InvalidArgumentException(
-                    sprintf('Cannot cast a value of type %s to %s.', gettype($value), $type)
-                );
-            }
+        $supported = in_array($type, ['int', 'float', 'bool', 'string', 'array', 'object', 'json'], true);
 
-            return $value;
-        }
-
-        if ($type === 'int') {
-            return (int) $value;
-        }
-
-        if ($type === 'float') {
-            return (float) $value;
-        }
-
-        if ($type === 'bool') {
-            return (bool) $value;
-        }
-
-        if ($type === 'string') {
-            return (string) $value;
-        }
-
-        if ($type === 'array') {
-            return (array) $value;
-        }
-
-        if ($type === 'object') {
-            return (object) $value;
-        }
-
-        if ($type === 'json') {
-            if ($value === null) {
-                return null;
-            }
-
-            return json_decode((string) $value, false, 512, $strict ? JSON_THROW_ON_ERROR : 0);
+        if ($supported && $this->isCastable($value, $type, $strict)) {
+            return $this->applyCast($value, $type, $strict);
         }
 
         if ($strict) {
-            throw new InvalidArgumentException('Unsupported filter type: ' . $type);
+            throw new InvalidArgumentException($supported
+                ? sprintf('Cannot cast a value of type %s to %s.', gettype($value), $type)
+                : 'Unsupported filter type: ' . $type);
         }
+
+        return $value;
+    }
+
+    /**
+     * Converts a castable value to a supported type.
+     * JSON strings are decoded to objects; null stays null.
+     *
+     * @param mixed  $value  Value to cast.
+     * @param string $type   Supported cast name.
+     * @param bool   $strict Throw JsonException for invalid JSON.
+     *
+     * @return mixed
+     */
+    private function applyCast($value, string $type, bool $strict)
+    {
+        if ($type === 'json') {
+            $flags = $strict ? JSON_THROW_ON_ERROR : 0;
+
+            return $value === null ? null : json_decode((string) $value, false, 512, $flags);
+        }
+
+        // settype() applies the same conversion as the (int), (float), (bool), (string), (array) and (object) casts.
+        settype($value, $type);
 
         return $value;
     }
@@ -181,18 +171,14 @@ trait Adapters
      */
     private function isCastable($value, string $type, bool $strict): bool
     {
-        if ($type === 'int' || $type === 'float') {
-            return !is_object($value);
-        }
+        $scalarOrNull = is_scalar($value) || $value === null;
+        $castable = [
+            'int' => !is_object($value),
+            'float' => !is_object($value),
+            'string' => $scalarOrNull || (is_object($value) && method_exists($value, '__toString')),
+            'json' => is_string($value) || (!$strict && $scalarOrNull),
+        ];
 
-        if ($type === 'string') {
-            return is_scalar($value) || $value === null || (is_object($value) && method_exists($value, '__toString'));
-        }
-
-        if ($type === 'json') {
-            return is_string($value) || (!$strict && (is_scalar($value) || $value === null));
-        }
-
-        return true;
+        return $castable[$type] ?? true;
     }
 }

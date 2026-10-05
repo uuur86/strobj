@@ -5,7 +5,7 @@ declare(strict_types=1);
 use function StrObj\Examples\renderFooter;
 use function StrObj\Examples\renderHeader;
 
-require __DIR__ . '/layout.php';
+require_once __DIR__ . '/layout.php';
 
 renderHeader('Explore the library', 'home', './');
 ?>

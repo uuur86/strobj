@@ -68,18 +68,9 @@ final class CoverageGateTest extends TestCase
         ));
 
         foreach ($source as $file) {
-            if (!$file->isFile() || $file->getExtension() !== 'php') {
-                continue;
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                $entries[] = $this->fileEntry($kind, $file->getRealPath());
             }
-
-            $name = htmlspecialchars($file->getRealPath(), ENT_QUOTES | ENT_XML1, 'UTF-8');
-            $count = $kind === 'uncovered' ? 0 : 1;
-            $covered = $kind === 'inconsistent' ? 0 : $count;
-            $statements = $kind === 'badmetrics' ? 'bad' : '1';
-            $entries[] = $kind === 'zero'
-            ? '<file name="' . $name . '"><metrics statements="0" coveredstatements="0"/></file>'
-            : '<file name="' . $name . '"><line num="1" type="stmt" count="' . $count . '"/>' .
-            '<metrics statements="' . $statements . '" coveredstatements="' . $covered . '"/></file>';
         }
 
         if ($kind === 'empty') {
@@ -91,6 +82,23 @@ final class CoverageGateTest extends TestCase
         }
 
         return '<coverage><project>' . implode('', $entries) . '</project></coverage>';
+    }
+
+    /** Builds one Clover file entry whose line and metrics match the requested report kind. */
+    private function fileEntry(string $kind, string $path): string
+    {
+        $name = htmlspecialchars($path, ENT_QUOTES | ENT_XML1, 'UTF-8');
+
+        if ($kind === 'zero') {
+            return '<file name="' . $name . '"><metrics statements="0" coveredstatements="0"/></file>';
+        }
+
+        $count = $kind === 'uncovered' ? 0 : 1;
+        $covered = $kind === 'inconsistent' ? 0 : $count;
+        $statements = $kind === 'badmetrics' ? 'bad' : '1';
+
+        return '<file name="' . $name . '"><line num="1" type="stmt" count="' . $count . '"/>' .
+        '<metrics statements="' . $statements . '" coveredstatements="' . $covered . '"/></file>';
     }
 
     private function runGate(): array

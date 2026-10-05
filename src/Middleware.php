@@ -31,11 +31,11 @@ class Middleware
     use Adapters;
 
     /**
-     * Memory limit in bytes
+     * Configured options; memory_limit holds the guard's limit in bytes
      *
      * @var array
      */
-    private array $_options = [];
+    private array $options = [];
     /** @var bool Whether memory limits require exact integer values. */
     private bool $consistent;
 
@@ -83,7 +83,7 @@ class Middleware
             }
         }
 
-        $this->_options[$name] = $value;
+        $this->options[$name] = $value;
     }
 
     /**
@@ -95,7 +95,7 @@ class Middleware
      */
     public function get(string $name)
     {
-        return $this->_options[$name] ?? null;
+        return $this->options[$name] ?? null;
     }
 
     /**

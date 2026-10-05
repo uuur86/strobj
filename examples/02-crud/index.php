@@ -11,17 +11,19 @@ use function StrObj\Examples\renderFooter;
 use function StrObj\Examples\renderHeader;
 use function StrObj\Examples\Crud\formFieldName;
 use function StrObj\Examples\Crud\formValue;
+use function StrObj\Examples\Crud\invalidState;
 use function StrObj\Examples\Crud\openDemoDatabase;
 use function StrObj\Examples\Crud\requestProductJson;
 use function StrObj\Examples\Crud\requireFormToken;
 use function StrObj\Examples\Crud\requireProductId;
 use function StrObj\Examples\Crud\validationMessages;
 
-require dirname(__DIR__) . '/bootstrap.php';
-require dirname(__DIR__) . '/layout.php';
-require __DIR__ . '/ProductRepository.php';
-require __DIR__ . '/ProductService.php';
-require __DIR__ . '/web.php';
+require_once dirname(__DIR__) . '/bootstrap.php';
+require_once dirname(__DIR__) . '/layout.php';
+require_once __DIR__ . '/ProductRepository.php';
+require_once __DIR__ . '/ProductService.php';
+require_once __DIR__ . '/DemoStorageException.php';
+require_once __DIR__ . '/web.php';
 
 if (!class_exists(PDO::class) || !in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     http_response_code(503);
@@ -55,17 +57,17 @@ try {
         switch ($request->get('action')) {
             case 'create':
                 $created = $products->create(requestProductJson($request));
-                $_SESSION['notice'] = 'Product #' . $created['id'] . ' created. It is now in your list.';
+                $_SESSION['notice'] = sprintf('Product #%d created. It is now in your list.', $created['id']);
                 break;
             case 'update':
                 $editId = requireProductId($request->get('id'));
                 $products->update($editId, requestProductJson($request));
-                $_SESSION['notice'] = 'Product #' . $editId . ' updated.';
+                $_SESSION['notice'] = sprintf('Product #%d updated.', $editId);
                 break;
             case 'delete':
                 $id = requireProductId($request->get('id'));
                 $products->delete($id);
-                $_SESSION['notice'] = 'Product #' . $id . ' deleted.';
+                $_SESSION['notice'] = sprintf('Product #%d deleted.', $id);
                 break;
             default:
                 throw new InvalidArgumentException('Choose an action using the product form or list.');
@@ -108,17 +110,22 @@ $textFields = [
         'label' => 'SKU', 'type' => 'text', 'hint' => 'Uppercase letters, digits and hyphens.', 'full' => true,
     ],
     'product/pricing/amount' => [
-        'label' => 'Price', 'type' => 'number',
+        'label' => 'Price', 'type' => 'number', 'step' => '0.01',
         'hint' => 'Zero or more; up to 2 decimal places.', 'full' => false,
     ],
     'product/inventory/stock' => [
-        'label' => 'Stock', 'type' => 'number', 'hint' => 'Zero is a valid stock level.', 'full' => false,
+        'label' => 'Stock', 'type' => 'number', 'step' => '1',
+        'hint' => 'Zero is a valid stock level.', 'full' => false,
     ],
     'product/inventory/warehouse/city' => [
         'label' => 'Warehouse city', 'type' => 'text',
         'hint' => 'Optional. Missing branches are created for you.', 'full' => true,
     ],
 ];
+// Fields rendered outside the text field loop.
+$currencyPath = 'product/pricing/currency';
+$activePath = 'product/publication/active';
+$descriptionPath = 'product/description';
 
 renderHeader('Product CRUD', 'crud');
 ?>
@@ -129,7 +136,7 @@ renderHeader('Product CRUD', 'crud');
         and are separate from other browser sessions.</p>
 </div>
 <?php if ($notice !== '') : ?>
-    <div class="alert success" role="status"><?= escapeHtml($notice) ?></div>
+    <output class="alert success"><?= escapeHtml($notice) ?></output>
 <?php endif; ?>
 <?php if ($errorMessage !== '') : ?>
     <div class="alert error" role="alert"><?= escapeHtml($errorMessage) ?></div>
@@ -149,14 +156,13 @@ renderHeader('Product CRUD', 'crud');
             <input type="hidden" name="id" value="<?= $editId ?? '' ?>">
             <div class="form-grid">
                 <?php foreach ($textFields as $path => $field) :
-                    $fieldId = str_replace('/', '-', $path); ?>
+                    $fieldId = escapeHtml(str_replace('/', '-', $path)); ?>
                     <div class="field <?= $field['full'] ? 'full' : '' ?>">
                         <label for="<?= $fieldId ?>"><?= escapeHtml($field['label']) ?></label>
                         <input id="<?= $fieldId ?>" name="<?= escapeHtml(formFieldName($path)) ?>"
-                            type="<?= $field['type'] ?>" value="<?= escapeHtml(formValue($form, $path)) ?>"
-                            <?= $field['type'] === 'number'
-                                ? 'min="0" step="' . ($path === 'product/pricing/amount' ? '0.01' : '1') . '"' : '' ?>
-                            aria-invalid="<?= array_key_exists($path, $errors) ? 'true' : 'false' ?>"
+                            type="<?= escapeHtml($field['type']) ?>" value="<?= escapeHtml(formValue($form, $path)) ?>"
+                            <?= isset($field['step']) ? 'min="0" step="' . escapeHtml($field['step']) . '"' : '' ?>
+                            aria-invalid="<?= invalidState($errors, $path) ?>"
                             aria-describedby="<?= $fieldId ?>-hint <?= $fieldId ?>-error">
                         <span class="hint" id="<?= $fieldId ?>-hint"><?= escapeHtml($field['hint']) ?></span>
                         <span class="field-error" id="<?= $fieldId ?>-error"><?=
@@ -165,39 +171,39 @@ renderHeader('Product CRUD', 'crud');
                 <?php endforeach; ?>
                 <div class="field"><label for="currency">Currency</label>
                     <select id="currency" name="product[pricing][currency]"
-                        aria-invalid="<?= array_key_exists('product/pricing/currency', $errors) ? 'true' : 'false' ?>"
+                        aria-invalid="<?= invalidState($errors, $currencyPath) ?>"
                         aria-describedby="currency-error">
                         <?php foreach (['USD', 'EUR', 'GBP'] as $currency) : ?>
                             <option value="<?= $currency ?>" <?=
-                                formValue($form, 'product/pricing/currency', 'USD') === $currency ? 'selected' : ''
+                                formValue($form, $currencyPath, 'USD') === $currency ? 'selected' : ''
                             ?>><?= $currency ?></option>
                         <?php endforeach; ?>
                     </select>
                     <span class="field-error" id="currency-error"><?=
-                        escapeHtml($errors['product/pricing/currency'] ?? '') ?></span>
+                        escapeHtml($errors[$currencyPath] ?? '') ?></span>
                 </div>
                 <div class="field"><label for="active">Status</label>
                     <select id="active" name="product[publication][active]"
-                        aria-invalid="<?= array_key_exists('product/publication/active', $errors) ? 'true' : 'false' ?>"
+                        aria-invalid="<?= invalidState($errors, $activePath) ?>"
                         aria-describedby="active-error">
                         <option value="0" <?=
-                            formValue($form, 'product/publication/active', '0') === '0' ? 'selected' : ''
+                            formValue($form, $activePath, '0') === '0' ? 'selected' : ''
                         ?>>Inactive</option>
                         <option value="1" <?=
-                            formValue($form, 'product/publication/active', '0') === '1' ? 'selected' : ''
+                            formValue($form, $activePath, '0') === '1' ? 'selected' : ''
                         ?>>Active</option>
                     </select>
                     <span class="field-error" id="active-error"><?=
-                        escapeHtml($errors['product/publication/active'] ?? '') ?></span>
+                        escapeHtml($errors[$activePath] ?? '') ?></span>
                 </div>
                 <div class="field full"><label for="description">Description</label>
                     <textarea id="description" name="product[description]" rows="3"
-                        aria-invalid="<?= array_key_exists('product/description', $errors) ? 'true' : 'false' ?>"
+                        aria-invalid="<?= invalidState($errors, $descriptionPath) ?>"
                         aria-describedby="description-hint description-error"><?=
-                            escapeHtml(formValue($form, 'product/description')) ?></textarea>
+                            escapeHtml(formValue($form, $descriptionPath)) ?></textarea>
                     <span class="hint" id="description-hint">Optional. Leave empty to store a null description.</span>
                     <span class="field-error" id="description-error"><?=
-                        escapeHtml($errors['product/description'] ?? '') ?></span>
+                        escapeHtml($errors[$descriptionPath] ?? '') ?></span>
                 </div>
                 <div class="actions full">
                     <button type="submit"><?= $editId === null ? 'Add product' : 'Save changes' ?></button>
@@ -224,28 +230,30 @@ renderHeader('Product CRUD', 'crud');
                     endif; ?>
                     <?php foreach ($records as $record) :
                         $item = StringObjects::instance($record);
+                        $recordId = (int) $record['id'];
+                        $name = escapeHtml($item->get('product/name'));
+                        $active = (bool) $item->get($activePath);
                         $warehouseCity = $item->get('product/inventory/warehouse/city'); ?>
-                        <tr data-product-id="<?= $record['id'] ?>">
-                            <td><strong><?= escapeHtml($item->get('product/name')) ?></strong>
+                        <tr data-product-id="<?= $recordId ?>">
+                            <td><strong><?= $name ?></strong>
                                 <span class="hint"><?= escapeHtml($item->get('product/sku')) ?> ·
-                                    #<?= $record['id'] ?></span></td>
-                            <td data-label="Price"><?= escapeHtml($item->get('product/pricing/currency')) ?> <?=
+                                    #<?= $recordId ?></span></td>
+                            <td data-label="Price"><?= escapeHtml($item->get($currencyPath)) ?> <?=
                                 number_format($item->get('product/pricing/amount'), 2, '.', ',') ?></td>
-                            <td data-label="Stock"><?= $item->get('product/inventory/stock') ?></td>
+                            <td data-label="Stock"><?= (int) $item->get('product/inventory/stock') ?></td>
                             <td data-label="Warehouse"><?=
                                 escapeHtml($warehouseCity === '' ? '—' : $warehouseCity) ?></td>
-                            <td data-label="Status"><span class="status <?=
-                                $item->get('product/publication/active') ? 'active' : ''
-                            ?>"><?= $item->get('product/publication/active') ? 'Active' : 'Inactive' ?></span></td>
+                            <td data-label="Status"><span class="status <?= $active ? 'active' : '' ?>"><?=
+                                $active ? 'Active' : 'Inactive' ?></span></td>
                             <td><div class="actions">
-                                <a class="button secondary small" href="?edit=<?= $record['id'] ?>"
-                                    aria-label="Edit <?= escapeHtml($item->get('product/name')) ?>">Edit</a>
+                                <a class="button secondary small" href="?edit=<?= $recordId ?>"
+                                    aria-label="Edit <?= $name ?>">Edit</a>
                                 <form action="./" method="post">
                                     <input type="hidden" name="csrf" value="<?= escapeHtml($csrf) ?>">
                                     <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="id" value="<?= $record['id'] ?>">
+                                    <input type="hidden" name="id" value="<?= $recordId ?>">
                                     <button class="danger small" type="submit"
-                                        aria-label="Delete <?= escapeHtml($item->get('product/name')) ?>"
+                                        aria-label="Delete <?= $name ?>"
                                         >Delete</button>
                                 </form>
                             </div></td>

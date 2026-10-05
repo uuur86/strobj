@@ -6,7 +6,6 @@ namespace StrObj\Examples\Crud;
 
 use InvalidArgumentException;
 use PDO;
-use RuntimeException;
 use StrObj\StringObjects;
 
 /** Starts an isolated browser session and opens its persistent SQLite database. */
@@ -18,20 +17,34 @@ function openDemoDatabase(): PDO
     $sessions = $storage . '/sessions';
 
     if (!is_dir($sessions) && !mkdir($sessions, 0770, true) && !is_dir($sessions)) {
-        throw new RuntimeException('Cannot create the example storage directory.');
+        throw new DemoStorageException('Cannot create the example storage directory.');
     }
 
     session_save_path($sessions);
     session_name('strobj_crud_demo');
-    session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+    // Plain-HTTP local demos need the session cookie; HTTPS requests mark it Secure.
+    session_set_cookie_params([ // NOSONAR: the secure flag follows the request scheme.
+        'path' => '/',
+        'secure' => isSecureRequest(),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
 
     if (!session_start()) {
-        throw new RuntimeException('Cannot start the example session.');
+        throw new DemoStorageException('Cannot start the example session.');
     }
 
     $_SESSION['csrf'] = $_SESSION['csrf'] ?? bin2hex(random_bytes(32));
 
     return new PDO('sqlite:' . $storage . '/' . hash('sha256', session_id()) . '.sqlite');
+}
+
+/** Reports whether the browser reached this page over HTTPS, so the session cookie can require it. */
+function isSecureRequest(): bool
+{
+    $https = $_SERVER['HTTPS'] ?? '';
+
+    return $https !== '' && strtolower((string) $https) !== 'off';
 }
 
 /** Rejects writes that do not originate from the current browser's form. */
@@ -74,6 +87,12 @@ function formFieldName(string $path): string
     $segments = explode('/', $path);
 
     return array_shift($segments) . '[' . implode('][', $segments) . ']';
+}
+
+/** Returns the aria-invalid value of a field that may have a validation message. */
+function invalidState(array $errors, string $path): string
+{
+    return array_key_exists($path, $errors) ? 'true' : 'false';
 }
 
 /** Safely displays form values, including false/zero, without traversing branches. */
