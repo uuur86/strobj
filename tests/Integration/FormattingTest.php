@@ -31,7 +31,8 @@ final class FormattingTest extends TestCase
             $php, $root . '/vendor/squizlabs/php_codesniffer/bin/phpcbf',
             '--standard=' . $root . '/phpcs.xml', '--stdin-path=' . $file, '-q', '-',
         ], $root, $input);
-        self::assertSame(1, $result['status'], $result['output']);
+        // PHPCBF 3 exits with 1 after fixing a buffer; PHPCBF 4 exits with 0 when nothing remains.
+        self::assertContains($result['status'], [0, 1], $result['output']);
         self::assertSame($expected, $result['output']);
 
         $result = $this->runCommand($command, $root);
