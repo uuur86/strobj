@@ -13,6 +13,7 @@ final class HookedState
     // Public reads with private writes. Sonar's PHP parser misreads the PER-CS modifier order.
     public private(set) object $state; // NOSONAR
 
+    // phpcs:ignore PHPCompatibility.Syntax.RemovedCurlyBraceArrayAccess.Found -- A PHP 8.4 property hook.
     public int $age {
         get => $this->state->age;
     }
