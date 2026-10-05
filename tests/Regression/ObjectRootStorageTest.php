@@ -36,7 +36,7 @@ final class ObjectRootStorageTest extends TestCase
 
     public function testSnapshotsStoreOnlyThePublicEntriesOfObjectRoots(): void
     {
-        $root = new class {
+        $root = new class () {
             public int $visible = 1;
             protected int $internal = 2;
             private int $secret = 3;

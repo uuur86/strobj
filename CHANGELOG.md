@@ -3,7 +3,7 @@
 All notable changes to this project are documented in this file.
 The project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [Unreleased][]
 
 ### Fixed
 
@@ -34,7 +34,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 - `.sonarcloud.properties` separates tests from sources in automatic analysis.
 - Documentation on caching documents with Memcached, Redis or PSR-16 caches
-  ([#6]).
+  ([#6][]).
 
 ### Known issues
 
@@ -42,7 +42,7 @@ The project follows [Semantic Versioning](https://semver.org/).
   SPL storage, as in v2.1, and raise `E_DEPRECATED` on PHP 8.5. See
   [docs/compatibility.md](docs/compatibility.md#object-roots-and-php-85).
 
-## [3.0.0] - 2026-10-05
+## [3.0.0][] - 2026-10-05
 
 ### Breaking changes
 
@@ -112,7 +112,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Untrusted values can no longer make validation throw.
 - Vulnerabilities are reported privately; see [SECURITY.md](SECURITY.md).
 
-## [2.1.9] - 2024-08-26
+## [2.1.9][] - 2024-08-26
 
 - Added a function to find inclusive paths.
 

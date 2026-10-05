@@ -10,8 +10,8 @@ namespace StrObj\Tests\Fixtures;
  */
 final class HookedState
 {
-    // Public reads with private writes; PHP 8.4 implies the public read visibility.
-    private(set) object $state;
+    // Public reads with private writes. Sonar's PHP parser misreads the PER-CS modifier order.
+    public private(set) object $state; // NOSONAR
 
     public int $age {
         get => $this->state->age;
